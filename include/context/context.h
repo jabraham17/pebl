@@ -38,7 +38,8 @@ void Context_init(struct Context* context);
       fprintf(                                                                 \
           stderr,                                                              \
           "line %d: warning: " format,                                         \
-          loc->line_start##__VA_ARGS__);                                       \
+          loc->line_start,                                                     \
+          ##__VA_ARGS__);                                                      \
     } else {                                                                   \
       fprintf(stderr, "<unknown>: warning: " format, ##__VA_ARGS__);           \
     }                                                                          \
