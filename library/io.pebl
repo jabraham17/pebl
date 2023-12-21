@@ -1,0 +1,67 @@
+
+#
+# header
+#
+type File = {fp:void*;}
+func openFile(name:string, mode:string):File*;
+func closeFile(file:File*):void;
+func getChar(file:File*):int8;
+func putChar(file:File*, c:int8):void;
+func putString(file:File*, s:string):void;
+func print(s: string): void;
+
+
+#
+# includes
+#
+func allocate(n: int):void*;
+func deallocate(p: void*):void;
+
+
+#
+# externs
+#
+extern func c_openFilePointer(name:string, mode:string):void*;
+extern func c_closeFilePointer(fp:void*):void;
+extern func c_getChar(fp:void*):int8;
+extern func c_putChar(fp:void*, c:int8):void;
+extern func c_getStdout():void*;
+
+#
+# defs
+#
+func openFile(name:string, mode:string):File* {
+  let file:File* = allocate(sizeof(File));
+  file->fp = c_openFilePointer(name, mode);
+  return file;
+}
+
+func closeFile(file:File*):void {
+  c_closeFilePointer(file->fp);
+  deallocate(file);
+}
+
+func getChar(file:File*):int8 {
+  let c:int8 = c_getChar(file->fp);
+  return c;
+}
+
+func putChar(file:File*, c:int8):void {
+  c_putChar(file->fp, c);
+}
+
+func putString(file:File*, s:string):void {
+  while ((*s):int) != 0 {
+    putChar(file, *s);
+    s = s + 1;
+  }
+}
+
+func print(s: string): void {
+  let stdout:void* = c_getStdout();
+  while ((*s):int) != 0 {
+    c_putChar(stdout, *s);
+    s = s + 1;
+  }
+}
+

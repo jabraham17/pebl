@@ -1,0 +1,27 @@
+
+
+#
+# header
+#
+func allocate(n: int):void*;
+func deallocate(p: void*):void;
+
+#
+# includes
+#
+
+#
+# externs
+#
+extern func c_allocate(n: int):void*;
+extern func c_deallocate(p: void*):void;
+
+#
+# defs
+#
+func allocate(n: int):void* {
+  return c_allocate(n);
+}
+func deallocate(p: void*):void {
+  c_deallocate(p);
+}
