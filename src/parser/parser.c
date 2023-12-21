@@ -10,7 +10,6 @@ static struct AstNode* parse_statement(struct Context* context);
 static struct AstNode* parse_block_statement(struct Context* context);
 static struct AstNode* parse_function_def(struct Context* context);
 static struct AstNode* parse_function_header(struct Context* context);
-static struct AstNode* parse_extern_function(struct Context* context);
 static struct AstNode* parse_body(struct Context* context);
 static struct AstNode* parse_args(struct Context* context);
 static struct AstNode* parse_name_with_type(struct Context* context);
@@ -74,14 +73,12 @@ static struct AstNode* parse_statement_list(struct Context* context) {
   }
   return NULL;
 }
-// statement -> function_def | extern_function | type_def | var_def |
+// statement -> function_def | type_def | var_def |
 // block_statement
 static struct AstNode* parse_statement(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
-  if(t->tt == tt_FUNC || t->tt == tt_EXPORT) {
+  if(t->tt == tt_FUNC || t->tt == tt_EXPORT || t->tt == tt_EXTERN) {
     return parse_function_def(context);
-  } else if(t->tt == tt_EXTERN) {
-    return parse_extern_function(context);
   } else if(t->tt == tt_TYPE) {
     return parse_type_def(context);
   } else if(t->tt == tt_LET) {
@@ -110,19 +107,45 @@ static struct AstNode* parse_block_statement(struct Context* context) {
     }
   }
 }
-// function_def -> (EXPORT?) function_header body
+// function_def -> (EXTERN|EXPORT)? function_header body?
 static struct AstNode* parse_function_def(struct Context* context) {
-  struct lexer_token* t = lexer_peek(context, 1);
+  // cxan only be extern or export
+  int is_extern = 0;
   int is_export = 0;
-  if(t->tt == tt_EXPORT) {
+  if(lexer_peek(context, 1)->tt == tt_EXTERN) {
+    is_extern = 1;
+    lexer_gettoken(context);
+  } else if(lexer_peek(context, 1)->tt == tt_EXPORT) {
     is_export = 1;
     lexer_gettoken(context);
   }
   struct AstNode* header = parse_function_header(context);
-  struct AstNode* body = parse_body(context);
-  // no need to build loc, function_header does it
+  struct AstNode* body = NULL;
+  if(lexer_peek(context, 1)->tt == tt_SEMICOLON) {
+    // no body
+    // if export, ERROR
+    if(is_export) {
+      ERROR_ON_AST(context, header, "cannot export a function with no body");
+    }
+    expect(context, tt_SEMICOLON);
+  } else {
+    // if extern, ERROR
+    if(is_extern) {
+      ERROR_ON_AST(
+          context,
+          header,
+          "cannot declare a extern function with a body");
+    }
+    body = parse_body(context);
+  }
+  // body can be null
   struct AstNode* func = ast_build_Function(header, body);
-  if(is_export) func = ast_build_ExportFunction(func);
+  if(is_export) {
+    func = ast_build_ExportFunction(func);
+  } else if(is_extern) {
+    func = ast_build_ExternFunction(func);
+  }
+
   return func;
 }
 // function_header -> FUNC varname LPAREN args RPAREN COLON typename
@@ -137,14 +160,6 @@ static struct AstNode* parse_function_header(struct Context* context) {
   struct AstNode* func_node = ast_build_FunctionHeader(name, args, ret_type);
   add_location_for_token(context, func_node, t);
   return func_node;
-}
-// extern_function -> EXTERN function_header SEMICOLON
-static struct AstNode* parse_extern_function(struct Context* context) {
-  expect(context, tt_EXTERN);
-  struct AstNode* header = parse_function_header(context);
-  expect(context, tt_SEMICOLON);
-  // no need to build loc, function_header does it
-  return ast_build_ExternFunction(header);
 }
 // body -> LCURLY statement_list RCURLY
 static struct AstNode* parse_body(struct Context* context) {

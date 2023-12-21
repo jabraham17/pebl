@@ -353,11 +353,7 @@ int ast_verify_Function(struct AstNode* ast) {
                      (ast_Function_args(ast) == NULL ||
                       ast_is_type(ast_Function_args(ast), ast_Variable)) &&
                      ast_is_type(ast_Function_ret_type(ast), ast_Typename);
-  if(ast_Function_is_extern(ast)) {
-    return valid_header;
-  } else {
-    return valid_header && ast_Function_body(ast) != NULL;
-  }
+  return valid_header;
 }
 struct AstNode* ast_Function_name(struct AstNode* ast) {
   return ast->children[0];
@@ -376,6 +372,9 @@ struct AstNode* ast_Function_ret_type(struct AstNode* ast) {
 }
 struct AstNode* ast_Function_body(struct AstNode* ast) {
   return ast->children[3];
+}
+int ast_Function_has_body(struct AstNode* ast) {
+  return ast_Function_body(ast) != NULL;
 }
 int ast_Function_is_extern(struct AstNode* ast) { return ast->int_value == 1; }
 int ast_Function_is_export(struct AstNode* ast) { return ast->int_value == 2; }

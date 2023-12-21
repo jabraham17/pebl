@@ -19,6 +19,7 @@ struct cg_function {
   struct Type* rettype;
   LLVMValueRef function;
   LLVMTypeRef cg_type;
+  int is_external;
   struct cg_function* next;
 };
 struct cg_context {

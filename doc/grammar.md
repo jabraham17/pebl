@@ -4,12 +4,11 @@ The grammar is specified in semi-EBNF format for each of reading
 
 ```
 statement_list -> EPSILON | statement | statement statement_list
-statement -> function_def | extern_function | type_def | var_def | block_statement
+statement -> function_def | type_def | var_def | block_statement
 block_statement -> assignment | if_stmt | while_stmt | return_stmt | break_stmt | call_stmt
 
-function_def -> (EXPORT?) function_header body
+function_def -> (EXTERN | EXPORT)? function_header body?
 function_header -> FUNC varname LPAREN args RPAREN COLON typename
-extern_function -> EXTERN function_header SEMICOLON
 
 body -> LCURLY statement_list RCURLY
 

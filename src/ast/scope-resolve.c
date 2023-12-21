@@ -188,7 +188,7 @@ static void build_scope(
     }
     LL_APPEND(scope->variables, sym);
 
-    if(!ast_Function_is_extern(ast)) {
+    if(ast_Function_has_body(ast)) {
       // now we need to resolve the function body
       struct AstNode* body = ast_Function_body(ast);
       if(!ast_Block_is_empty(body)) {

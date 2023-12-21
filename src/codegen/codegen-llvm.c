@@ -39,49 +39,54 @@ static struct cg_function* codegen_function_prototype(
   char* name = ast_Identifier_name(ast_Function_name(ast_func));
   char* mname = mangled_name(ctx, ast_func);
 
-  // build arg types
-  int n_args = ast_Function_num_args(ast_func);
-  LLVMTypeRef* params = malloc(sizeof(*params) * n_args);
-  int i = 0;
-  ast_foreach(ast_Function_args(ast_func), arg) {
-    params[i] = get_llvm_type_ast(ctx, ast_Variable_type(arg));
-    i++;
-  }
-  // build ret type
-  LLVMTypeRef funcType = LLVMFunctionType(
-      get_llvm_type_ast(ctx, ast_Function_ret_type(ast_func)),
-      params,
-      n_args,
-      0);
-
-  LLVMValueRef func = LLVMAddFunction(ctx->codegen->module, mname, funcType);
-  struct cg_function* cg_func = add_function(
-      ctx,
-      name,
-      mname,
-      func,
-      funcType,
-      TypeTable_get_type_ast(ctx, ast_Function_ret_type(ast_func)));
-
-  // set linkage
-  if(ast_Function_is_extern(ast_func) || ast_Function_is_export(ast_func)) {
-    LLVMSetLinkage(func, LLVMExternalLinkage);
+  LLVMValueRef func = LLVMGetNamedFunction(ctx->codegen->module, mname);
+  struct cg_function* cg_func = NULL;
+  if(func) {
+    // already exists
+    cg_func = get_function_named(ctx, mname);
   } else {
-    LLVMSetLinkage(func, LLVMInternalLinkage);
+    // build arg types
+    int n_args = ast_Function_num_args(ast_func);
+    LLVMTypeRef* params = malloc(sizeof(*params) * n_args);
+    int i = 0;
+    ast_foreach(ast_Function_args(ast_func), arg) {
+      params[i] = get_llvm_type_ast(ctx, ast_Variable_type(arg));
+      i++;
+    }
+    // build ret type
+    LLVMTypeRef funcType = LLVMFunctionType(
+        get_llvm_type_ast(ctx, ast_Function_ret_type(ast_func)),
+        params,
+        n_args,
+        0);
+
+    // build function
+    func = LLVMAddFunction(ctx->codegen->module, mname, funcType);
+    cg_func = add_function(
+        ctx,
+        name,
+        mname,
+        func,
+        funcType,
+        TypeTable_get_type_ast(ctx, ast_Function_ret_type(ast_func)));
+
+    if(ast_Function_is_extern(ast_func) || ast_Function_is_export(ast_func)) {
+      cg_func->is_external = 1;
+    }
+    // create names for the parameters
+    i = 0;
+    ast_foreach(ast_Function_args(ast_func), arg) {
+
+      struct AstNode* var = ast_Variable_name(arg);
+      char* varname = ast_Identifier_name(var);
+
+      LLVMValueRef param = LLVMGetParam(func, i);
+      LLVMSetValueName(param, varname);
+
+      i++;
+    }
   }
 
-  // create names for the parameters
-  i = 0;
-  ast_foreach(ast_Function_args(ast_func), arg) {
-
-    struct AstNode* var = ast_Variable_name(arg);
-    char* varname = ast_Identifier_name(var);
-
-    LLVMValueRef param = LLVMGetParam(func, i);
-    LLVMSetValueName(param, varname);
-
-    i++;
-  }
   return cg_func;
 }
 
@@ -95,9 +100,8 @@ struct cg_value* codegen_helper(
     struct ScopeResult* sr = scope_resolve(ctx, ast);
     struct cg_function* func = codegen_function_prototype(ctx, ast, sr);
 
-    // generate body if not extern
-    if(!ast_Function_is_extern(ast)) {
-
+    // generate body
+    if(ast_Function_has_body(ast)) {
       // make entry block
       LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(
           ctx->codegen->llvmContext,
@@ -592,9 +596,14 @@ struct cg_value* codegen_helper(
   }
 }
 
+static struct cg_function* get_user_main(struct Context* ctx) {
+  struct cg_function* user_main = get_function_named(ctx, "main");
+  return user_main;
+}
+
 static LLVMValueRef codegen_main(struct Context* ctx) {
   // get user main
-  struct cg_function* user_main = get_function_named(ctx, "main");
+  struct cg_function* user_main = get_user_main(ctx);
   if(!user_main) {
     // no main, dont create one
     return NULL;
@@ -644,6 +653,27 @@ static LLVMValueRef codegen_main(struct Context* ctx) {
   return func;
 }
 
+static void set_linkage(struct Context* ctx) {
+  struct cg_function* user_main = get_user_main(ctx);
+
+  LL_FOREACH(ctx->codegen->functions, cg_func) {
+    // no user main, anything could be external
+    if(!user_main) {
+      LLVMSetLinkage(cg_func->function, LLVMExternalLinkage);
+    } else {
+      if(cg_func->is_external) {
+        LLVMSetLinkage(cg_func->function, LLVMExternalLinkage);
+      } else if(LLVMCountBasicBlocks(cg_func->function) == 0) {
+        // if no body def, external
+        LLVMSetLinkage(cg_func->function, LLVMExternalLinkage);
+      } else {
+        // internal
+        LLVMSetLinkage(cg_func->function, LLVMInternalLinkage);
+      }
+    }
+  }
+}
+
 void codegen(struct Context* ctx) {
 
   // init the module
@@ -655,6 +685,7 @@ void codegen(struct Context* ctx) {
   ast_foreach(ctx->ast, a) { codegen_helper(ctx, a, NULL); }
 
   codegen_main(ctx);
+  set_linkage(ctx);
 }
 void cg_emit(struct Context* ctx) {
   LLVMVerifyModule(ctx->codegen->module, LLVMPrintMessageAction, NULL);

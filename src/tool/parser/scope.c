@@ -23,7 +23,7 @@ void do_scope_internal(struct Context* c, struct AstNode* ast, int indent) {
     struct ScopeResult* sr = scope_resolve(c, ast);
     char* name = ast_Identifier_name(ast_Function_name(ast));
     print_scope(name, sr, indent);
-    if(!ast_Function_is_extern(ast)) {
+    if(ast_Function_has_body(ast)) {
       struct AstNode* body = ast_Function_body(ast);
       if(!ast_Block_is_empty(body)) {
         ast_foreach(ast_Block_stmts(body), a) {

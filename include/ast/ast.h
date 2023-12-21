@@ -131,6 +131,7 @@ int ast_Function_num_args(struct AstNode* ast);
 struct AstNode*
 ast_Function_ret_type(struct AstNode* ast); // returns a Typename
 struct AstNode* ast_Function_body(struct AstNode* ast);
+int ast_Function_has_body(struct AstNode* ast);
 int ast_Function_is_extern(struct AstNode* ast);
 int ast_Function_is_export(struct AstNode* ast);
 

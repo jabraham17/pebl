@@ -46,9 +46,9 @@ struct cg_value* add_value(
   return val;
 }
 
-struct cg_function* get_function_named(struct Context* ctx, char* name) {
+struct cg_function* get_function_named(struct Context* ctx, char* mname) {
   LL_FOREACH(ctx->codegen->functions, f) {
-    if(strcmp(f->name, name) == 0) {
+    if(strcmp(f->mname, mname) == 0) {
       return f;
     }
   }
