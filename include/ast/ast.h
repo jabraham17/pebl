@@ -20,6 +20,7 @@ enum OperatorType {
   op_EQ,
   op_NEQ,
   op_NOT,
+  op_CAST,
   op_TAKE_ADDRESS,
   op_PTR_DEREFERENCE,
 

@@ -277,7 +277,8 @@ static struct AstNode* parse_expr(struct Context* context) {
     if(t->tt == tt_PLUS || t->tt == tt_MINUS || t->tt == tt_STAR ||
        t->tt == tt_DIVIDE || t->tt == tt_AND || t->tt == tt_OR ||
        t->tt == tt_LT || t->tt == tt_GT || t->tt == tt_LTEQ ||
-       t->tt == tt_GTEQ || t->tt == tt_EQ || t->tt == tt_NEQ) {
+       t->tt == tt_GTEQ || t->tt == tt_EQ || t->tt == tt_NEQ ||
+       t->tt == tt_COLON) {
       enum OperatorType op = parse_op(context);
       struct AstNode* rhs = parse_atom(context);
       struct AstNode* expr_node = ast_build_Expr_binop(lhs, rhs, op);
@@ -352,7 +353,7 @@ static struct AstNode* parse_atom(struct Context* context) {
   }
 }
 // op -> PLUS | MINUS | STAR | DIVIDE | AND | OR | LT | GT | LTEQ | GTEQ | EQ |
-// NEQ
+// NEQ | COLON
 static enum OperatorType parse_op(struct Context* context) {
   struct lexer_token* t = lexer_gettoken(context);
   if(t->tt == tt_PLUS) {
@@ -379,6 +380,8 @@ static enum OperatorType parse_op(struct Context* context) {
     return op_EQ;
   } else if(t->tt == tt_NEQ) {
     return op_NEQ;
+  } else if(t->tt == tt_COLON) {
+    return op_CAST;
   } else {
     syntax_error(context, t);
   }

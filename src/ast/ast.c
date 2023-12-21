@@ -73,6 +73,7 @@ void OperatorType_tostring(char* buf, enum OperatorType op) {
   else if(op == op_EQ) bsstrcpy(buf, "EQ");
   else if(op == op_NEQ) bsstrcpy(buf, "NEQ");
   else if(op == op_NOT) bsstrcpy(buf, "NOT");
+  else if(op == op_CAST) bsstrcpy(buf, "CAST");
   else if(op == op_TAKE_ADDRESS) bsstrcpy(buf, "TAKE_ADDRESS");
   else if(op == op_PTR_DEREFERENCE) bsstrcpy(buf, "PTR_DEREFERENCE");
 }
