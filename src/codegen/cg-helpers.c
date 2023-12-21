@@ -149,8 +149,11 @@ struct cg_value* allocate_stack_for_sym(
   if(firstInst) LLVMPositionBuilderBefore(ctx->codegen->builder, firstInst);
   else LLVMPositionBuilderAtEnd(ctx->codegen->builder, entryBB);
 
+  char* name = sym ? sym->name : "temp";
+
   // get the alloca, add as a value
-  LLVMValueRef stack_ptr = LLVMBuildAlloca(ctx->codegen->builder, cg_type, "");
+  LLVMValueRef stack_ptr =
+      LLVMBuildAlloca(ctx->codegen->builder, cg_type, name);
   struct cg_value* val;
   if(sym) val = add_value(ctx, stack_ptr, cg_type, sym, type);
   else val = add_temp_value(ctx, stack_ptr, cg_type, type);
