@@ -488,13 +488,10 @@ struct AstNode* ast_While_condition(struct AstNode* ast) {
 }
 struct AstNode* ast_While_body(struct AstNode* ast) { return ast->children[1]; }
 
-struct AstNode* ast_build_Expr(struct AstNode* lhs) {
-  struct AstNode* ast = ast_allocate(ast_Expr);
-  ast->children[0] = lhs;
-  ast->int_value = (int)op_NONE;
-  return ast;
+struct AstNode* ast_build_Expr_plain(struct AstNode* lhs) {
+  return ast_build_Expr_uop(lhs, op_NONE);
 }
-struct AstNode* ast_build_Expr2(
+struct AstNode* ast_build_Expr_binop(
     struct AstNode* lhs,
     struct AstNode* rhs,
     enum OperatorType op) {
@@ -504,11 +501,8 @@ struct AstNode* ast_build_Expr2(
   ast->int_value = (int)op;
   return ast;
 }
-struct AstNode* ast_build_Expr3(struct AstNode* lhs, enum OperatorType op) {
-  struct AstNode* ast = ast_allocate(ast_Expr);
-  ast->children[0] = lhs;
-  ast->int_value = (int)op;
-  return ast;
+struct AstNode* ast_build_Expr_uop(struct AstNode* lhs, enum OperatorType op) {
+  return ast_build_Expr_binop(lhs, NULL, op);
 }
 int ast_verify_Expr(struct AstNode* ast) {
   int valid_atom = ast_Expr_lhs(ast) != NULL;
@@ -523,7 +517,7 @@ enum OperatorType ast_Expr_op(struct AstNode* ast) {
   enum OperatorType op = (enum OperatorType)ast->int_value;
   return op;
 }
-int ast_Expr_is_variable(struct AstNode* ast) {
+int ast_Expr_is_plain(struct AstNode* ast) {
   return ast_Expr_op(ast) == op_NONE;
 }
 int ast_Expr_is_binop(struct AstNode* ast) { return ast_Expr_rhs(ast) != NULL; }

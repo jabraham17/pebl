@@ -46,7 +46,7 @@ sizeof_getTypeFromArg(struct Context* ctx, struct AstNode* arg) {
     char* typename = ast_Identifier_name(arg);
     struct Type* type = TypeTable_get_type(ctx, typename);
     return type;
-  } else if(ast_is_type(arg, ast_Expr) && ast_Expr_is_variable(arg)) {
+  } else if(ast_is_type(arg, ast_Expr) && ast_Expr_is_plain(arg)) {
     struct Type* type = sizeof_getTypeFromArg(ctx, ast_Expr_lhs(arg));
     return type;
   }

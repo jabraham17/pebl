@@ -181,15 +181,17 @@ struct AstNode* ast_While_condition(struct AstNode* ast); // returns an Expr
 struct AstNode* ast_While_body(struct AstNode* ast);
 
 /* Expr */
-struct AstNode* ast_build_Expr(struct AstNode* lhs);
-struct AstNode*
-ast_build_Expr2(struct AstNode* lhs, struct AstNode* rhs, enum OperatorType op);
-struct AstNode* ast_build_Expr3(struct AstNode* lhs, enum OperatorType op);
+struct AstNode* ast_build_Expr_plain(struct AstNode* lhs);
+struct AstNode* ast_build_Expr_binop(
+    struct AstNode* lhs,
+    struct AstNode* rhs,
+    enum OperatorType op);
+struct AstNode* ast_build_Expr_uop(struct AstNode* lhs, enum OperatorType op);
 int ast_verify_Expr(struct AstNode* ast);
 struct AstNode* ast_Expr_lhs(struct AstNode* ast);
 struct AstNode* ast_Expr_rhs(struct AstNode* ast);
 enum OperatorType ast_Expr_op(struct AstNode* ast);
-int ast_Expr_is_variable(struct AstNode* ast);
+int ast_Expr_is_plain(struct AstNode* ast);
 int ast_Expr_is_binop(struct AstNode* ast);
 int ast_Expr_is_uop(struct AstNode* ast);
 

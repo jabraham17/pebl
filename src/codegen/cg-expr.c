@@ -11,7 +11,7 @@
 struct cg_value*
 codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
   ASSERT(ast_is_type(ast, ast_Expr));
-  if(ast_Expr_is_variable(ast)) {
+  if(ast_Expr_is_plain(ast)) {
     return codegen_helper(ctx, ast_Expr_lhs(ast), sr);
   } else if(ast_Expr_is_binop(ast)) {
     struct cg_value* lhsVal = codegen_helper(ctx, ast_Expr_lhs(ast), sr);

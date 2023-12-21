@@ -252,7 +252,7 @@ static struct AstNode* parse_expr(struct Context* context) {
   if(t->tt == tt_AMPERSAND || t->tt == tt_STAR || t->tt == tt_NOT) {
     enum OperatorType op = parse_preop(context);
     struct AstNode* lhs = parse_atom(context);
-    struct AstNode* expr_node = ast_build_Expr3(lhs, op);
+    struct AstNode* expr_node = ast_build_Expr_uop(lhs, op);
     add_location_for_token(context, expr_node, t);
     return expr_node;
   } else {
@@ -265,11 +265,11 @@ static struct AstNode* parse_expr(struct Context* context) {
        t->tt == tt_GTEQ || t->tt == tt_EQ || t->tt == tt_NEQ) {
       enum OperatorType op = parse_op(context);
       struct AstNode* rhs = parse_atom(context);
-      struct AstNode* expr_node = ast_build_Expr2(lhs, rhs, op);
+      struct AstNode* expr_node = ast_build_Expr_binop(lhs, rhs, op);
       add_location_for_token(context, expr_node, tok_for_loc);
       return expr_node;
     } else {
-      struct AstNode* expr_node = ast_build_Expr(lhs);
+      struct AstNode* expr_node = ast_build_Expr_plain(lhs);
       add_location_for_token(context, expr_node, tok_for_loc);
       return expr_node;
     }
@@ -292,12 +292,11 @@ static struct AstNode* parse_expr_list(struct Context* context) {
   return NULL;
 }
 // atom -> NUMBER | STRING_LITERAL | varname | call_expr |
-// varname (DOT|ARROW) varname
+// varname (DOT|ARROW) varname | LPAREN expr RPAREN
 static struct AstNode* parse_atom(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(t->tt == tt_NUMBER) {
     t = expect(context, tt_NUMBER);
-
     struct AstNode* num_node = ast_build_Number(atoi(t->lexeme));
     add_location_for_token(context, num_node, t);
     return num_node;
@@ -326,6 +325,13 @@ static struct AstNode* parse_atom(struct Context* context) {
         return var;
       }
     }
+  } else if(t->tt == tt_LPAREN) {
+    struct lexer_token* tok = expect(context, tt_LPAREN);
+    struct AstNode* expr = parse_expr(context);
+    expect(context, tt_RPAREN);
+    struct AstNode* wrapped_expr = ast_build_Expr_plain(expr);
+    add_location_for_token(context, wrapped_expr, tok);
+    return wrapped_expr;
   } else {
     syntax_error(context, t);
   }
