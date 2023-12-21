@@ -1,0 +1,34 @@
+BreakBeforeBraces: Attach
+AlignAfterOpenBracket: AlwaysBreak
+SpaceBeforeParens: Never
+IndentWidth: 2
+ColumnLimit: 80
+IndentCaseLabels: true
+UseTab: Never
+PointerAlignment: Left
+IndentPPDirectives: BeforeHash
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+AllowAllArgumentsOnNextLine: false
+
+Standard: c++17
+
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories: 
+  - Regex:           '^"[[:alnum:].]+"$'
+    Priority:        1
+    CaseSensitive:   true
+  - Regex:           '^"[[:alnum:].]+/'
+    Priority:        2
+    CaseSensitive:   true
+  - Regex:           '^<'
+    Priority:        3
+    CaseSensitive:   true
+  - Regex:           '.*'
+    Priority:        4
+    CaseSensitive:   true

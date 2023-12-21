@@ -1,0 +1,85 @@
+#ifndef CODEGEN_BINARY_OPERATOR
+#define CODEGEN_BINARY_OPERATOR(op, lhsType, rhsType, funcName)
+#endif
+#ifndef CODEGEN_UNARY_OPERATOR
+#define CODEGEN_UNARY_OPERATOR(op, operandType, funcName)
+#endif
+
+//
+// "" is any type
+// "*" is any ptr type
+//
+// funcName(ctx:Context*, op:OperatorType, lhs:cg_value*, rhs:cg_value*):cg_value*
+//
+
+#define Int "int"
+#define Ptr "*"
+#define Any ""
+
+//
+// Int Math
+//
+CODEGEN_BINARY_OPERATOR(PLUS, Int, Int, intBOp)
+CODEGEN_BINARY_OPERATOR(MINUS, Int, Int, intBOp)
+CODEGEN_BINARY_OPERATOR(MULT, Int, Int, intBOp)
+CODEGEN_BINARY_OPERATOR(DIVIDE, Int, Int, intBOp)
+CODEGEN_BINARY_OPERATOR(AND, Int, Int, intBOp)
+CODEGEN_BINARY_OPERATOR(OR, Int, Int, intBOp)
+
+//
+// Int Comparison
+//
+CODEGEN_BINARY_OPERATOR(LT, Int, Int, intCompare)
+CODEGEN_BINARY_OPERATOR(GT, Int, Int, intCompare)
+CODEGEN_BINARY_OPERATOR(LTEQ, Int, Int, intCompare)
+CODEGEN_BINARY_OPERATOR(GTEQ, Int, Int, intCompare)
+CODEGEN_BINARY_OPERATOR(EQ, Int, Int, intCompare)
+CODEGEN_BINARY_OPERATOR(NEQ, Int, Int, intCompare)
+CODEGEN_UNARY_OPERATOR(NOT, Int, negate)
+
+//
+// Ptr Comparison
+//
+CODEGEN_BINARY_OPERATOR(LT, Ptr, Int, ptrCompare)
+CODEGEN_BINARY_OPERATOR(GT, Ptr, Int, ptrCompare)
+CODEGEN_BINARY_OPERATOR(LTEQ, Ptr, Int, ptrCompare)
+CODEGEN_BINARY_OPERATOR(GTEQ, Ptr, Int, ptrCompare)
+CODEGEN_BINARY_OPERATOR(EQ, Ptr, Int, ptrCompare)
+CODEGEN_BINARY_OPERATOR(NEQ, Ptr, Int, ptrCompare)
+
+CODEGEN_BINARY_OPERATOR(LT, Int, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(GT, Int, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(LTEQ, Int, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(GTEQ, Int, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(EQ, Int, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(NEQ, Int, Ptr, ptrCompare)
+
+CODEGEN_BINARY_OPERATOR(LT, Ptr, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(GT, Ptr, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(LTEQ, Ptr, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(GTEQ, Ptr, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(EQ, Ptr, Ptr, ptrCompare)
+CODEGEN_BINARY_OPERATOR(NEQ, Ptr, Ptr, ptrCompare)
+
+CODEGEN_UNARY_OPERATOR(NOT, Ptr, negate)
+
+//
+// Address computation
+//
+CODEGEN_BINARY_OPERATOR(PLUS, Int, Ptr, addrOffset)
+CODEGEN_BINARY_OPERATOR(PLUS, Ptr, Int, addrOffset)
+// CODEGEN_BINARY_OPERATOR(MINUS, Int, Ptr, addrOffset)
+// CODEGEN_BINARY_OPERATOR(MINUS, Ptr, Int, addrOffset)
+
+//
+// Pointers
+//
+CODEGEN_UNARY_OPERATOR(TAKE_ADDRESS, Any, getAddressOfValue)
+CODEGEN_UNARY_OPERATOR(PTR_DEREFERENCE, Any, getValueAtAddress)
+
+#undef Int
+#undef Ptr
+#undef Any
+
+#undef CODEGEN_BINARY_OPERATOR
+#undef CODEGEN_UNARY_OPERATOR

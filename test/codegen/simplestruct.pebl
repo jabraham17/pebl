@@ -1,0 +1,54 @@
+extern func print(s: string): void;
+extern func println(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+extern func ptrToString(p:void*):string;
+
+extern func allocate(n:int):void*;
+
+func printInt(prefix: string, i: int, suffix: string): void {
+  print(prefix);
+  print(intToString(i));
+  println(suffix);
+}
+
+type mytype = {x:int; y:int;}
+
+func getMyType(x:int, y:int):mytype {
+  let a: mytype;
+  a.x = x;
+  a.y = y;
+  return a;
+}
+func printMyType(a:mytype):void {
+  printInt("x=",a.x,"");
+  printInt("y=",a.y,"");
+}
+
+func main(args: string*, nargs: int): int {
+
+  let x: int = 0;
+  let y: int = 0;
+  if nargs < 3 {
+    println("not enough args");
+    return 1;
+  } else {
+      if nargs > 3 {
+      println("too many args");
+      return 1;
+    }
+    else {
+      let p:string* = args + 1;
+      x = stringToInt(*p);
+      p = p+1;
+      y = stringToInt(*p);
+    }
+  }
+
+  let a: mytype = getMyType(x, y);
+  printMyType(a);
+
+  return 0;
+}

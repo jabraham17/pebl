@@ -1,0 +1,70 @@
+extern func print(s: string): void;
+extern func println(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+extern func ptrToString(p:void*):string;
+
+extern func allocate(n:int):void*;
+
+func printInt(prefix: string, i: int, suffix: string): void {
+  print(prefix);
+  print(intToString(i));
+  println(suffix);
+}
+
+type nodeType = {x:int; next:nodeType*;}
+
+func createNodeType(x:int):nodeType* {
+  # TODO: sizeof
+  let np: nodeType* = allocate(sizeof(nodeType));
+  np->x = x;
+  np->next = 0;
+  return np;
+}
+func appendNodeType(head_ptr:nodeType**, n:nodeType*):void {
+  let temp: nodeType* = *head_ptr;
+  if temp == 0 {
+    *head_ptr = n;
+  } else {
+    let done: int = 0;
+    while !done {
+      if temp->next != 0 {
+        temp = temp->next;
+      }
+      else {
+        temp->next = n;
+        done = 1;
+      }
+    }
+  }
+}
+
+func printNodeType(head:nodeType*):void {
+  if head == 0 {
+    return;
+  }
+  let temp:nodeType = *head;
+  printInt("node: x=",temp.x,"");
+  printNodeType(temp.next);
+}
+
+func main(args: string*, nargs: int): int {
+
+  let head: nodeType* = createNodeType(1);
+  # create an empty scope
+  if 1 {
+    let n: nodeType* = createNodeType(2);
+    appendNodeType(&head, n);
+  }
+  # create an empty scope
+  if 1 {
+    let n: nodeType* = createNodeType(3);
+    appendNodeType(&head, n);
+  }
+
+  printNodeType(head);
+
+  return 0;
+}

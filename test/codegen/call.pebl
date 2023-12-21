@@ -1,0 +1,17 @@
+
+extern func print(s: string): void;
+
+func bar(a:int): int {
+  return a;
+}
+
+func main(args: string*, nargs: int): int {
+
+  let msg: string = "hello, world!";
+  let msg2: string = "goodbye, world!";
+  let _: void = print(msg);
+  let _2: void = print(msg2);
+  let a: int = 8;
+  let ret: int = bar(a);
+  return ret;
+}

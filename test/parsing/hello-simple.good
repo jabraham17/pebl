@@ -1,0 +1,37 @@
+Function:
+  Identifier:
+   name='print'
+  Variable:
+    Identifier:
+     name='s'
+    Typename:
+     name='int8*'
+  Typename:
+   name='void'
+Variable:
+  Identifier:
+   name='msg'
+  Typename:
+   name='int8*'
+  Expr:
+    String:
+     value='hello, world!'
+Variable:
+  Identifier:
+   name='_'
+  Typename:
+   name='void'
+  Expr:
+    Call:
+      Identifier:
+       name='print'
+      Identifier:
+       name='msg'
+Type:
+  Typename:
+   name='t'
+  Variable:
+    Identifier:
+     name='x'
+    Typename:
+     name='int64'

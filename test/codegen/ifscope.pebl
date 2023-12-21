@@ -1,0 +1,37 @@
+
+extern func print(s: string): void;
+extern func println(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+func printme(s:string):void {
+  print(s);
+  println("");
+  return;
+}
+
+func main(args: string*, nargs: int): int {
+  print("the first arg is '");
+  let offset:int* = 8;
+  let arg1:string* = args+offset;
+  print(*arg1);
+  println("'");
+
+  printme("foo");
+
+  print("adding 17 to it gives ");
+
+  let i: int = stringToInt(*arg1);
+  let ii:int = i + 17;
+  println(intToString(ii));
+
+  let a: int = 1;
+  if 1 {
+    let a: int = 2;
+    printme("hi");
+    printme(intToString(a));
+  }
+
+  return 1+2;
+}

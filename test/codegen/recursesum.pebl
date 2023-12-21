@@ -1,0 +1,39 @@
+extern func print(s: string): void;
+extern func println(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+extern func ptrToString(p:void*):string;
+
+extern func allocate(n:int):void*;
+
+func printInt(prefix: string, i: int, suffix: string): void {
+  print(prefix);
+  print(intToString(i));
+  println(suffix);
+}
+func printPtr(prefix: string, p: void*, suffix: string): void {
+  print(prefix);
+  print(ptrToString(p));
+  println(suffix);
+}
+
+func sumArgs(i: int, args: string*, nargs: int): int {
+  let sum: int = 0;
+  if i < nargs {
+    let offset: int = i;
+    let argP:string* = args + offset;
+    let argI:int = stringToInt(*argP);
+    sum = argI + sumArgs(i+1, args, nargs);
+  }
+  return sum;
+}
+
+func main(args: string*, nargs: int): int {
+
+  println("hello from main");
+  let sum: int = sumArgs(1, args, nargs);
+  printInt("The sum is: ", sum, "");
+  return 0;
+}

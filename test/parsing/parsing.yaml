@@ -1,0 +1,19 @@
+variables:
+  PARSER: ${BIN_DIR}/parser${EXT}
+  PARSE_CMD: ${PARSER} ${FILE} -no-checks
+  # VALGRIND: valgrind
+tests:
+- file: hello.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD} -print
+- file: hello-simple.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD} -print
+- file: simple-grammar.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD} -print
+- file: complex-grammar.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD} -print
+  # - compile-cmd: ${VALGRIND} -q --track-origins=yes --leak-check=no -- ${PARSE_CMD}
+    # good-file: complex-grammar-valgrind.good

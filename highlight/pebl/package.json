@@ -1,0 +1,35 @@
+{
+  "name": "pebl",
+  "displayName": "pebl",
+  "description": "",
+  "version": "0.0.1",
+  "publisher": "jabraham17",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "pebl",
+        "extensions": [
+          ".pebl"
+        ],
+        "icon": {
+          "light": "./icons/pebl.svg",
+          "dark": "./icons/pebl.svg"
+        },
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "pebl",
+        "scopeName": "source.pebl",
+        "path": "./syntaxes/pebl.tmLanguage.json"
+      }
+    ]
+  }
+}

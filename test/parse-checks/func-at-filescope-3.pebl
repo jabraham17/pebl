@@ -1,0 +1,5 @@
+func foo(): void {
+  if 1 {
+    func bar(): void {}
+  }
+}

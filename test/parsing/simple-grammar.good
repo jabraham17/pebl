@@ -1,0 +1,64 @@
+Function:
+  Identifier:
+   name='simple'
+  Variable:
+    Identifier:
+     name='a'
+    Typename:
+     name='int'
+  Typename:
+   name='int'
+  Variable:
+    Identifier:
+     name='b'
+    Typename:
+     name='int'
+    Expr:
+     op='PLUS'
+      Identifier:
+       name='a'
+      Number:
+       value=1
+  Return:
+    Expr:
+      Identifier:
+       name='b'
+Type:
+  Typename:
+   name='t'
+  Variable:
+    Identifier:
+     name='x'
+    Typename:
+     name='int'
+  Variable:
+    Identifier:
+     name='y'
+    Typename:
+     name='int'
+Variable:
+  Identifier:
+   name='g'
+  Typename:
+   name='t'
+  Expr:
+    Number:
+     value=0
+Assignment:
+  FieldAccess:
+    Identifier:
+     name='g'
+    Identifier:
+     name='x'
+  Expr:
+    Number:
+     value=1
+Assignment:
+  FieldAccess:
+    Identifier:
+     name='g'
+    Identifier:
+     name='y'
+  Expr:
+    Number:
+     value=2

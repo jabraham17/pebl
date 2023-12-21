@@ -1,0 +1,6 @@
+func foo(): void {
+  let a: int = 1;
+  while a != 1 {
+    break;
+  }
+}

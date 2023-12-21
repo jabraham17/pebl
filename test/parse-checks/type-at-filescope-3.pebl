@@ -1,0 +1,12 @@
+func foo(): void {
+
+}
+
+func bar(): void {
+  if 1 {
+  
+  }
+  else {
+    type t = int;
+  }
+}

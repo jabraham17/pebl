@@ -1,0 +1,29 @@
+extern func print(s: string): void;
+extern func println(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+extern func ptrToString(p:void*):string;
+
+extern func allocate(n:int):void*;
+
+func printInt(prefix: string, i: int, suffix: string): void {
+  print(prefix);
+  print(intToString(i));
+  println(suffix);
+}
+
+func main(args: string*, nargs: int): int {
+
+  println("hello from main");
+  let sum: int = 0;
+  let i: int = 1;
+  while i < nargs {
+    let p: string* = args + i;
+    sum = sum + stringToInt(*p);
+    i = i + 1;
+  }
+  printInt("The sum is: ", sum, "");
+  return 0;
+}

@@ -1,0 +1,14 @@
+
+// builtins are purely disambiguated by their name and number of args
+
+#ifndef COMPILER_BUILTIN
+#define COMPILER_BUILTIN(name, numArgs, codegenFunc)
+#endif
+
+//
+// codegenFunc(ctx:Context*, builtin:CompilerBuiltin*, call:AstNode*):cg_value*
+//
+
+COMPILER_BUILTIN(sizeof, 1, codegenSizeof)
+
+#undef COMPILER_BUILTIN

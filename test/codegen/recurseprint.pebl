@@ -1,0 +1,27 @@
+
+extern func print(s: string): void;
+extern func println(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+func printArgs(i:int, args: string*, nargs: int): void {
+  if nargs > i {
+    let arg:string = *args;
+    print("Argument ");
+    print(intToString(i));
+    print(" = ");
+    print(arg);
+    println("");
+
+    let offset:void* = 8;
+    printArgs(i+1, args+offset, nargs);
+  }
+}
+
+func main(args: string*, nargs: int): int {
+
+  printArgs(0, args, nargs);
+
+  return 0;
+}

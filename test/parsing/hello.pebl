@@ -1,0 +1,7 @@
+
+extern func print(s: int8*): void;
+func main(argc: int, argv: int8**): int {
+  let msg: int8* = "hello, world!";
+  let _: void = print(msg);
+  return 0;
+}

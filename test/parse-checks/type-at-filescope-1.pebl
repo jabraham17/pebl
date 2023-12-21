@@ -1,0 +1,4 @@
+type t1 = {}
+type t2 = {a: int; b: int;}
+type t3 = {x: t1; y: t2*;}
+type t = int;

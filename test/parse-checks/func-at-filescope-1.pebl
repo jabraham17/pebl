@@ -1,0 +1,6 @@
+func foo(): void {
+
+}
+func bar(): void {
+  
+}

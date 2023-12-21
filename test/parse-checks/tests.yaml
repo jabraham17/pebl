@@ -1,0 +1,57 @@
+variables:
+  PARSER: ${BIN_DIR}/parser${EXT}
+  PARSE_CMD: ${PARSER} ${FILE}
+  NO_ERROR: no-error.good
+tests:
+- file: break-in-loop-1.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+- file: break-in-loop-2.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
+- file: break-in-loop-3.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+- file: break-in-loop-4.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
+- file: break-in-loop-5.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
+- file: return-in-func-1.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+- file: return-in-func-2.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+- file: return-in-func-3.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
+- file: return-in-func-4.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
+- file: func-at-filescope-1.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
+- file: func-at-filescope-2.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+- file: func-at-filescope-3.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+- file: type-at-filescope-1.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
+- file: type-at-filescope-2.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+- file: type-at-filescope-3.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}

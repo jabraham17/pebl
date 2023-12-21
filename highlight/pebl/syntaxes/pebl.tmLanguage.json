@@ -1,0 +1,97 @@
+{
+  "name": "pebl",
+  "scopeName": "source.pebl",
+  "fileTypes": ["pebl"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#keywords" },
+    { "include": "#builtin_types" },
+    { "include": "#operators" },
+    { "include": "#numbers" },
+    { "include": "#strings" }
+  ],
+  "repository": {
+    "keywords": {
+      "patterns": [
+        {
+          "match": "\\b(let|func|extern|export|type)\\b",
+          "name": "storage.type.pebl"
+        },
+        {
+          "match": "\\b(if|else|while|break|return)\\b",
+          "name": "keyword.control.pebl"
+        }
+      ]
+    },
+    "builtin_types": {
+      "patterns": [
+        {
+          "match": "\\b(void)\\b",
+          "name": "storage.type.pebl"
+        },
+        {
+          "match": "\\b(int8|int64)\\b",
+          "name": "storage.type.pebl"
+        },
+        {
+          "match": "\\b(int|char|string)\\b",
+          "name": "storage.type.pebl"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "match": "&&|\\|\\||<|>|<=|>=|==|!=|\\+|-|\\*|/|&|!|=",
+          "name": "keyword.operator.pebl"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "match": "\\b([0-9]+)\\b",
+          "name": "constant.numeric.pebl"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "begin": "\"",
+          "end": "\"",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.pebl"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.pebl"
+            }
+          },
+          "name": "string.quoted.double.pebl",
+          "patterns": [
+            {
+              "matches": "\\\\(\\\\|[nt\"])",
+              "name": "constant.character.escapes.pebl"
+            }
+          ]
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "match": "(#).*$\\n?",
+          "name": "comment.line.number-sign.pebl",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.comment.pebl"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
