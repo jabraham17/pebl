@@ -1,0 +1,4 @@
+extern func println(s: string): void;
+func doB():void {
+  println("in B");
+}

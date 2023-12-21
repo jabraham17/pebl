@@ -1,0 +1,13 @@
+extern func println(s: string): void;
+
+func doB():void;
+func doA():void {
+  println("in A");
+  doB();
+}
+
+func main(args: string*, nargs: int): int {
+  doA();
+
+  return 0;
+}
