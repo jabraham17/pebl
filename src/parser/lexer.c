@@ -122,6 +122,21 @@ static struct lexer_token* handle_strings(struct Context* context) {
       seek_pos(context, pos);
       return t;
     }
+    if(next == '\\') {
+      // consume the '\'
+      next = get_char(context);
+      // if the escape is a valid escape, keep it
+      if(next == '\\') {
+        next = '\\';
+      } else if(next == 'n') {
+        next = '\n';
+      } else if(next == 't') {
+        next = '\t';
+      } else {
+        WARNING(context, "invalid escape sequence '\\%c'\n", next);
+        return t;
+      }
+    }
     if(next == '"') {
       // consume the '"'
       break;
@@ -130,6 +145,7 @@ static struct lexer_token* handle_strings(struct Context* context) {
     nChars++;
   }
   if(nChars == LEXER_LEXEME_SIZE) {
+    WARNING(context, "lexeme too big\n");
     return t; // error, token was too big
   }
 
