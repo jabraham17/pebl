@@ -6,7 +6,9 @@
     { "include": "#comments" },
     { "include": "#keywords" },
     { "include": "#builtin_types" },
+    { "include": "#types" },
     { "include": "#operators" },
+    { "include": "#builtins" },
     { "include": "#numbers" },
     { "include": "#strings" }
   ],
@@ -39,11 +41,31 @@
         }
       ]
     },
+    "types": {
+      "patterns": [
+        {
+          "match": "(:\\s*([_a-zA-Z0-9*]+))\\b",
+          "captures": {
+            "2": {
+              "name": "storage.type.pebl"
+            }
+          }
+        }
+      ]
+    },
     "operators": {
       "patterns": [
         {
           "match": "&&|\\|\\||<|>|<=|>=|==|!=|\\+|-|\\*|/|&|!|=",
           "name": "keyword.operator.pebl"
+        }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        {
+          "match": "sizeof",
+          "name": "keyword.other.sizeof.pebl"
         }
       ]
     },
