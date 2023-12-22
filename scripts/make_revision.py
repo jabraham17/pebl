@@ -5,10 +5,6 @@ import shutil
 import os
 import tarfile
 
-build_dir = ".build-revision"
-binaries_dir = "binaries"
-install_dir = os.path.join(binaries_dir, "pebl")
-
 def check_output(cmd):
     print(" ".join(cmd))
     return sp.check_output(cmd).decode("utf-8").strip().splitlines()
@@ -37,7 +33,7 @@ def get_next_tag():
     return f"v{get_last_tag_num()+1}"
 
 
-def build_compiler():
+def build_compiler(build_dir, install_dir):
     if os.path.exists(install_dir):
         shutil.rmtree(install_dir)
 
@@ -45,7 +41,7 @@ def build_compiler():
         shutil.rmtree(build_dir)
     os.mkdir(build_dir)
 
-    check_call(["cmake", "-S", ".", "-B", build_dir,"-G", "Ninja", f"-DCMAKE_INSTALL_PREFIX={install_dir}", "-DCMAKE_BUILD_TYPE=Release"])
+    check_call(["cmake", "-S", ".", "-B", build_dir,"-G", "Ninja", f"-DCMAKE_INSTALL_PREFIX={install_dir}", "-DCMAKE_BUILD_TYPE=Release", "-DPEBL_SHARED_MODE=off"])
     check_call(["cmake", "--build", build_dir, "--target", "install", "--config", "Release"])
 
     shutil.rmtree(build_dir)
@@ -61,8 +57,12 @@ def commit_compiler(*files):
     check_call(["git", "tag", tag])
 
 
+build_dir = ".build-revision"
+binaries_dir = "binaries"
+install_dir = os.path.join(binaries_dir, "pebl")
 
-build_compiler()
+
+build_compiler(build_dir, install_dir)
 
 new_tar = os.path.join(binaries_dir, f"{get_next_tag()}.tar.gz")
 package_compiler(new_tar, install_dir)
@@ -70,4 +70,5 @@ old_tar = os.path.join(binaries_dir, f"{get_last_tag()}.tar.gz")
 if os.path.exists(old_tar):
     os.remove(old_tar)
 
-commit_compiler(install_dir, new_tar)
+commit_compiler(install_dir, new_tar, old_tar)
+check_call(["git", "push", "origin", "--tags"])
