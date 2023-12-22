@@ -20,3 +20,28 @@ git push origin --tags
 ```
 
 This creates a new revision in a git tag, which is pushed to GitHub for backup. This revision contains a fully built compiler and a tar file of the built compiler. When running the compiler, you may nee to set `LD_LIBRARY_PATH`
+
+## Building LLVM
+
+For best results, use the following to build LLVM.
+
+```bash
+LLVM_SRC=
+LLVM_BUILD=
+LLVM_INSTALL=
+cmake -B $LLVM_BUILD -S $LLVM_SRC -G Ninja \
+  -DCMAKE_INSTALL_PREFIX=$LLVM_INSTALL \
+  -DCMAKE_BUILD_TYPE="Release" \
+  -DLLVM_TARGETS_TO_BUILD="X86" \
+  -DLLVM_BUILD_LLVM_DYLIB=true \
+  -DLLVM_ENABLE_ZLIB=false \
+  -DLLVM_ENABLE_ZSTD=false \
+  -DLLVM_INCLUDE_TESTS=false \
+  -DLLVM_INCLUDE_BENCHMARKS=false \
+  -DLLVM_INCLUDE_EXAMPLES=false \
+  -DLLVM_ENABLE_TERMINFO=false \
+  -DLLVM_ENABLE_LIBXML2=false \
+  -DLLVM_ENABLE_LIBEDIT=false
+ninja -C $LLVM_BUILD install
+export LLVM_DIR=$LLVM_INSTALL/lib/cmake/llvm
+```
