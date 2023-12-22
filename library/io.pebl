@@ -32,8 +32,13 @@ extern func c_getStdout():void*;
 # defs
 #
 func openFile(name:string, mode:string):File* {
+  let fp: void* = c_openFilePointer(name, mode);
+  if fp == 0 {
+    let file:File* = 0;
+    return file;
+  }
   let file:File* = allocate(sizeof(File));
-  file->fp = c_openFilePointer(name, mode);
+  file->fp = fp;
   return file;
 }
 
