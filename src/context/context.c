@@ -8,7 +8,6 @@
 #include "parser/parser.h"
 
 #include <string.h>
-#include "common/bsstring.h"
 
 struct Context* Context_allocate() {
   struct Context* context = malloc(sizeof(*context));
