@@ -15,6 +15,7 @@ struct cg_context;
 struct CompilerBuiltin;
 
 struct Context {
+  char* filename;
   struct lexer_state* lexer;
 
   struct AstNode* ast;
@@ -29,7 +30,7 @@ struct Context {
 };
 
 struct Context* Context_allocate();
-void Context_init(struct Context* context);
+void Context_init(struct Context* context, char* filename);
 
 #define WARNING_ON_AST(context, ast, format, ...)                              \
   do {                                                                         \
@@ -37,11 +38,16 @@ void Context_init(struct Context* context);
     if(loc) {                                                                  \
       fprintf(                                                                 \
           stderr,                                                              \
-          "line %d: warning: " format,                                         \
+          "%s:%d: warning: " format,                                           \
+          context->filename,                                                   \
           loc->line_start,                                                     \
           ##__VA_ARGS__);                                                      \
     } else {                                                                   \
-      fprintf(stderr, "<unknown>: warning: " format, ##__VA_ARGS__);           \
+      fprintf(                                                                 \
+          stderr,                                                              \
+          "%s: warning: " format,                                              \
+          context->filename,                                                   \
+          ##__VA_ARGS__);                                                      \
     }                                                                          \
   } while(0)
 
@@ -67,17 +73,24 @@ void Context_init(struct Context* context);
     FATAL_EXIT();                                                              \
   } while(0)
 
+#define ERROR_ON_LINE(context, lineno, format, ...)                            \
+  do {                                                                         \
+    fprintf(                                                                   \
+        stderr,                                                                \
+        "%s:%d: error: " format,                                               \
+        context->filename,                                                     \
+        lineno,                                                                \
+        ##__VA_ARGS__);                                                        \
+    FATAL_EXIT();                                                              \
+  } while(0)
+
 #define ERROR_ON_AST(context, ast, format, ...)                                \
   do {                                                                         \
     struct Location* loc = Context_get_location(context, ast);                 \
     if(loc) {                                                                  \
-      fprintf(                                                                 \
-          stderr,                                                              \
-          "line %d: error: " format,                                           \
-          loc->line_start,                                                     \
-          ##__VA_ARGS__);                                                      \
+      ERROR_ON_LINE(context, loc->line_start, format, ##__VA_ARGS__);          \
     } else {                                                                   \
-      fprintf(stderr, "<unknown>: error: " format, ##__VA_ARGS__);             \
+      fprintf(stderr, "%s: error: " format, context->filename, ##__VA_ARGS__); \
     }                                                                          \
     FATAL_EXIT();                                                              \
   } while(0)

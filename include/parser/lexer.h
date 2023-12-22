@@ -64,7 +64,8 @@ struct lexer_token {
   int lineno;
 };
 
-void lexer_init(struct Context* context, FILE* fp);
+void lexer_init(struct Context* context);
+void lexer_deinit(struct Context* context);
 struct lexer_token* lexer_gettoken(struct Context* context);
 struct lexer_token* lexer_peek(struct Context* context, int lookahead);
 

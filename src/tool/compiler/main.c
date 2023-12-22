@@ -63,21 +63,14 @@ int main(int argc, char** argv) {
     outfile = bsstrcat(filename, ".ll");
   }
 
-  FILE* fp = fopen(filename, "rb");
-  if(fp == NULL) {
-    fprintf(stderr, "Error - could not open file\n");
-    return 1;
-  }
-
   struct Context context_;
   struct Context* context = &context_;
-  Context_init(context);
-  lexer_init(context, fp);
+  Context_init(context, filename);
+  lexer_init(context);
   parser_init(context);
 
   parser_parse(context);
-
-  fclose(fp);
+  lexer_deinit(context);
 
   if(verify) verify_ast(context);
   if(checks) parse_checks(context);

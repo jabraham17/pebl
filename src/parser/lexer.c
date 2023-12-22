@@ -7,11 +7,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-void lexer_init(struct Context* context, FILE* fp) {
+void lexer_init(struct Context* context) {
   context->lexer = malloc(sizeof(*context->lexer));
   memset(context->lexer, 0, sizeof(*context->lexer));
-  context->lexer->fp = fp;
+
+  context->lexer->fp = fopen(context->filename, "rb");
+  if(context->lexer->fp == NULL) {
+    ERROR(context, "could not open file named '%s'\n", context->filename);
+  }
   context->lexer->current_line = 1;
+}
+void lexer_deinit(struct Context* context) {
+  fclose(context->lexer->fp);
+  free(context->lexer);
 }
 static struct lexer_token* lexer_gettoken_internal(struct Context* context);
 struct lexer_token* lexer_peek(struct Context* context, int lookahead) {

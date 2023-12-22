@@ -36,10 +36,10 @@ __attribute__((noreturn)) static void
 syntax_error(struct Context* context, struct lexer_token* t) {
   char buf[32];
   tokentype_to_string(buf, t->tt);
-  ERROR(
+  ERROR_ON_LINE(
       context,
-      "syntax error on line %d - token {%s, '%s'}\n",
       t->lineno,
+      "syntax error on token {%s, '%s'}\n",
       buf,
       t->lexeme);
 }

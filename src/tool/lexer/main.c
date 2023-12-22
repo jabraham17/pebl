@@ -18,16 +18,10 @@ int main(int argc, char** argv) {
 
   char* filename = argv[1];
 
-  FILE* fp = fopen(filename, "rb");
-  if(fp == NULL) {
-    printf("Error - could not open file\n");
-    return 1;
-  }
-
   struct Context context_;
   struct Context* context = &context_;
-  Context_init(context);
-  lexer_init(context, fp);
+  Context_init(context, filename);
+  lexer_init(context);
 
   struct lexer_token* t;
   while(1) {
@@ -36,7 +30,7 @@ int main(int argc, char** argv) {
     if(t->tt == tt_EOF || t->tt == tt_ERROR) break;
   }
 
-  fclose(fp);
+  lexer_deinit(context);
 
   return 0;
 }
