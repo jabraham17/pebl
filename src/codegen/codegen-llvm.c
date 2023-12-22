@@ -688,6 +688,22 @@ void codegen(struct Context* ctx) {
   set_linkage(ctx);
 }
 void cg_emit(struct Context* ctx) {
-  LLVMVerifyModule(ctx->codegen->module, LLVMPrintMessageAction, NULL);
-  LLVMPrintModuleToFile(ctx->codegen->module, ctx->codegen->outfilename, NULL);
+  LLVMBool res;
+  char* errorMsg;
+  res =
+      LLVMVerifyModule(ctx->codegen->module, LLVMReturnStatusAction, &errorMsg);
+  if(res) {
+    WARNING(ctx, "llvm verifification failed\n%s\n", errorMsg);
+  }
+  res = LLVMPrintModuleToFile(
+      ctx->codegen->module,
+      ctx->codegen->outfilename,
+      &errorMsg);
+  if(res) {
+    ERROR(
+        ctx,
+        "failed to write output to '%s'\n%s\n",
+        ctx->codegen->outfilename,
+        errorMsg);
+  }
 }
