@@ -9,6 +9,7 @@ func getChar(file:File*):int8;
 func putChar(file:File*, c:int8):void;
 func putString(file:File*, s:string):void;
 func print(s: string): void;
+func printn(s:string, len:int):void;
 
 
 #
@@ -57,11 +58,19 @@ func putString(file:File*, s:string):void {
   }
 }
 
-func print(s: string): void {
+func print(s:string):void {
   let stdout:void* = c_getStdout();
   while ((*s):int) != 0 {
     c_putChar(stdout, *s);
     s = s + 1;
+  }
+}
+func printn(s:string, len:int):void {
+  let stdout:void* = c_getStdout();
+  let i: int = 0;
+  while i < len {
+    c_putChar(stdout, *(s+i));
+    i=i+1;
   }
 }
 
