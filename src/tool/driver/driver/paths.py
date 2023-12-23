@@ -29,13 +29,10 @@ def search_path(
     # if so, there is a pebl/lib/, which should be seached
     # NOTE: should be sperate, as `normpath` may fail if `lib` doesn't exist
     script_dir = os.path.dirname(__file__)
-    pebl_dir = os.path.normpath(os.path.join(script_dir, ".."))
+    pebl_dir = os.path.normpath(os.path.join(script_dir, os.pardir, os.pardir))
     lib_dir = os.path.join(pebl_dir, "lib")
     if os.path.exists(lib_dir):
         paths_to_search.append(lib_dir)
-        # for d in os.listdir(lib_dir):
-        #     if os.path.isdir(d):
-        #         paths_to_search.append(d)
 
     if PATH := os.environ.get("PATH", None):
         paths_to_search.extend(PATH.split(os.pathsep))
