@@ -108,6 +108,13 @@ def find_llvm_tool(
     # search for both 'toolname' and 'toolname-versionNum', prefer version num specifc
     return find_path_tool(toolname, [f"{toolname}-{LLVM_VERSION}", toolname])
 
+def is_obj_file(path: str) -> bool:
+    ext = os.path.splitext(path)[1]
+    return ext == ".o"
+
+def is_pebl_source(path: str) -> bool:
+    ext = os.path.splitext(path)[1]
+    return ext == ".pebl"
 
 def compile_pebl_source(
     source_file: str, compiler: str, opt: str, llc: str, temp_dir: str
@@ -116,9 +123,8 @@ def compile_pebl_source(
     compile a pebl source file to an object file.
     returns the compiled object file path
     """
-    ext = os.path.splitext(source_file)[1]
-    if ext != ".pebl":
-        error(f"unknown file extension {ext}")
+    if not is_pebl_source(source_file):
+        error(f"unknown file extension for '{source_file}'")
     basename = os.path.splitext(os.path.basename(source_file))[0]
 
     asm_filename = os.path.join(temp_dir, f"{basename}.ll")
@@ -234,7 +240,8 @@ def main(raw_args: List[str]) -> int:
 
     AP = ap.ArgumentParser(formatter_class=ap.ArgumentDefaultsHelpFormatter)
     AP.add_argument("files", nargs="+", type=str, help="pebl files to compile")
-    AP.add_argument("-o", "--output", default="a.out", help="output exexcutable name")
+    AP.add_argument("-o", "--output", default=None)
+    AP.add_argument("-c", "--just-compile", default=False, action='store_true')
     AP.add_argument(
         "--llvm-install", default=None, help="llvm install path to search for tools"
     )
@@ -347,24 +354,45 @@ def main(raw_args: List[str]) -> int:
         os.makedirs(temp_dir)
 
     files = args.files
+    just_compile = args.just_compile
+    if just_compile and len(files) > 1:
+        error("cannot specify multiple files with '-c'")
     outfile = args.output
+    if outfile is None:
+        if just_compile:
+            outfile = f"{os.path.splitext(os.path.basename(files[0]))[0]}.o"
+        else:
+            outfile = 'a.out'
     num_processes = args.num_processes
 
     def pool_init(v: bool):
         global verbose
         verbose = v
 
-    with ProcessPoolExecutor(
-        max_workers=num_processes, initializer=pool_init, initargs=(args.verbose,)
-    ) as pool:
-        object_files = build_pebl_files(pool, files, pebl_compiler, opt, llc, temp_dir)
-        std_lib_a = build_standard_library(
-            pool, std_library, pebl_compiler, opt, llc, ar, temp_dir
-        )
-        runtime_a = build_runtime(pool, runtime, c_compiler, ar, temp_dir)
+    if just_compile:
+        obj = compile_pebl_source(files[0], pebl_compiler, opt, llc, temp_dir)
+        shutil.copyfile(obj, outfile)
+    else:
+        with ProcessPoolExecutor(
+            max_workers=num_processes, initializer=pool_init, initargs=(args.verbose,)
+        ) as pool:
+            object_files = []
+            source_files = []
+            for f in files:
+                if is_pebl_source(f):
+                    source_files.append(f)
+                elif is_obj_file(f):
+                    object_files.append(f)
+                else:
+                    warning(f"ignoring '{f}': unknown file type")
+            object_files += build_pebl_files(pool, source_files, pebl_compiler, opt, llc, temp_dir)
+            std_lib_a = build_standard_library(
+                pool, std_library, pebl_compiler, opt, llc, ar, temp_dir
+            )
+            runtime_a = build_runtime(pool, runtime, c_compiler, ar, temp_dir)
 
-        objects = object_files + [std_lib_a, runtime_a]
-        link_executable(objects, linker, outfile)
+            objects = object_files + [std_lib_a, runtime_a]
+            link_executable(objects, linker, outfile)
 
     # cleanup
     if not args.keep_temp_dir and os.path.exists(temp_dir):
