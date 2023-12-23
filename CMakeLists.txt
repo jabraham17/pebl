@@ -18,6 +18,14 @@ else()
   set(CMAKE_EXE_LINKER_FLAGS "-static")
 endif()
 
+if(PEBL_ASAN)
+  message(STATUS "building asan")
+  add_compile_options(-fsanitize=address)
+  add_link_options(-fsanitize=address)
+endif()
+
+add_compile_options(-Wall -Wextra)
+
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 
 # set compile commands
