@@ -71,4 +71,4 @@ if os.path.exists(old_tar):
     os.remove(old_tar)
 
 commit_compiler(install_dir, new_tar, old_tar)
-check_call(["git", "push", "origin", "--tags"])
+check_call(["git", "push", "origin", "--all"])
