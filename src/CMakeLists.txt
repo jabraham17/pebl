@@ -25,6 +25,9 @@ add_subdirectory("${SOURCE_DIR}/context")
 add_subdirectory("${SOURCE_DIR}/ast")
 add_subdirectory("${SOURCE_DIR}/parser")
 
+# add libs for pebl
+target_link_libraries(core PRIVATE pebl_stdlib pebl_runtime)
+
 #
 # build codegen
 #
@@ -53,11 +56,3 @@ add_subdirectory("${SOURCE_DIR}/tool/lexer")
 add_subdirectory("${SOURCE_DIR}/tool/parser")
 add_subdirectory("${SOURCE_DIR}/tool/peblc")
 add_subdirectory("${SOURCE_DIR}/tool/driver")
-add_subdirectory("${SOURCE_DIR}/tool/test")
-
-#
-# install runtime and stdlib sources
-#
-
-# install(DIRECTORY "${PROJECT_SOURCE_DIR}/runtime" DESTINATION lib/runtime/src)
-# install(DIRECTORY "${PROJECT_SOURCE_DIR}/stdlib" DESTINATION lib/stdlib/src)

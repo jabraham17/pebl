@@ -95,7 +95,10 @@ check_return_outside_func(struct Context* context, struct AstNode* ast) {
       ast_is_type(ast, ast_Function));
 }
 
+void hello();
+
 void parse_checks(struct Context* context) {
+  hello();
   if(context->ast == NULL) return;
   check_break_outside_loop(context, context->ast);
   check_return_outside_func(context, context->ast);
