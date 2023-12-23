@@ -13,7 +13,7 @@ endif()
 
 target_include_directories(core PRIVATE "${PROJECT_SOURCE_DIR}/include"
                                         "${SOURCE_DIR}")
-install(TARGETS core DESTINATION lib)
+install(TARGETS core DESTINATION lib/compiler)
 
 function(add_sources srcs directory_name)
   target_sources(core PRIVATE ${srcs})
@@ -35,7 +35,7 @@ else()
 endif()
 target_include_directories(codegen PRIVATE "${PROJECT_SOURCE_DIR}/include"
                                            "${SOURCE_DIR}")
-install(TARGETS codegen DESTINATION lib)
+install(TARGETS codegen DESTINATION lib/compiler)
 
 # link in core and llvm
 target_link_libraries(codegen PRIVATE ${llvm_libs} core)
@@ -54,3 +54,10 @@ add_subdirectory("${SOURCE_DIR}/tool/parser")
 add_subdirectory("${SOURCE_DIR}/tool/peblc")
 add_subdirectory("${SOURCE_DIR}/tool/driver")
 add_subdirectory("${SOURCE_DIR}/tool/test")
+
+#
+# install runtime and stdlib sources
+#
+
+# install(DIRECTORY "${PROJECT_SOURCE_DIR}/runtime" DESTINATION lib/runtime/src)
+# install(DIRECTORY "${PROJECT_SOURCE_DIR}/stdlib" DESTINATION lib/stdlib/src)
