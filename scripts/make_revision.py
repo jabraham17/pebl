@@ -21,7 +21,7 @@ def get_last_tag_num():
     output = get_tags()
     nums = [0,]
     for l in output:
-        if m:= re.match(r"^v(\d)+$", l):
+        if m:= re.match(r"^v(\d+)$", l):
             nums.append(int(m[1]))
     last= max(nums)
     return last
