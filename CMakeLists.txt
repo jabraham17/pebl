@@ -32,9 +32,8 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 project(Pebl LANGUAGES C CXX)
-
-list( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-enable_language( Pebl )
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+enable_language(Pebl)
 
 # specific to system
 find_package(LLVM REQUIRED CONFIG)
@@ -48,3 +47,6 @@ llvm_map_components_to_libnames(llvm_libs support core analysis)
 message(STATUS "Components mapped to libnames: ${llvm_libs}")
 
 add_subdirectory("${PROJECT_SOURCE_DIR}/src")
+
+add_subdirectory("${PROJECT_SOURCE_DIR}/runtime")
+add_subdirectory("${PROJECT_SOURCE_DIR}/stdlib")
