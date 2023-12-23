@@ -68,7 +68,7 @@ void verify_ast(struct Context* context);
 #define ast_foreach_child(root, name)                                          \
   struct AstNode* name = NULL;                                                 \
   for(int i = 0;                                                               \
-      ((name = (root)->children[i]), 1) && i < ast_num_children(root);         \
+      i < ast_num_children(root) && ((name = (root)->children[i]), 1);         \
       i++)
 
 /* Identifier */
