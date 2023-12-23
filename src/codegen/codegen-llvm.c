@@ -28,14 +28,9 @@ void deinit_cg_context(struct Context* ctx) {
 static struct cg_function* codegen_function_prototype(
     struct Context* ctx,
     struct AstNode* ast_func,
-    struct ScopeResult* sr) {
+    __attribute__((unused)) struct ScopeResult* sr) {
   ASSERT(ast_is_type(ast_func, ast_Function));
 
-  struct ScopeSymbol* funcSym = scope_lookup_identifier(
-      ctx,
-      sr,
-      ast_Function_name(ast_func),
-      /*search parent*/ 1);
   char* name = ast_Identifier_name(ast_Function_name(ast_func));
   char* mname = mangled_name(ctx, ast_func);
 
@@ -185,7 +180,6 @@ struct cg_value* codegen_helper(
     struct cg_value* object =
         codegen_helper(ctx, ast_FieldAccess_object(ast), sr);
 
-    int object_is_ptr = ast_FieldAccess_object_is_ptr(ast);
     struct Type* objectType = TypeTable_get_base_type(object->type);
     struct Type* objectPtrType = NULL;
     if(Type_is_pointer(objectType)) {

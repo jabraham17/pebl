@@ -56,7 +56,8 @@ int main(int argc, char** argv) {
   if(filename == NULL) {
     fprintf(
         stderr,
-        "Error - usage: './peblc <filename> (-output FILENAME)? (-checks?) -(verify)?'\n");
+        "Error - usage: './peblc <filename> (-output FILENAME)? (-checks?) "
+        "-(verify)?'\n");
     return 1;
   }
   if(outfile == NULL) {

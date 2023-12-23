@@ -85,7 +85,7 @@ static int get_char_pos(struct Context* context, char* c) {
   *c = get_char(context);
   return pos;
 }
-static char peek_char(struct Context* context) {
+__attribute__((unused)) static char peek_char(struct Context* context) {
   char c;
   int pos = get_char_pos(context, &c);
   seek_pos(context, pos);

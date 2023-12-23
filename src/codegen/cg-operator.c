@@ -121,7 +121,7 @@ static struct cg_value* codegenOperator_ptrCompare(
 
 static struct cg_value* codegenOperator_negate(
     struct Context* ctx,
-    enum OperatorType op,
+    __attribute__((unused)) enum OperatorType op,
     struct cg_value* operand) {
 
   LLVMValueRef operandVal = LLVMBuildLoad2(
@@ -161,6 +161,10 @@ static struct cg_value* codegenOperator_addrOffset(
   struct Type* ptrType = TypeTable_get_base_type(ptr->type);
   ASSERT(Type_is_pointer(ptrType));
 
+  if(op != op_PLUS) {
+    UNIMPLEMENTED("unimplemented op\n");
+  }
+
   LLVMValueRef ptrVal =
       LLVMBuildLoad2(ctx->codegen->builder, ptr->cg_type, ptr->value, "");
   LLVMValueRef offsetVal =
@@ -178,7 +182,7 @@ static struct cg_value* codegenOperator_addrOffset(
 
 static struct cg_value* codegenOperator_getValueAtAddress(
     struct Context* ctx,
-    enum OperatorType op,
+    __attribute__((unused)) enum OperatorType op,
     struct cg_value* operand) {
   struct Type* ptrType = TypeTable_get_base_type(operand->type);
   ASSERT(Type_is_pointer(ptrType));
@@ -203,7 +207,7 @@ static struct cg_value* codegenOperator_getValueAtAddress(
 
 static struct cg_value* codegenOperator_getAddressOfValue(
     struct Context* ctx,
-    enum OperatorType op,
+    __attribute__((unused)) enum OperatorType op,
     struct cg_value* operand) {
   // LLVMValueRef val = LLVMBuildLoad2(
   //     ctx->codegen->builder,

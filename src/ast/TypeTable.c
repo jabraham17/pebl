@@ -98,19 +98,19 @@ void Context_install_builtin_types(struct Context* context) {
 
 #define MAKE_BUILTIN(name, size)                                               \
   do {                                                                         \
-    struct Type* t = allocate_Builtin(context, #name, size);                   \
+    allocate_Builtin(context, #name, size);                                    \
   } while(0);
 #define MAKE_ALIAS(name, alias_to)                                             \
   do {                                                                         \
     struct Type* t_alias_to = TypeTable_get_type(context, #alias_to);          \
-    struct Type* t = allocate_Alias(context, #name, t_alias_to);               \
+    allocate_Alias(context, #name, t_alias_to);                                \
   } while(0);
 #define MAKE_PTR_ALIAS(name, alias_to)                                         \
   do {                                                                         \
     struct Type* t_alias_to = TypeTable_get_ptr_type(                          \
         context,                                                               \
         TypeTable_get_type(context, #alias_to));                               \
-    struct Type* t = allocate_Alias(context, #name, t_alias_to);               \
+    allocate_Alias(context, #name, t_alias_to);                                \
   } while(0);
 
   BUILTIN_TYPES(MAKE_BUILTIN, MAKE_ALIAS, MAKE_PTR_ALIAS)
@@ -126,7 +126,7 @@ void TypeTable_add_from_ast(struct Context* context, struct AstNode* root) {
   }
 }
 int TypeTable_equivalent_types(
-    struct Context* context,
+    __attribute__((unused)) struct Context* context,
     struct Type* t1,
     struct Type* t2) {
   t1 = TypeTable_get_base_type(t1);

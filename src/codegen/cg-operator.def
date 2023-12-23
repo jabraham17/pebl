@@ -68,8 +68,8 @@ CODEGEN_UNARY_OPERATOR(NOT, Ptr, negate)
 //
 CODEGEN_BINARY_OPERATOR(PLUS, Int, Ptr, addrOffset)
 CODEGEN_BINARY_OPERATOR(PLUS, Ptr, Int, addrOffset)
-// CODEGEN_BINARY_OPERATOR(MINUS, Int, Ptr, addrOffset)
-// CODEGEN_BINARY_OPERATOR(MINUS, Ptr, Int, addrOffset)
+CODEGEN_BINARY_OPERATOR(MINUS, Int, Ptr, addrOffset)
+CODEGEN_BINARY_OPERATOR(MINUS, Ptr, Int, addrOffset)
 
 //
 // Pointers

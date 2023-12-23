@@ -55,7 +55,7 @@ sizeof_getTypeFromArg(struct Context* ctx, struct AstNode* arg) {
 
 static struct cg_value* codegenBuiltin_codegenSizeof(
     struct Context* ctx,
-    struct CompilerBuiltin* builtin,
+    __attribute__((unused)) struct CompilerBuiltin* builtin,
     struct AstNode* call) {
   ASSERT(ast_is_type(call, ast_Call));
 
