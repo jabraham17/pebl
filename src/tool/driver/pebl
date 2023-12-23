@@ -59,6 +59,7 @@ def execute_compiler(*cmd: str) -> None:
 def find_path_tool(
     name: str, search_names: Optional[List[str]] = None
 ) -> Optional[str]:
+    """find executables in PATH"""
     PATH = os.environ.get("PATH", None)
     if not PATH:
         return None
@@ -73,6 +74,23 @@ def find_path_tool(
             if os.path.exists(toolpath):
                 log(f"found '{toolpath}'", verbose_level=2)
                 return toolpath
+    return None
+
+
+def find_local_tool(
+    name: str, search_names: Optional[List[str]] = None
+) -> Optional[str]:
+    """find executables in same directory as this script"""
+    script_dir = os.path.dirname(__file__)
+
+    if search_names is None:
+        search_names = [name]
+
+    for n in search_names:
+        toolpath = os.path.join(script_dir, n)
+        if os.path.exists(toolpath):
+            log(f"found '{toolpath}'", verbose_level=2)
+            return toolpath
     return None
 
 
@@ -292,7 +310,9 @@ def main(raw_args: List[str]) -> int:
 
     pebl_compiler = args.pebl_compiler
     if pebl_compiler is None:
-        if pc_ := find_path_tool("peblc"):
+        if pc_ := find_local_tool("peblc"):
+            pebl_compiler = pc_
+        elif pc_ := find_path_tool("peblc"):
             pebl_compiler = pc_
         else:
             error(f"could not find pebl compiler")

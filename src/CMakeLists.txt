@@ -49,6 +49,7 @@ add_subdirectory("${SOURCE_DIR}/codegen")
 #
 # build tools
 #
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/tool/lexer")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/tool/parser")
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/tool/peblc")
+add_subdirectory("${SOURCE_DIR}/tool/lexer")
+add_subdirectory("${SOURCE_DIR}/tool/parser")
+add_subdirectory("${SOURCE_DIR}/tool/peblc")
+add_subdirectory("${SOURCE_DIR}/tool/driver")
