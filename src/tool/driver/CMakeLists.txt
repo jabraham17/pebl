@@ -1,2 +1,2 @@
 # no build work to do, just install
-install(FILES pebl DESTINATION bin)
+install(FILES driver.py DESTINATION bin RENAME pebl)
