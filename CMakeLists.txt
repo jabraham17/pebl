@@ -33,6 +33,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 project(Pebl LANGUAGES C CXX)
 
+list( APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
+enable_language( Pebl )
+
 # specific to system
 find_package(LLVM REQUIRED CONFIG)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
