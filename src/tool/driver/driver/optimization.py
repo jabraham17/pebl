@@ -1,10 +1,10 @@
 
 
-from typing import List, Union, Self
+from typing import List, Union, Any
 
 class Passes:
 
-    def __init__(self, name: str, passes: List[Union[str, Self]]):
+    def __init__(self, name: str, passes: List[Union[str, Any]]):
         self.name = name
         self.passes: List[str] = []
         for p in passes:
