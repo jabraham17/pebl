@@ -23,7 +23,6 @@ static struct AstNode* parse_expr_list(struct Context* context);
 static struct AstNode* parse_atom(struct Context* context);
 static enum OperatorType parse_op(struct Context* context);
 static enum OperatorType parse_preop(struct Context* context);
-static struct AstNode* parse_varnames(struct Context* context);
 static struct AstNode* parse_call_stmt(struct Context* context);
 static struct AstNode* parse_call_expr(struct Context* context);
 static struct AstNode* parse_assignment(struct Context* context);
@@ -325,7 +324,6 @@ static struct AstNode* parse_atom(struct Context* context) {
     if(lexer_peek(context, 2)->tt == tt_LPAREN) {
       return parse_call_expr(context);
     } else {
-      struct lexer_token* tok_for_loc = t;
       struct AstNode* var = parse_varname(context);
       t = lexer_peek(context, 1);
       if(t->tt == tt_DOT || t->tt == tt_ARROW) {
@@ -398,21 +396,6 @@ static enum OperatorType parse_preop(struct Context* context) {
   } else {
     syntax_error(context, t);
   }
-}
-// varnames -> EPSILON | varname | varname COMMA varnames
-static struct AstNode* parse_varnames(struct Context* context) {
-  struct lexer_token* t = lexer_peek(context, 1);
-  if(t->tt == tt_ID) {
-    struct AstNode* head = parse_varname(context);
-    t = lexer_peek(context, 1);
-    if(t->tt == tt_COMMA) {
-      expect(context, tt_COMMA);
-      struct AstNode* tail = parse_varnames(context);
-      ast_append(&head, tail);
-    }
-    return head;
-  }
-  return NULL;
 }
 // call_stmt -> call_expr SEMICOLON
 static struct AstNode* parse_call_stmt(struct Context* context) {

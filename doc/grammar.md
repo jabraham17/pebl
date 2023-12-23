@@ -28,7 +28,6 @@ atom -> NUMBER | STRING_LITERAL | varname | call_expr | varname (DOT | ARROW) va
 op -> PLUS | MINUS | STAR | DIVIDE | AND | OR | LT | GT | LTEQ | GTEQ | EQ | NEQ | COLON
 preop -> AMPERSAND | STAR | NOT
 
-varnames -> EPSILON | varname | varname COMMA varnames
 call_stmt -> call_expr SEMICOLON
 call_expr -> varname LPAREN expr_list RPAREN
 
