@@ -33,9 +33,6 @@ def search_path(
     lib_dir = os.path.join(pebl_dir, "lib")
     if os.path.exists(lib_dir):
         paths_to_search.append(lib_dir)
-        # for d in os.listdir(lib_dir):
-        #     if os.path.isdir(d):
-        #         paths_to_search.append(d)
 
     if PATH := os.environ.get("PATH", None):
         paths_to_search.extend(PATH.split(os.pathsep))
