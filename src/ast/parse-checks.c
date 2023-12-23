@@ -96,6 +96,7 @@ check_return_outside_func(struct Context* context, struct AstNode* ast) {
 }
 
 void parse_checks(struct Context* context) {
+  if(context->ast == NULL) return;
   check_break_outside_loop(context, context->ast);
   check_return_outside_func(context, context->ast);
 
