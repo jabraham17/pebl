@@ -4,3 +4,5 @@ build
 *.o
 build-win
 *.tmp.out
+__pycache__
+a.out
