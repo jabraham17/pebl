@@ -8,6 +8,7 @@ enum TypeKind {
   tk_BUILTIN,
   tk_ALIAS,
   tk_TYPEDEF,
+  tk_OPAQUE,
   tk_POINTER,
 };
 
@@ -49,6 +50,7 @@ struct Type* TypeTable_get_base_type(struct Type* t);
 
 int TypeTable_get_num_fields(struct Type* t);
 int Type_is_pointer(struct Type* t);
+int Type_is_opaque(struct Type* t);
 
 int Type_get_size(struct Type* t);
 

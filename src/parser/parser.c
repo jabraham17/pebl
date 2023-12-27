@@ -192,23 +192,30 @@ static struct AstNode* parse_name_with_type(struct Context* context) {
   return var_node;
 }
 // type_def -> TYPE typename EQUALS LCURLY type_list RCURLY | TYPE typename
-// EQUALS typename SEMICOLON
+// EQUALS typename SEMICOLON | TYPE typename SEMICOLON
 static struct AstNode* parse_type_def(struct Context* context) {
   struct lexer_token* type_tok = expect(context, tt_TYPE);
   struct AstNode* name = parse_typename(context);
-  expect(context, tt_EQUALS);
-  struct lexer_token* t = lexer_peek(context, 1);
-  if(t->tt == tt_LCURLY) {
-    expect(context, tt_LCURLY);
-    struct AstNode* args = parse_type_list(context);
-    expect(context, tt_RCURLY);
-    struct AstNode* type_node = ast_build_Type(name, args);
-    add_location_for_token(context, type_node, type_tok);
-    return type_node;
+  if(lexer_peek(context, 1)->tt == tt_EQUALS) {
+    expect(context, tt_EQUALS);
+    struct lexer_token* t = lexer_peek(context, 1);
+    if(t->tt == tt_LCURLY) {
+      expect(context, tt_LCURLY);
+      struct AstNode* args = parse_type_list(context);
+      expect(context, tt_RCURLY);
+      struct AstNode* type_node = ast_build_Type(name, args);
+      add_location_for_token(context, type_node, type_tok);
+      return type_node;
+    } else {
+      struct AstNode* alias = parse_typename(context);
+      expect(context, tt_SEMICOLON);
+      struct AstNode* type_node = ast_build_TypeAlias(name, alias);
+      add_location_for_token(context, type_node, type_tok);
+      return type_node;
+    }
   } else {
-    struct AstNode* alias = parse_typename(context);
     expect(context, tt_SEMICOLON);
-    struct AstNode* type_node = ast_build_TypeAlias(name, alias);
+    struct AstNode* type_node = ast_build_OpaqueType(name);
     add_location_for_token(context, type_node, type_tok);
     return type_node;
   }

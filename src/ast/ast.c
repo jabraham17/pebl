@@ -283,20 +283,32 @@ ast_build_TypeAlias(struct AstNode* name, struct AstNode* alias) {
   ast->int_value = 1; // is_alias
   return ast;
 }
+struct AstNode* ast_build_OpaqueType(struct AstNode* name) {
+  struct AstNode* ast = ast_allocate(ast_Type);
+  ast->children[0] = name;
+  ast->int_value = 0; // is_alias
+  return ast;
+}
 int ast_verify_Type(struct AstNode* ast) {
   int is_type = ast_is_type(ast, ast_Type) &&
                 ast_is_type(ast_Type_name(ast), ast_Typename);
-  if(ast_Type_is_alias(ast)) {
-    return is_type && ast_is_type(ast_Type_alias(ast), ast_Typename);
+
+  if(ast_Type_is_opaque(ast)) {
+    return is_type;
   } else {
-    return is_type && (ast_Type_args(ast) == NULL ||
-                       ast_is_type(ast_Type_args(ast), ast_Variable));
+    if(ast_Type_is_alias(ast)) {
+      return is_type && ast_is_type(ast_Type_alias(ast), ast_Typename);
+    } else {
+      return is_type && (ast_Type_args(ast) == NULL ||
+                         ast_is_type(ast_Type_args(ast), ast_Variable));
+    }
   }
 }
 struct AstNode* ast_Type_name(struct AstNode* ast) { return ast->children[0]; }
 struct AstNode* ast_Type_args(struct AstNode* ast) { return ast->children[1]; }
 struct AstNode* ast_Type_alias(struct AstNode* ast) { return ast->children[1]; }
 int ast_Type_is_alias(struct AstNode* ast) { return ast->int_value ? 1 : 0; }
+int ast_Type_is_opaque(struct AstNode* ast) { return ast->children[1] == NULL; }
 
 struct AstNode* ast_build_Variable(
     struct AstNode* name,

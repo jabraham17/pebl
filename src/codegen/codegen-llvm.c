@@ -198,7 +198,7 @@ struct cg_value* codegen_helper(
       ERROR_ON_AST(
           ctx,
           ast,
-          "invalid field access - base is not a complex type\n");
+          "invalid field access - base is not a struct-like type\n");
     }
 
     // compute the offset into the object

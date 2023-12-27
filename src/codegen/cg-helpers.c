@@ -124,6 +124,8 @@ LLVMTypeRef get_llvm_type(struct Context* ctx, struct Type* tt) {
       LLVMStructSetBody(llvmTT, fields, n_fields, 0);
     }
     return llvmTT;
+  } else if(tt->kind == tk_OPAQUE) {
+    ERROR(ctx, "unknown type definition for '%s', type is opaque\n", tt->name);
   } else {
     UNIMPLEMENTED("unhandled\n");
   }

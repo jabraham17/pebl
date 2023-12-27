@@ -56,6 +56,12 @@ allocate_Alias(struct Context* context, char* name, struct Type* alias_of) {
   return t;
 }
 
+static struct Type* allocate_Opaque(struct Context* context, char* name) {
+  struct Type* t = allocate_TypeWithName(context, name, tk_OPAQUE);
+  t->size = -1;
+  return t;
+}
+
 // always allocates, want something that looks up the existing type
 static struct Type*
 allocate_Typedef(struct Context* context, char* name, struct AstNode* args) {
@@ -165,13 +171,17 @@ TypeTable_get_type_ast(struct Context* context, struct AstNode* ast) {
     if(t) return t;
 
     // build appropriate type
-    if(ast_Type_is_alias(ast)) {
-      struct Type* alias_of =
-          TypeTable_get_type_ast(context, ast_Type_alias(ast));
-      if(!alias_of) return NULL;
-      t = allocate_Alias(context, name, alias_of);
+    if(ast_Type_is_opaque(ast)) {
+      t = allocate_Opaque(context, name);
     } else {
-      t = allocate_Typedef(context, name, ast_Type_args(ast));
+      if(ast_Type_is_alias(ast)) {
+        struct Type* alias_of =
+            TypeTable_get_type_ast(context, ast_Type_alias(ast));
+        if(!alias_of) return NULL;
+        t = allocate_Alias(context, name, alias_of);
+      } else {
+        t = allocate_Typedef(context, name, ast_Type_args(ast));
+      }
     }
     return t;
 
@@ -217,6 +227,7 @@ int TypeTable_get_num_fields(struct Type* t) {
 int Type_is_pointer(struct Type* t) {
   return t->kind == tk_POINTER && t->pointer_to != NULL;
 }
+int Type_is_opaque(struct Type* t) { return t->kind == tk_OPAQUE; }
 
 int Type_get_size(struct Type* t) { return TypeTable_get_base_type(t)->size; }
 

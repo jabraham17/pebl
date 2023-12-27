@@ -15,7 +15,7 @@ body -> LCURLY statement_list RCURLY
 args -> EPSILON | name_with_type | name_with_type COMMA args
 name_with_type -> varname COLON typename
 
-type_def -> TYPE typename EQUALS LCURLY type_list RCURLY | TYPE typename
+type_def -> TYPE typename EQUALS LCURLY type_list RCURLY | TYPE typename EQUALS typename SEMICOLON | TYPE typename SEMICOLON
 type_list -> EPSILON | name_with_type SEMICOLON type_list
 
 var_def -> LET varname COLON typename (EQUALS expr)? SEMICOLON

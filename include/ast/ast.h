@@ -99,12 +99,13 @@ int ast_FieldAccess_object_is_ptr(struct AstNode* ast);
 struct AstNode* ast_build_Type(struct AstNode* name, struct AstNode* args);
 struct AstNode*
 ast_build_TypeAlias(struct AstNode* name, struct AstNode* alias);
+struct AstNode* ast_build_OpaqueType(struct AstNode* name);
 int ast_verify_Type(struct AstNode* ast);
 struct AstNode* ast_Type_name(struct AstNode* ast);  // returns a Typename
 struct AstNode* ast_Type_args(struct AstNode* ast);  // returns a Variable
 struct AstNode* ast_Type_alias(struct AstNode* ast); // returns a Typename
 int ast_Type_is_alias(struct AstNode* ast);
-
+int ast_Type_is_opaque(struct AstNode* ast);
 /* Variable */
 struct AstNode* ast_build_Variable(
     struct AstNode* name,
