@@ -4,6 +4,7 @@ import concurrent.futures
 
 def get_pool(max_workers: int = 1) -> concurrent.futures.Executor:
     """get an executor pool"""
+
     def pool_init(v: bool):
         utils.verbose = v
 

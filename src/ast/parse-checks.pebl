@@ -1,4 +1,4 @@
 func print(s:string):void;
 export func hello(): void {
-  print("hi\n");
+  # print("hi\n");
 }
