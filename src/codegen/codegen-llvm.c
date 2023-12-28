@@ -1,6 +1,6 @@
 #include "codegen/codegen-llvm.h"
 
-#include "ast/TypeTable.h"
+#include "ast/Type.h"
 #include "ast/ast.h"
 #include "ast/scope-resolve.h"
 #include "builtins/compiler-builtin.h"
@@ -28,7 +28,7 @@ void deinit_cg_context(struct Context* ctx) {
 static struct cg_function* codegen_function_prototype(
     struct Context* ctx,
     struct AstNode* ast_func,
-    __attribute__((unused)) struct ScopeResult* sr) {
+    struct ScopeResult* surroundScope) {
   ASSERT(ast_is_type(ast_func, ast_Function));
 
   char* name = ast_Identifier_name(ast_Function_name(ast_func));
@@ -43,14 +43,12 @@ static struct cg_function* codegen_function_prototype(
     // build arg types
     int n_args = ast_Function_num_args(ast_func);
     LLVMTypeRef* params = malloc(sizeof(*params) * n_args);
-    int i = 0;
-    ast_foreach(ast_Function_args(ast_func), arg) {
-      params[i] = get_llvm_type_ast(ctx, ast_Variable_type(arg));
-      i++;
+    ast_foreach_idx(ast_Function_args(ast_func), arg, i) {
+      params[i] = get_llvm_type_ast(ctx, surroundScope, ast_Variable_type(arg));
     }
     // build ret type
     LLVMTypeRef funcType = LLVMFunctionType(
-        get_llvm_type_ast(ctx, ast_Function_ret_type(ast_func)),
+        get_llvm_type_ast(ctx, surroundScope, ast_Function_ret_type(ast_func)),
         params,
         n_args,
         0);
@@ -63,26 +61,88 @@ static struct cg_function* codegen_function_prototype(
         mname,
         func,
         funcType,
-        TypeTable_get_type_ast(ctx, ast_Function_ret_type(ast_func)));
+        scope_get_Type_from_ast(
+            ctx,
+            surroundScope,
+            ast_Function_ret_type(ast_func),
+            1));
 
     if(ast_Function_is_extern(ast_func) || ast_Function_is_export(ast_func)) {
       cg_func->is_external = 1;
     }
     // create names for the parameters
-    i = 0;
-    ast_foreach(ast_Function_args(ast_func), arg) {
+    ast_foreach_idx(ast_Function_args(ast_func), arg, i) {
 
       struct AstNode* var = ast_Variable_name(arg);
       char* varname = ast_Identifier_name(var);
 
       LLVMValueRef param = LLVMGetParam(func, i);
       LLVMSetValueName(param, varname);
-
-      i++;
     }
   }
 
   return cg_func;
+}
+
+static int ast_is_constant(struct AstNode* ast) {
+  return ast_is_type(ast, ast_Number) || ast_is_type(ast, ast_String);
+}
+static int ast_is_constant_expr(struct AstNode* ast) {
+  if(ast_is_type(ast, ast_Expr)) {
+    // currently only allows very simple constants
+    if(ast_Expr_is_plain(ast) && ast_is_constant_expr(ast_Expr_lhs(ast)))
+      return 1;
+    else return 0;
+  }
+  return ast_is_constant(ast);
+}
+
+static struct cg_value* codegen_constant_expr(
+    struct Context* ctx,
+    struct AstNode* ast,
+    struct ScopeResult* sr) {
+  ASSERT(ast_is_constant_expr(ast));
+  if(ast_is_type(ast, ast_Number)) {
+    LLVMTypeRef type = LLVMInt64TypeInContext(ctx->codegen->llvmContext);
+    LLVMValueRef val = LLVMConstInt(type, ast_Number_value(ast), /*signext*/ 1);
+    return add_temp_value(
+        ctx,
+        val,
+        type,
+        scope_get_Type_from_name(ctx, sr, "int", 1));
+  } else if(ast_is_type(ast, ast_String)) {
+    char* str = ast_String_value(ast);
+    int len = strlen(str) + 1;
+
+    LLVMTypeRef strType =
+        LLVMArrayType2(LLVMInt8TypeInContext(ctx->codegen->llvmContext), len);
+    LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
+    LLVMSetInitializer(
+        strVal,
+        LLVMConstStringInContext(
+            ctx->codegen->llvmContext,
+            str,
+            len,
+            /*dont null term*/ 1));
+    LLVMSetGlobalConstant(strVal, 1);
+    LLVMSetLinkage(strVal, LLVMPrivateLinkage);
+    LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);
+
+    return add_temp_value(
+        ctx,
+        strVal,
+        LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0),
+        scope_get_Type_from_name(ctx, sr, "string", 1));
+
+  } else if(ast_is_type(ast, ast_Expr)) {
+    if(ast_Expr_is_plain(ast) && ast_is_constant_expr(ast_Expr_lhs(ast))) {
+      return codegen_constant_expr(ctx, ast_Expr_lhs(ast), sr);
+    } else {
+      UNIMPLEMENTED("unknown constant expr type\n");
+    }
+  } else {
+    UNIMPLEMENTED("unknown constant type\n");
+  }
 }
 
 struct cg_value* codegen_helper(
@@ -91,12 +151,11 @@ struct cg_value* codegen_helper(
     struct ScopeResult* sr) {
 
   if(ast_is_type(ast, ast_Function)) {
-    clear_current_values(ctx);
-    struct ScopeResult* sr = scope_resolve(ctx, ast);
     struct cg_function* func = codegen_function_prototype(ctx, ast, sr);
-
     // generate body
     if(ast_Function_has_body(ast)) {
+      struct AstNode* body = ast_Function_body(ast);
+      struct ScopeResult* body_scope = scope_lookup(ctx, body);
       // make entry block
       LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(
           ctx->codegen->llvmContext,
@@ -105,14 +164,13 @@ struct cg_value* codegen_helper(
       LLVMPositionBuilderAtEnd(ctx->codegen->builder, entry);
 
       // copy all the parameters to the stack
-      int i = 0;
-      ast_foreach(ast_Function_args(ast), arg) {
+      ast_foreach_idx(ast_Function_args(ast), arg, i) {
 
         struct AstNode* var = ast_Variable_name(arg);
         char* varname = ast_Identifier_name(var);
 
         struct ScopeSymbol* sym =
-            scope_lookup_identifier(ctx, sr, var, /*search_parent*/ 1);
+            scope_lookup_name(ctx, body_scope, ast_Identifier_name(var), 1);
         if(sym == NULL) {
           ERROR_ON_AST(ctx, arg, "could not resolve '%s'\n", varname);
         }
@@ -122,18 +180,16 @@ struct cg_value* codegen_helper(
         // allocate state space
         LLVMValueRef stack_ptr =
             LLVMBuildAlloca(ctx->codegen->builder, param_type, "");
-        add_value(ctx, stack_ptr, param_type, sym, sym->type);
+        add_value(ctx, stack_ptr, param_type, sym);
 
         // store param to stack
         LLVMBuildStore(ctx->codegen->builder, param_val, stack_ptr);
-
-        i++;
       }
       // codegen body
-      struct AstNode* body = ast_Function_body(ast);
+
       if(!ast_Block_is_empty(body)) {
         ast_foreach(ast_Block_stmts(body), elm) {
-          codegen_helper(ctx, elm, sr);
+          codegen_helper(ctx, elm, body_scope);
         }
       }
 
@@ -180,11 +236,11 @@ struct cg_value* codegen_helper(
     struct cg_value* object =
         codegen_helper(ctx, ast_FieldAccess_object(ast), sr);
 
-    struct Type* objectType = TypeTable_get_base_type(object->type);
+    struct Type* objectType = Type_get_base_type(object->type);
     struct Type* objectPtrType = NULL;
     if(Type_is_pointer(objectType)) {
       objectPtrType = objectType;
-      objectType = TypeTable_get_base_type(objectPtrType->pointer_to);
+      objectType = Type_get_base_type(objectPtrType->pointer_to);
     }
 
     // check types
@@ -225,7 +281,7 @@ struct cg_value* codegen_helper(
     // object should already be a ptr, build a gep
     ASSERT(LLVMGetTypeKind(LLVMTypeOf(ptrForGep)) == LLVMPointerTypeKind);
 
-    LLVMTypeRef gepType = get_llvm_type(ctx, objectType);
+    LLVMTypeRef gepType = get_llvm_type(ctx, sr, objectType);
     LLVMTypeRef idxType = LLVMInt32TypeInContext(ctx->codegen->llvmContext);
     LLVMValueRef gepIdx[2] = {
         LLVMConstInt(idxType, 0, /*signext*/ 1),
@@ -236,14 +292,14 @@ struct cg_value* codegen_helper(
     struct cg_value* ret = add_temp_value(
         ctx,
         gep,
-        get_llvm_type(ctx, fieldType->type),
+        get_llvm_type(ctx, sr, fieldType->type),
         fieldType->type);
 
     return ret;
 
   } else if(ast_is_type(ast, ast_Identifier)) {
     struct ScopeSymbol* sym =
-        scope_lookup_identifier(ctx, sr, ast, /*search_parent*/ 1);
+        scope_lookup_name(ctx, sr, ast_Identifier_name(ast), 1);
     if(!sym) {
       ERROR_ON_AST(
           ctx,
@@ -261,46 +317,17 @@ struct cg_value* codegen_helper(
     }
     return val;
 
-  } else if(ast_is_type(ast, ast_Number)) {
-    LLVMTypeRef type = LLVMInt64TypeInContext(ctx->codegen->llvmContext);
-    LLVMValueRef val = LLVMConstInt(type, ast_Number_value(ast), /*signext*/ 1);
+  } else if(ast_is_constant(ast)) {
+    struct cg_value* constant = codegen_constant_expr(ctx, ast, sr);
     return allocate_stack_for_temp(
         ctx,
-        type,
-        val,
-        TypeTable_get_type(ctx, "int"));
-
-  } else if(ast_is_type(ast, ast_String)) {
-    char* str = ast_String_value(ast);
-    int len = strlen(str) + 1;
-
-    LLVMTypeRef strType =
-        LLVMArrayType2(LLVMInt8TypeInContext(ctx->codegen->llvmContext), len);
-    LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
-    LLVMSetInitializer(
-        strVal,
-        LLVMConstStringInContext(
-            ctx->codegen->llvmContext,
-            str,
-            len,
-            /*dont null term*/ 1));
-    LLVMSetGlobalConstant(strVal, 1);
-    LLVMSetLinkage(strVal, LLVMPrivateLinkage);
-    LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);
-
-    return allocate_stack_for_temp(
-        ctx,
-        LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0),
-        strVal,
-        TypeTable_get_type(ctx, "string"));
-
+        constant->cg_type,
+        constant->value,
+        constant->type);
   } else if(ast_is_type(ast, ast_Call)) {
     // get the function we are calling
-    struct ScopeSymbol* sym = scope_lookup_identifier(
-        ctx,
-        NULL /*search all scopes*/,
-        ast_Call_name(ast),
-        1 /*search parent*/);
+    struct ScopeSymbol* sym =
+        scope_lookup_name(ctx, sr, ast_Identifier_name(ast_Call_name(ast)), 1);
     struct CompilerBuiltin* builtin = NULL;
     if(!sym) {
       // try and get a builtin
@@ -318,7 +345,7 @@ struct cg_value* codegen_helper(
 
     // if there is a builtin, do codegen for it
     if(builtin) {
-      struct cg_value* val = codegenBuiltin(ctx, builtin, ast);
+      struct cg_value* val = codegenBuiltin(ctx, sr, builtin, ast);
       if(!val) {
         struct Location* loc = Context_get_location(ctx, ast);
         int lineno = -1;
@@ -341,12 +368,10 @@ struct cg_value* codegen_helper(
 
     int numArgs = ast_Call_num_args(ast);
     LLVMValueRef* args = malloc(sizeof(*args) * numArgs);
-    int i = 0;
-    LL_FOREACH(ast_Call_args(ast), a) {
+    ast_foreach_idx(ast_Call_args(ast), a, i) {
       struct cg_value* val = codegen_helper(ctx, a, sr);
       args[i] =
           LLVMBuildLoad2(ctx->codegen->builder, val->cg_type, val->value, "");
-      i++;
     }
     LLVMValueRef call = LLVMBuildCall2(
         ctx->codegen->builder,
@@ -434,7 +459,7 @@ struct cg_value* codegen_helper(
     // get the scope for the if block and codegen it
     // only codegen body if it exists
     struct AstNode* body = ast_Conditional_if_body(ast);
-    struct ScopeResult* if_sr = scope_resolve(ctx, body);
+    struct ScopeResult* if_sr = scope_lookup(ctx, body);
     if(!ast_Block_is_empty(body)) {
       ast_foreach(ast_Block_stmts(body), a) { codegen_helper(ctx, a, if_sr); }
     }
@@ -451,7 +476,7 @@ struct cg_value* codegen_helper(
       LLVMPositionBuilderAtEnd(ctx->codegen->builder, elseBB);
 
       struct AstNode* else_body = ast_Conditional_else_body(ast);
-      struct ScopeResult* else_sr = scope_resolve(ctx, else_body);
+      struct ScopeResult* else_sr = scope_lookup(ctx, else_body);
       if(!ast_Block_is_empty(else_body)) {
         ast_foreach(ast_Block_stmts(else_body), a) {
           codegen_helper(ctx, a, else_sr);
@@ -508,7 +533,7 @@ struct cg_value* codegen_helper(
     // get the scope for the if block and codegen it
     // only codegen body if it exists
     struct AstNode* body = ast_While_body(ast);
-    struct ScopeResult* while_sr = scope_resolve(ctx, body);
+    struct ScopeResult* while_sr = scope_lookup(ctx, body);
     if(!ast_Block_is_empty(body)) {
       ast_foreach(ast_Block_stmts(body), a) {
         codegen_helper(ctx, a, while_sr);
@@ -530,11 +555,11 @@ struct cg_value* codegen_helper(
   } else if(ast_is_type(ast, ast_Variable)) {
 
     // lookup sym
-    struct ScopeSymbol* sym = scope_lookup_identifier(
+    struct ScopeSymbol* sym = scope_lookup_name(
         ctx,
         sr,
-        ast_Variable_name(ast),
-        /*search_parent*/ 1);
+        ast_Identifier_name(ast_Variable_name(ast)),
+        1);
     if(sym == NULL) {
       ERROR_ON_AST(
           ctx,
@@ -542,48 +567,64 @@ struct cg_value* codegen_helper(
           "could not resolve '%s'\n",
           ast_Identifier_name(ast_Variable_name(ast)));
     }
-    struct Type* type = TypeTable_get_type_ast(ctx, ast_Variable_type(ast));
-    if(!type) {
-      ERROR_ON_AST(ctx, ast, "could not resolve type\n");
-    }
-    LLVMTypeRef cg_type = get_llvm_type(ctx, type);
+    ASSERT(sym->sst == sst_Variable);
+    LLVMTypeRef cg_type = get_llvm_type_sym(ctx, sr, sym);
     struct AstNode* init_expr = ast_Variable_expr(ast);
 
-    if(LLVMGetTypeKind(cg_type) == LLVMVoidTypeKind) {
+    int is_global = sr->parent_scope == NULL;
+    if(is_global) {
+      char* name = ast_Identifier_name(ast_Variable_name(ast));
+      LLVMValueRef global = LLVMAddGlobal(ctx->codegen->module, cg_type, name);
+      LLVMSetLinkage(global, LLVMPrivateLinkage);
       if(init_expr) {
-        // just build the init expression, we are not saving the value
-        struct cg_value* init_val = codegen_helper(ctx, init_expr, sr);
-        return init_val;
-      } else {
-        ERROR_ON_AST(
-            ctx,
-            ast,
-            "cannot have a variable with void type and no init\n");
+        if(ast_is_constant_expr(init_expr)) {
+          struct cg_value* init_val = codegen_constant_expr(ctx, init_expr, sr);
+          LLVMSetInitializer(global, init_val->value);
+        } else {
+          ERROR_ON_AST(
+              ctx,
+              ast,
+              "cannot have a global variable with non-constant init "
+              "expression\n");
+        }
       }
-    } else {
-      struct cg_value* val;
-      if(init_expr) {
-        struct cg_value* init_val = codegen_helper(ctx, init_expr, sr);
-        // load the init value, store it to the new variable
-        ASSERT_MSG(
-            LLVMGetTypeKind(LLVMTypeOf(init_val->value)) == LLVMPointerTypeKind,
-            "cannot load a non-pointer value\n");
-        LLVMValueRef load = LLVMBuildLoad2(
-            ctx->codegen->builder,
-            init_val->cg_type,
-            init_val->value,
-            "");
-        val = allocate_stack_for_sym(ctx, cg_type, load, sym, type);
-      } else {
-        val = allocate_stack_for_sym(
-            ctx,
-            cg_type,
-            LLVMGetUndef(cg_type),
-            sym,
-            type);
-      }
+      struct cg_value* value = add_value(ctx, global, cg_type, sym);
+      return value;
 
-      return val;
+    } else {
+      if(LLVMGetTypeKind(cg_type) == LLVMVoidTypeKind) {
+        if(init_expr) {
+          // just build the init expression, we are not saving the value
+          struct cg_value* init_val = codegen_helper(ctx, init_expr, sr);
+          return init_val;
+        } else {
+          ERROR_ON_AST(
+              ctx,
+              ast,
+              "cannot have a variable with void type and no init\n");
+        }
+      } else {
+        struct cg_value* val;
+        if(init_expr) {
+          struct cg_value* init_val = codegen_helper(ctx, init_expr, sr);
+          // load the init value, store it to the new variable
+          ASSERT_MSG(
+              LLVMGetTypeKind(LLVMTypeOf(init_val->value)) ==
+                  LLVMPointerTypeKind,
+              "cannot load a non-pointer value\n");
+          LLVMValueRef load = LLVMBuildLoad2(
+              ctx->codegen->builder,
+              init_val->cg_type,
+              init_val->value,
+              "");
+          val = allocate_stack_for_sym(ctx, cg_type, load, sym);
+        } else {
+          val =
+              allocate_stack_for_sym(ctx, cg_type, LLVMGetUndef(cg_type), sym);
+        }
+
+        return val;
+      }
     }
   } else {
     UNIMPLEMENTED("not handled\n");
@@ -676,7 +717,10 @@ void codegen(struct Context* ctx) {
       ctx->codegen->llvmContext);
   ctx->codegen->builder = LLVMCreateBuilderInContext(ctx->codegen->llvmContext);
 
-  ast_foreach(ctx->ast, a) { codegen_helper(ctx, a, NULL); }
+  ASSERT(ast_is_type(ctx->ast, ast_Block) && ast_next(ctx->ast) == NULL);
+  struct AstNode* body = ctx->ast;
+  struct ScopeResult* scope = scope_lookup(ctx, body);
+  ast_foreach(ast_Block_stmts(body), a) { codegen_helper(ctx, a, scope); }
 
   codegen_main(ctx);
   set_linkage(ctx);

@@ -1,5 +1,5 @@
-#ifndef TYPE_TABLE_H_
-#define TYPE_TABLE_H_
+#ifndef TYPE_H_
+#define TYPE_H_
 #include "ast.h"
 
 #include "context/context.h"
@@ -33,22 +33,13 @@ struct TypeField {
   struct TypeField* next;
 };
 
-void Context_install_builtin_types(struct Context* context);
+int Type_eq(struct Type* t1, struct Type* t2);
 
-void TypeTable_add_from_ast(struct Context* context, struct AstNode* ast);
-
-int TypeTable_equivalent_types(
-    struct Context* context,
-    struct Type* t1,
-    struct Type* t2);
-struct Type* TypeTable_get_type(struct Context* context, char* name);
-struct Type*
-TypeTable_get_type_ast(struct Context* context, struct AstNode* ast);
-struct Type* TypeTable_get_ptr_type(struct Context* context, struct Type* t);
+struct Type* Type_get_ptr_type(struct Type* t);
 // follow alias chains to base type
-struct Type* TypeTable_get_base_type(struct Type* t);
+struct Type* Type_get_base_type(struct Type* t);
 
-int TypeTable_get_num_fields(struct Type* t);
+int Type_get_num_fields(struct Type* t);
 int Type_is_pointer(struct Type* t);
 int Type_is_opaque(struct Type* t);
 

@@ -106,7 +106,7 @@ static struct AstNode* parse_block_statement(struct Context* context) {
     }
   }
 }
-// function_def -> (EXTERN|EXPORT)? function_header body?
+// function_def -> (EXTERN|EXPORT)? function_header (body|SEMICOLON)
 static struct AstNode* parse_function_def(struct Context* context) {
   // cxan only be extern or export
   int is_extern = 0;
@@ -191,11 +191,11 @@ static struct AstNode* parse_name_with_type(struct Context* context) {
   add_location_for_token(context, var_node, t);
   return var_node;
 }
-// type_def -> TYPE typename EQUALS LCURLY type_list RCURLY | TYPE typename
-// EQUALS typename SEMICOLON | TYPE typename SEMICOLON
+// type_def -> TYPE varname EQUALS LCURLY type_list RCURLY | TYPE varname EQUALS
+// typename SEMICOLON | TYPE varname SEMICOLON
 static struct AstNode* parse_type_def(struct Context* context) {
   struct lexer_token* type_tok = expect(context, tt_TYPE);
-  struct AstNode* name = parse_typename(context);
+  struct AstNode* name = parse_varname(context);
   if(lexer_peek(context, 1)->tt == tt_EQUALS) {
     expect(context, tt_EQUALS);
     struct lexer_token* t = lexer_peek(context, 1);
@@ -255,17 +255,24 @@ static struct AstNode* parse_varname(struct Context* context) {
   add_location_for_token(context, ident, t);
   return ident;
 }
-// typename -> ID STAR*
+// typename -> ID STAR* | TYPE
 static struct AstNode* parse_typename(struct Context* context) {
-  struct lexer_token* t = expect(context, tt_ID);
-  int ptr_level = 0;
-  while(lexer_peek(context, 1)->tt == tt_STAR) {
-    expect(context, tt_STAR);
-    ptr_level++;
+  if(lexer_peek(context, 1)->tt == tt_TYPE) {
+    struct lexer_token* t = expect(context, tt_TYPE);
+    struct AstNode* typename = ast_build_Typename("type");
+    add_location_for_token(context, typename, t);
+    return typename;
+  } else {
+    struct lexer_token* t = expect(context, tt_ID);
+    int ptr_level = 0;
+    while(lexer_peek(context, 1)->tt == tt_STAR) {
+      expect(context, tt_STAR);
+      ptr_level++;
+    }
+    struct AstNode* typename = ast_build_Typename2(t->lexeme, ptr_level);
+    add_location_for_token(context, typename, t);
+    return typename;
   }
-  struct AstNode* typename = ast_build_Typename2(t->lexeme, ptr_level);
-  add_location_for_token(context, typename, t);
-  return typename;
 }
 // expr -> atom | atom op atom | preop atom
 static struct AstNode* parse_expr(struct Context* context) {
@@ -498,5 +505,7 @@ static struct AstNode* parse_break_stmt(struct Context* context) {
 
 void parser_init(__attribute__((unused)) struct Context* context) {}
 void parser_parse(struct Context* context) {
-  context->ast = parse_statement_list(context);
+  struct AstNode* body = parse_statement_list(context);
+  struct AstNode* block = ast_build_Block(body);
+  context->ast = block;
 }

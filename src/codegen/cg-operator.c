@@ -1,12 +1,14 @@
 
 #include "cg-operator.h"
 
-#include "ast/TypeTable.h"
+#include "ast/Type.h"
+#include "ast/scope-resolve.h"
 
 #include "cg-helpers.h"
 
 static struct cg_value* codegenOperator_intBOp(
     struct Context* ctx,
+    __attribute__((unused)) struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
@@ -42,6 +44,7 @@ static struct cg_value* codegenOperator_intBOp(
 
 static struct cg_value* codegenOperator_intCompare(
     struct Context* ctx,
+    __attribute__((unused)) struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
@@ -74,6 +77,7 @@ static struct cg_value* codegenOperator_intCompare(
 
 static struct cg_value* codegenOperator_ptrCompare(
     struct Context* ctx,
+    __attribute__((unused)) struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
@@ -121,6 +125,7 @@ static struct cg_value* codegenOperator_ptrCompare(
 
 static struct cg_value* codegenOperator_negate(
     struct Context* ctx,
+    __attribute__((unused)) struct ScopeResult* scope,
     __attribute__((unused)) enum OperatorType op,
     struct cg_value* operand) {
 
@@ -145,20 +150,21 @@ static struct cg_value* codegenOperator_negate(
 
 static struct cg_value* codegenOperator_addrOffset(
     struct Context* ctx,
+    struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
 
   struct cg_value* ptr;
   struct cg_value* offset;
-  if(Type_is_pointer(TypeTable_get_base_type(lhs->type))) {
+  if(Type_is_pointer(Type_get_base_type(lhs->type))) {
     ptr = lhs;
     offset = rhs;
   } else {
     ptr = rhs;
     offset = lhs;
   }
-  struct Type* ptrType = TypeTable_get_base_type(ptr->type);
+  struct Type* ptrType = Type_get_base_type(ptr->type);
   ASSERT(Type_is_pointer(ptrType));
 
   if(op != op_PLUS) {
@@ -170,7 +176,7 @@ static struct cg_value* codegenOperator_addrOffset(
   LLVMValueRef offsetVal =
       LLVMBuildLoad2(ctx->codegen->builder, offset->cg_type, offset->value, "");
 
-  LLVMTypeRef gepType = get_llvm_type(ctx, ptrType->pointer_to);
+  LLVMTypeRef gepType = get_llvm_type(ctx, scope, ptrType->pointer_to);
   LLVMValueRef* gepIdx = &offsetVal;
   LLVMValueRef resVal =
       LLVMBuildGEP2(ctx->codegen->builder, gepType, ptrVal, gepIdx, 1, "");
@@ -182,9 +188,10 @@ static struct cg_value* codegenOperator_addrOffset(
 
 static struct cg_value* codegenOperator_getValueAtAddress(
     struct Context* ctx,
+    struct ScopeResult* scope,
     __attribute__((unused)) enum OperatorType op,
     struct cg_value* operand) {
-  struct Type* ptrType = TypeTable_get_base_type(operand->type);
+  struct Type* ptrType = Type_get_base_type(operand->type);
   ASSERT(Type_is_pointer(ptrType));
   LLVMValueRef ptr = LLVMBuildLoad2(
       ctx->codegen->builder,
@@ -194,7 +201,7 @@ static struct cg_value* codegenOperator_getValueAtAddress(
   // value should be a pointer, load it, then its pointer
 
   ASSERT(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
-  LLVMTypeRef pointerToLLVMType = get_llvm_type(ctx, ptrType->pointer_to);
+  LLVMTypeRef pointerToLLVMType = get_llvm_type(ctx, scope, ptrType->pointer_to);
   LLVMValueRef loaded =
       LLVMBuildLoad2(ctx->codegen->builder, pointerToLLVMType, ptr, "");
   struct cg_value* derefed_val = allocate_stack_for_temp(
@@ -207,19 +214,12 @@ static struct cg_value* codegenOperator_getValueAtAddress(
 
 static struct cg_value* codegenOperator_getAddressOfValue(
     struct Context* ctx,
+    __attribute__((unused)) struct ScopeResult* scope,
     __attribute__((unused)) enum OperatorType op,
     struct cg_value* operand) {
-  // LLVMValueRef val = LLVMBuildLoad2(
-  //     ctx->codegen->builder,
-  //     operand->cg_type,
-  //     operand->value,
-  //     "");
   // just return the stack ptr for this
-  struct Type* operandTypePtr = TypeTable_get_ptr_type(ctx, operand->type);
+  struct Type* operandTypePtr = Type_get_ptr_type(operand->type);
   ASSERT(LLVMGetTypeKind(LLVMTypeOf(operand->value)) == LLVMPointerTypeKind);
-  // LLVMTypeRef pointerToLLVMType = get_llvm_type(ctx, ptrType->pointer_to);
-  // LLVMValueRef loaded =
-  //     LLVMBuildLoad2(ctx->codegen->builder, pointerToLLVMType, ptr, "");
   struct cg_value* address = allocate_stack_for_temp(
       ctx,
       LLVMTypeOf(operand->value),
@@ -228,31 +228,32 @@ static struct cg_value* codegenOperator_getAddressOfValue(
   return address;
 }
 
-static int typesMatch(struct Context* ctx, struct cg_value* val, char* type) {
+static int typesMatch(struct Context* ctx, struct ScopeResult* scope, struct cg_value* val, char* type) {
   // any type
   if(type == NULL) return 1;
   if(type[0] == '\0') return 1;
 
   // type is any pointer
   if(type[0] == '*' && type[1] == '\0') {
-    return Type_is_pointer(TypeTable_get_base_type(val->type));
+    return Type_is_pointer(Type_get_base_type(val->type));
   }
 
-  struct Type* t = TypeTable_get_type(ctx, type);
+  struct Type* t = scope_get_Type_from_name(ctx, scope, type, 1);
 
-  return TypeTable_equivalent_types(ctx, val->type, t);
+  return Type_eq(val->type, t);
 }
 
 struct cg_value* codegenBinaryOperator(
     struct Context* ctx,
+    struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
 
 #define CODEGEN_BINARY_OPERATOR(opType, lhsType, rhsType, funcName)            \
-  if(op == op_##opType && typesMatch(ctx, lhs, lhsType) &&                     \
-     typesMatch(ctx, rhs, rhsType)) {                                          \
-    return codegenOperator_##funcName(ctx, op, lhs, rhs);                      \
+  if(op == op_##opType && typesMatch(ctx, scope, lhs, lhsType) &&                     \
+     typesMatch(ctx, scope, rhs, rhsType)) {                                          \
+    return codegenOperator_##funcName(ctx, scope, op, lhs, rhs);                      \
   }
 #include "cg-operator.def"
 
@@ -261,12 +262,13 @@ struct cg_value* codegenBinaryOperator(
 
 struct cg_value* codegenUnaryOperator(
     struct Context* ctx,
+    struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* operand) {
 
 #define CODEGEN_UNARY_OPERATOR(opType, operandType, funcName)                  \
-  if(op == op_##opType && typesMatch(ctx, operand, operandType)) {             \
-    return codegenOperator_##funcName(ctx, op, operand);                       \
+  if(op == op_##opType && typesMatch(ctx, scope, operand, operandType)) {             \
+    return codegenOperator_##funcName(ctx, scope, op, operand);                       \
   }
 #include "cg-operator.def"
 

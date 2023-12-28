@@ -1,7 +1,7 @@
 
 
-#include "ast/TypeTable.h"
 #include "ast/parse-checks.h"
+#include "ast/scope-resolve.h"
 #include "context/context.h"
 #include "parser/parser.h"
 
@@ -73,11 +73,10 @@ int main(int argc, char** argv) {
   if(checks) parse_checks(context);
   if(print) dump_ast(context);
 
-  // build types
-  // Context_install_builtin_types(context);
-  // TypeTable_add_from_ast(context, context->ast);
-
-  if(scope) do_scope(context);
+  if(scope) {
+    scope_resolve(context);
+    do_scope(context);
+  }
 
   return 0;
 }

@@ -29,6 +29,7 @@ struct cg_context {
   char* outfilename;
   struct cg_value* current_values;
   struct cg_function* functions;
+  struct cg_type* struct_types;
 };
 
 void init_cg_context(struct Context* context, char* filename);

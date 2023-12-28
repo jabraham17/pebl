@@ -14,9 +14,11 @@ class Passes:
     def __str__(self) -> str:
         return str(self.name)
 
-    def __eq__(self, other: str):
+    def __eq__(self, other):
         if isinstance(other, str):
             return self.name == other
+        elif isinstance(other, Passes):
+            return self.name == other.name
         return False
 
 

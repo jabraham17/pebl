@@ -19,7 +19,7 @@ static void check_allowed_at_file_scope_helper(
             a,
             "function '%s' can only be declared at file scope\n",
             ast_Identifier_name(ast_Function_name(a)));
-      } else if(ast_is_type(a, ast_Type)) {
+      }else if(ast_is_type(a, ast_Type)) {
         ERROR_ON_AST(
             context,
             a,
@@ -27,11 +27,11 @@ static void check_allowed_at_file_scope_helper(
             ast_Identifier_name(ast_Type_name(a)));
       }
     } else {
-      if(!ast_is_type(a, ast_Function) && !ast_is_type(a, ast_Type)) {
+      if(!ast_is_type(a, ast_Function) && !ast_is_type(a, ast_Type) && !ast_is_type(a, ast_Variable)) {
         ERROR_ON_AST(
             context,
             a,
-            "only functions and types can appear at file scope\n");
+            "only functions, types, and variables can appear at file scope\n");
       }
     }
     ast_foreach_child(a, child) {
@@ -99,10 +99,9 @@ void hello();
 
 void parse_checks(struct Context* context) {
   hello();
-  if(context->ast == NULL) return;
   check_break_outside_loop(context, context->ast);
   check_return_outside_func(context, context->ast);
 
   // this goes last, its more of as temporary check as a simplifying assumption
-  check_allowed_at_file_scope(context, context->ast);
+  check_allowed_at_file_scope(context, ast_Block_stmts(context->ast));
 }

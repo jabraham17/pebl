@@ -26,4 +26,9 @@
 #define LL_FOREACH(root, name)                                                 \
   for(DECLTYPE(root) name = (root); name != NULL; name = name->next)
 
+#define LL_FOREACH_ENUMERATE(root, name, idx)                                  \
+  for(int idx = -1, loop_once_ = 1; loop_once_; loop_once_ = 0)                \
+    for(DECLTYPE(root) name = (root); name != NULL && ((idx++), 1);            \
+        name = name->next)
+
 #endif

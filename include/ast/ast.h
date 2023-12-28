@@ -60,16 +60,20 @@ void ast_append(struct AstNode** head, struct AstNode* tail);
 enum AstType ast_type(struct AstNode* ast);
 int ast_is_type(struct AstNode* ast, enum AstType at);
 int ast_num_children(struct AstNode* ast);
+struct AstNode* ast_get_child(struct AstNode* ast, int);
 
 void dump_ast(struct Context* context);
 void verify_ast(struct Context* context);
 
 #define ast_foreach(root, name) LL_FOREACH(root, name)
+#define ast_foreach_idx(root, name, idx) LL_FOREACH_ENUMERATE(root, name, idx)
 #define ast_foreach_child(root, name)                                          \
-  struct AstNode* name = NULL;                                                 \
-  for(int i = 0;                                                               \
-      i < ast_num_children(root) && ((name = (root)->children[i]), 1);         \
-      i++)
+  for(struct AstNode* name = NULL, *loop_once_ = (struct AstNode*)1;           \
+      loop_once_;                                                              \
+      loop_once_ = 0)                                                          \
+    for(int i = 0;                                                             \
+        i < ast_num_children(root) && ((name = (root)->children[i]), 1);       \
+        i++)
 
 /* Identifier */
 struct AstNode* ast_build_Identifier(char* name);

@@ -1,9 +1,10 @@
 
-#include "ast/TypeTable.h"
+#include "ast/Type.h"
 #include "builtins/compiler-builtin.h"
 #include "codegen/codegen-llvm.h"
 #include "common/bsstring.h"
 #include "common/ll-common.h"
+#include "ast/scope-resolve.h"
 
 #include <llvm-c/Core.h>
 #include <stdlib.h>
@@ -40,21 +41,10 @@ compiler_builtin_lookup_name(struct Context* ctx, char* name) {
   return NULL;
 }
 
-static struct Type*
-sizeof_getTypeFromArg(struct Context* ctx, struct AstNode* arg) {
-  if(ast_is_type(arg, ast_Identifier)) {
-    char* typename = ast_Identifier_name(arg);
-    struct Type* type = TypeTable_get_type(ctx, typename);
-    return type;
-  } else if(ast_is_type(arg, ast_Expr) && ast_Expr_is_plain(arg)) {
-    struct Type* type = sizeof_getTypeFromArg(ctx, ast_Expr_lhs(arg));
-    return type;
-  }
-  return NULL;
-}
 
 static struct cg_value* codegenBuiltin_codegenSizeof(
     struct Context* ctx,
+    struct ScopeResult* scope,
     __attribute__((unused)) struct CompilerBuiltin* builtin,
     struct AstNode* call) {
   ASSERT(ast_is_type(call, ast_Call));
@@ -64,7 +54,7 @@ static struct cg_value* codegenBuiltin_codegenSizeof(
     ERROR_ON_AST(ctx, call, "sizeof() expects 1 argument\n");
   }
   struct AstNode* arg = ast_Call_args(call);
-  struct Type* type = sizeof_getTypeFromArg(ctx, arg);
+  struct Type* type = scope_get_Type_from_ast(ctx, scope, arg, 1);
   if(!type) {
     ERROR_ON_AST(ctx, call, "could not find type for sizeof()\n");
   }
@@ -76,17 +66,18 @@ static struct cg_value* codegenBuiltin_codegenSizeof(
       ctx,
       cg_type,
       val,
-      TypeTable_get_type(ctx, "int"));
+      scope_get_Type_from_name(ctx, scope, "int", 1));
 }
 
 struct cg_value* codegenBuiltin(
     struct Context* ctx,
+    struct ScopeResult* scope,
     struct CompilerBuiltin* builtin,
     struct AstNode* call) {
 
 #define COMPILER_BUILTIN(name_, numArgs_, codegenFunc)                         \
   if(strcmp(#name_, builtin->name) == 0 && numArgs_ == builtin->numArgs) {     \
-    return codegenBuiltin_##codegenFunc(ctx, builtin, call);                   \
+    return codegenBuiltin_##codegenFunc(ctx, scope, builtin, call);                   \
   }
 #include "compiler-builtins.def"
 

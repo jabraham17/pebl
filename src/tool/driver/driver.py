@@ -23,6 +23,7 @@ import paths
 import mp
 import arguments
 from shims import override
+import optimization
 
 
 @dataclass
@@ -267,7 +268,10 @@ def main(raw_args: List[str]) -> int:
         temp_dir.makedirs()
 
     if args.compile:
-        stop_after = StopAfter.OPTIMIZE if args.human_readable else None
+        stop_after = None
+        if args.human_readable:
+            stop_after = StopAfter.COMPILE if args.opt == optimization.OptNone else StopAfter.OPTIMIZE
+
         file = args.files[0]
         build_file(file, toolchain, temp_dir, stop_after, args.output)
     else:

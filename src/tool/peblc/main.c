@@ -1,12 +1,13 @@
 
 
-#include "ast/TypeTable.h"
+
 #include "ast/parse-checks.h"
 #include "builtins/compiler-builtin.h"
 #include "codegen/codegen-llvm.h"
 #include "common/bsstring.h"
 #include "context/context.h"
 #include "parser/parser.h"
+#include "ast/scope-resolve.h"
 
 #include <string.h>
 
@@ -76,10 +77,9 @@ int main(int argc, char** argv) {
   if(verify) verify_ast(context);
   if(checks) parse_checks(context);
 
-  Context_install_builtin_types(context);
-  TypeTable_add_from_ast(context, context->ast);
-
   register_compiler_builtins(context);
+
+  scope_resolve(context);
 
   init_cg_context(context, outfile);
   codegen(context);

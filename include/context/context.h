@@ -21,7 +21,6 @@ struct Context {
   struct AstNode* ast;
   struct Location* locations;
 
-  struct Type* types;
   struct ScopeResult* scope_table;
 
   struct CompilerBuiltin* compiler_builtins;

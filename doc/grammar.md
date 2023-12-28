@@ -7,7 +7,7 @@ statement_list -> EPSILON | statement | statement statement_list
 statement -> function_def | type_def | var_def | block_statement
 block_statement -> assignment | if_stmt | while_stmt | return_stmt | break_stmt | call_stmt
 
-function_def -> (EXTERN | EXPORT)? function_header body?
+function_def -> (EXTERN|EXPORT)? function_header (body|SEMICOLON)
 function_header -> FUNC varname LPAREN args RPAREN COLON typename
 
 body -> LCURLY statement_list RCURLY
@@ -15,12 +15,12 @@ body -> LCURLY statement_list RCURLY
 args -> EPSILON | name_with_type | name_with_type COMMA args
 name_with_type -> varname COLON typename
 
-type_def -> TYPE typename EQUALS LCURLY type_list RCURLY | TYPE typename EQUALS typename SEMICOLON | TYPE typename SEMICOLON
+type_def -> TYPE varname EQUALS LCURLY type_list RCURLY | TYPE varname EQUALS typename SEMICOLON | TYPE varname SEMICOLON
 type_list -> EPSILON | name_with_type SEMICOLON type_list
 
 var_def -> LET varname COLON typename (EQUALS expr)? SEMICOLON
 varname -> ID
-typename -> ID STAR*
+typename -> ID STAR* | TYPE
 
 expr -> atom | atom op atom | preop atom
 expr_list -> EPSILON | expr | expr COMMA expr_list

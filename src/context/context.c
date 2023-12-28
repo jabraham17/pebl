@@ -1,6 +1,6 @@
 #include "context/context.h"
 
-#include "ast/TypeTable.h"
+#include "ast/Type.h"
 #include "ast/ast.h"
 #include "ast/location.h"
 #include "ast/scope-resolve.h"

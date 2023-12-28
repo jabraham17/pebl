@@ -39,6 +39,9 @@ int ast_num_children(struct AstNode* ast) {
   else if(at == ast_Call) return 2;
   return 0;
 }
+struct AstNode* ast_get_child(struct AstNode* ast, int i) {
+  return ast->children[i];
+}
 
 static void ast_type_to_string(char* buf, enum AstType at) {
   if(at == ast_Identifier) bsstrcpy(buf, "Identifier");
@@ -291,7 +294,7 @@ struct AstNode* ast_build_OpaqueType(struct AstNode* name) {
 }
 int ast_verify_Type(struct AstNode* ast) {
   int is_type = ast_is_type(ast, ast_Type) &&
-                ast_is_type(ast_Type_name(ast), ast_Typename);
+                ast_is_type(ast_Type_name(ast), ast_Identifier);
 
   if(ast_Type_is_opaque(ast)) {
     return is_type;

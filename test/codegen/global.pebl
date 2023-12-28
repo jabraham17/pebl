@@ -1,0 +1,22 @@
+func print(s: string): void;
+
+extern func intToString(i:int):string;
+
+func printInt(prefix: string, i: int, suffix: string): void {
+  print(prefix);
+  print(intToString(i));
+  print(suffix);
+}
+
+let myglobal: int = 1;
+
+func main(args: string*, nargs: int): int {
+
+  printInt("", myglobal, "\n");
+  myglobal = myglobal + 1;
+  printInt("", myglobal, "\n");
+
+  return 0;
+}
+
+

@@ -1,48 +1,81 @@
 
-#include "TypeTable.h"
+#include "Type.h"
 #include "ast.h"
 
 // scope resolve ast, building a ScopeResult object
 
-struct ScopeSymbol {
-  // common
-  char* name;
-  struct Type* type;
-  int is_var;
+enum ScopeSymbolType { sst_Variable, sst_Function, sst_Type, sst_Builtin };
+char* sst_toString(enum ScopeSymbolType sst);
 
+struct ScopeSymbol;
+
+struct ScopeVariable {
+  struct AstNode* variable;
+  struct Type* type;
+};
+struct ScopeFunction {
+  struct AstNode* function;
+  struct Type* rettype;
   int num_args;
   struct ScopeSymbol** args;
-
-  struct ScopeSymbol* next;
 };
+struct ScopeBuiltin {};
+
+struct ScopeSymbol {
+  enum ScopeSymbolType sst;
+  struct ScopeSymbol* next;
+
+  struct ScopeVariable* ss_variable;
+  struct ScopeFunction* ss_function;
+  struct Type* ss_type;
+  struct ScopeBuiltin* ss_builtin;
+};
+
+// struct ScopeSymbol {
+//   struct AstNode* scope_for;
+//   // common
+//   char* name;
+//   struct Type* type;
+//   int is_var;
+
+//   int num_args;
+//   struct ScopeSymbol** args;
+
+//   struct ScopeSymbol* next;
+// };
 char* ScopeSymbol_name(struct ScopeSymbol* sym);
-
-int ScopeSymbol_is_variable(struct ScopeSymbol* sym);
-struct Type* ScopeSymbol_type(struct ScopeSymbol* sym);
-
-int ScopeSymbol_is_function(struct ScopeSymbol* sym);
-struct Type* ScopeSymbol_return_type(struct ScopeSymbol* sym);
-int ScopeSymbol_num_args(struct ScopeSymbol* sym);
-struct ScopeSymbol* ScopeSymbol_arg(struct ScopeSymbol* sym, int i);
 int ScopeSymbol_eq(struct ScopeSymbol* lhs, struct ScopeSymbol* rhs);
 
 struct ScopeResult {
-  struct AstNode* scope_for;
-  struct ScopeSymbol* variables;
+  struct AstNode* ast;
+  struct ScopeSymbol* symbols;
 
   struct ScopeResult* parent_scope;
   struct ScopeResult* next;
 };
 
-// only lookup existing scopes
-struct ScopeResult*
-scope_lookup(struct Context* context, struct AstNode* scope_for);
-// lookup a single ident
-struct ScopeSymbol* scope_lookup_identifier(
-    struct Context* context,
+void scope_resolve(struct Context* ctx);
+struct ScopeResult* scope_lookup(struct Context* ctx, struct AstNode* ast);
+
+struct ScopeSymbol* scope_lookup_name(
+    struct Context* ctx,
     struct ScopeResult* sr,
-    struct AstNode* ident,
+    char* name,
     int search_parent);
-// fresly scope resolve, returns scope if already resolved
-struct ScopeResult*
-scope_resolve(struct Context* context, struct AstNode* scope_for);
+
+struct ScopeSymbol* scope_lookup_typename(
+    struct Context* ctx,
+    struct ScopeResult* sr,
+    struct AstNode* typename,
+    int search_parent);
+
+struct Type* scope_get_Type_from_name(
+    struct Context* ctx,
+    struct ScopeResult* sr,
+    char* name,
+    int search_parent);
+struct Type* scope_get_Type_from_ast(
+    struct Context* ctx,
+    struct ScopeResult* sr,
+    struct AstNode* ast,
+    int search_parent);
