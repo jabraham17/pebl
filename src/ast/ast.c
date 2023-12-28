@@ -326,7 +326,7 @@ struct AstNode* ast_build_Variable(
 int ast_verify_Variable(struct AstNode* ast) {
   return ast_is_type(ast, ast_Variable) &&
          ast_is_type(ast_Variable_name(ast), ast_Identifier) &&
-         ast_is_type(ast_Variable_type(ast), ast_Typename) &&
+         (ast_Variable_type(ast) == NULL || ast_is_type(ast_Variable_type(ast), ast_Typename)) &&
          (ast_Variable_expr(ast) == NULL ||
           ast_is_type(ast_Variable_expr(ast), ast_Expr));
 }

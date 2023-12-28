@@ -232,13 +232,16 @@ static struct AstNode* parse_type_list(struct Context* context) {
   }
   return NULL;
 }
-// var_def -> LET varname COLON typename (EQUALS expr)? SEMICOLON
+// var_def -> LET varname (COLON typename)? (EQUALS expr)? SEMICOLON
 static struct AstNode* parse_var_def(struct Context* context) {
   struct lexer_token* t = expect(context, tt_LET);
   struct AstNode* var = parse_varname(context);
-  expect(context, tt_COLON);
-  struct AstNode* type = parse_typename(context);
+  struct AstNode* type = NULL;
   struct AstNode* expr = NULL;
+  if(lexer_peek(context, 1)->tt == tt_COLON) {
+    expect(context, tt_COLON);
+    type = parse_typename(context);
+  }
   if(lexer_peek(context, 1)->tt == tt_EQUALS) {
     expect(context, tt_EQUALS);
     expr = parse_expr(context);

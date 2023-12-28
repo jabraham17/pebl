@@ -1,5 +1,6 @@
-#include "ast/ast.h"
 #include "ast/scope-resolve.h"
+
+#include "ast/ast.h"
 #include "common/bsstring.h"
 #include "common/ll-common.h"
 #include "context/context.h"
@@ -111,7 +112,21 @@ static struct ScopeSymbol* build_ScopeSymbol_for_variable(
 
   // build a new scope symbol for this variable
   struct AstNode* typename = ast_Variable_type(var);
-  struct Type* type = scope_get_Type_from_ast(ctx, sr, typename, 1);
+  struct Type* type = NULL;
+  if(typename) {
+    type = scope_get_Type_from_ast(ctx, sr, typename, 1);
+  } else {
+    struct AstNode* init_expr = ast_Variable_expr(var);
+    if(init_expr) {
+      type = scope_get_Type_from_ast(ctx, sr, init_expr, 1);
+    } else {
+      ERROR_ON_AST(
+          ctx,
+          var,
+          "could not infer type of '%s'\n",
+          ast_Identifier_name(ast_Variable_name(var)));
+    }
+  }
   struct ScopeSymbol* ss = ScopeSymbol_init_var(var, type);
   LL_APPEND(sr->symbols, ss);
 
@@ -166,9 +181,12 @@ static void Type_init_Typedef(
   ast_foreach(args, a) {
     ASSERT(ast_is_type(a, ast_Variable));
 
-    struct TypeField* newField =
-        TypeField_allocate(ast_Identifier_name(ast_Variable_name(a)));
+    char* fieldName = ast_Identifier_name(ast_Variable_name(a));
+    struct TypeField* newField = TypeField_allocate(fieldName);
     struct AstNode* typename = ast_Variable_type(a);
+    if(!typename) {
+      ERROR_ON_AST(ctx, a, "cannot infer type for '%s'\n", fieldName);
+    }
     newField->type = scope_get_Type_from_ast(ctx, sr, typename, 1);
     newField->parentType = t;
     size += newField->type->size;
@@ -230,6 +248,13 @@ static struct ScopeSymbol* build_ScopeSymbol_for_func(
     // 2.
     ast_foreach_idx(ast_Function_args(func), arg, idx) {
       struct AstNode* typename = ast_Variable_type(arg);
+      if(!typename) {
+        ERROR_ON_AST(
+            ctx,
+            arg,
+            "cannot infer type for '%s'\n",
+            ast_Identifier_name(ast_Variable_name(arg)));
+      }
       struct Type* arg_type = scope_get_Type_from_ast(ctx, sr, typename, 1);
       func_ss->ss_function->args[idx] = ScopeSymbol_init_var(arg, arg_type);
     }
@@ -455,8 +480,24 @@ struct Type* scope_get_Type_from_ast(
     return sym->ss_type;
   } else if(ast_is_type(ast, ast_Identifier)) {
     char* name = ast_Identifier_name(ast);
-    return scope_get_Type_from_name(ctx, sr, name, search_parent);
-  } else if(ast_is_type(ast, ast_Expr)) {
+    struct ScopeSymbol* sym = scope_lookup_name(ctx, sr, name, search_parent);
+    if(sym && sym->sst == sst_Type) {
+      return sym->ss_type;
+    }
+    else if(sym && sym->sst == sst_Variable) {
+      return sym->ss_variable->type;
+    }
+    else {
+      ERROR(ctx, "could not find type named '%s'\n", name);
+    }
+  }
+  else if(ast_is_type(ast, ast_Number)) {
+    return scope_get_Type_from_name(ctx, sr, "int", 1);
+  }
+    else if(ast_is_type(ast, ast_String)) {
+    return scope_get_Type_from_name(ctx, sr, "string", 1);
+  }
+  else if(ast_is_type(ast, ast_Expr)) {
     if(ast_Expr_is_plain(ast)) {
       struct Type* type =
           scope_get_Type_from_ast(ctx, sr, ast_Expr_lhs(ast), search_parent);

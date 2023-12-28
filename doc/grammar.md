@@ -18,7 +18,7 @@ name_with_type -> varname COLON typename
 type_def -> TYPE varname EQUALS LCURLY type_list RCURLY | TYPE varname EQUALS typename SEMICOLON | TYPE varname SEMICOLON
 type_list -> EPSILON | name_with_type SEMICOLON type_list
 
-var_def -> LET varname COLON typename (EQUALS expr)? SEMICOLON
+var_def -> LET varname (COLON typename)? (EQUALS expr)? SEMICOLON
 varname -> ID
 typename -> ID STAR* | TYPE
 

@@ -44,6 +44,9 @@ static struct cg_function* codegen_function_prototype(
     int n_args = ast_Function_num_args(ast_func);
     LLVMTypeRef* params = malloc(sizeof(*params) * n_args);
     ast_foreach_idx(ast_Function_args(ast_func), arg, i) {
+      if(!ast_Variable_type(arg)) {
+        ERROR_ON_AST(ctx, arg, "cannot infer type of '%s'\n", ast_Identifier_name(ast_Variable_name(arg)));
+      }
       params[i] = get_llvm_type_ast(ctx, surroundScope, ast_Variable_type(arg));
     }
     // build ret type

@@ -1,0 +1,35 @@
+func allocate(n: int): void*;
+func print(s: string): void;
+
+extern func intToString(i:int):string;
+
+func printInt(prefix: string, i: int, suffix: string): void {
+  print(prefix);
+  print(intToString(i));
+  print(suffix);
+}
+
+func foo(): int {
+  return 1;
+}
+
+func main(args: string*, nargs: int): int {
+
+  let x = 2;
+  printInt("x=", x, "\n");
+
+  let y = "hello\n";
+  print(y);
+
+  let z = x;
+  z = z+1;
+  printInt("z=", z, "\n");
+
+  # let w = 1 + 1; # error for now
+  # let ww = foo(); # error for now
+
+
+  return 0;
+}
+
+

@@ -30,7 +30,7 @@ type_def:
 ;
 type_list: name_with_type SEMICOLON type_list |;
 
-var_def: LET varname COLON typename (EQUALS expr)? SEMICOLON;
+var_def: LET varname (COLON typename)? (EQUALS expr)? SEMICOLON;
 varname: ID;
 typename: ID STAR*;
 
