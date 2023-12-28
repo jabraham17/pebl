@@ -1,0 +1,5 @@
+pebl
+    filter remove_matches ^\s*#
+    filter remove_inline #.*$
+    extension pebl
+    3rd_gen_scale 3.14
