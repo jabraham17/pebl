@@ -3,7 +3,7 @@ set(SOURCE_DIR
     CACHE INTERNAL "")
 
 #
-# build core
+# build core and peblc.so
 #
 if(${PEBL_SHARED_MODE})
   add_library(core SHARED)
@@ -19,15 +19,21 @@ function(add_sources srcs directory_name)
   target_sources(core PRIVATE ${srcs})
 endfunction()
 
+# add libs for pebl
+target_link_libraries(core PRIVATE pebl_stdlib pebl_runtime)
+
 # build library
 add_subdirectory("${SOURCE_DIR}/common")
 add_subdirectory("${SOURCE_DIR}/context")
 add_subdirectory("${SOURCE_DIR}/ast")
 add_subdirectory("${SOURCE_DIR}/parser")
 
-# add libs for pebl
-target_link_libraries(core PRIVATE pebl_stdlib pebl_runtime)
-
+#
+# build shared object for peblc
+#
+add_library(libpeblc SHARED $<TARGET_OBJECTS:core>)
+set_target_properties(libpeblc PROPERTIES OUTPUT_NAME peblc)
+install(TARGETS libpeblc DESTINATION lib/compiler)
 #
 # build codegen
 #
