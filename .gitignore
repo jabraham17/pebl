@@ -1,8 +1,8 @@
 build
+build-*
 .vscode
 *.ll
 *.o
-build-win
 *.tmp.out
 __pycache__
 a.out
