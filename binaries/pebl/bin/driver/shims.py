@@ -8,5 +8,6 @@ if sys.version_info[1] < 12:
 
 else:
     import typing
+
     def override(func):
         return typing.override(func)

@@ -1,9 +1,7 @@
-
-
 from typing import List, Union, Any
 
-class Passes:
 
+class Passes:
     def __init__(self, name: str, passes: List[Union[str, Any]]):
         self.name = name
         self.passes: List[str] = []
@@ -16,13 +14,16 @@ class Passes:
     def __str__(self) -> str:
         return str(self.name)
 
-    def __eq__(self, other: str):
+    def __eq__(self, other):
         if isinstance(other, str):
             return self.name == other
+        elif isinstance(other, Passes):
+            return self.name == other.name
         return False
 
+
 OptNone = Passes("none", [])
-OptBasic = Passes("basic", ['mem2reg'])
-OptFull = Passes("full", ['default<O3>'])
+OptBasic = Passes("basic", ["mem2reg"])
+OptFull = Passes("full", ["default<O3>"])
 
 Choices = [OptNone, OptBasic, OptFull]
