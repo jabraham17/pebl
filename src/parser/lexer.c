@@ -354,6 +354,9 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   else if(is_keyword(t->lexeme, "export")) t->tt = tt_EXPORT;
   else if(is_keyword(t->lexeme, "type")) t->tt = tt_TYPE;
   else if(is_keyword(t->lexeme, "let")) t->tt = tt_LET;
+  else if(is_keyword(t->lexeme, "true")) t->tt = tt_TRUE;
+  else if(is_keyword(t->lexeme, "false")) t->tt = tt_FALSE;
+  // THESE MUST GO LAST
   else if(is_valid_id(t->lexeme)) t->tt = tt_ID;
   else if(is_valid_num(t->lexeme)) t->tt = tt_NUMBER;
 
@@ -365,6 +368,8 @@ void tokentype_to_string(char* s, enum lexer_tokentype tt) {
   else if(tt == tt_ERROR) bsstrcpy(s, "ERROR");
   else if(tt == tt_ID) bsstrcpy(s, "ID");
   else if(tt == tt_NUMBER) bsstrcpy(s, "NUMBER");
+  else if(tt == tt_TRUE) bsstrcpy(s, "TRUE");
+  else if(tt == tt_FALSE) bsstrcpy(s, "FALSE");
   else if(tt == tt_STRING_LITERAL) bsstrcpy(s, "STRING_LITERAL");
   else if(tt == tt_CHAR_LITERAL) bsstrcpy(s, "CHAR_LITERAL");
   else if(tt == tt_LPAREN) bsstrcpy(s, "LPAREN");

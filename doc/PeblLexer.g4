@@ -42,6 +42,8 @@ ID: [a-zA-Z_][a-zA-Z_0-9]*;
 CHAR_LITERAL: '\'' '\\'? . '\'';
 STRING_LITERAL: '"' ~["]* '"';
 NUMBER: [0-9]+;
+TRUE: 'true';
+FALSE: 'false';
 
 WS: [ \n\t\r]+ -> skip;
-COMMENT: '#'~[\n]* -> skip;
+COMMENT: '#' ~[\n]* -> skip;

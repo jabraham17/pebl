@@ -41,6 +41,7 @@ CODEGEN_BINARY_OPERATOR(DIVIDE, Int8, Int8, Int8, sintBOp)
 // CODEGEN_BINARY_OPERATOR(AND, Ptr, Int, booleanOr)
 // CODEGEN_BINARY_OPERATOR(AND, Ptr, Ptr, booleanOr)
 // CODEGEN_BINARY_OPERATOR(OR, Int8, Int8, booleanOr)
+CODEGEN_UNARY_OPERATOR(NOT, Bool, Bool, negate)
 
 //
 // Int Comparison

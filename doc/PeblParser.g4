@@ -36,10 +36,9 @@ typename: ID STAR*;
 
 expr: atom | atom op atom | preop atom;
 expr_list: expr | expr COMMA expr_list |;
+literal: NUMBER | STRING_LITERAL | CHAR_LITERAL | TRUE | FALSE;
 atom:
-  NUMBER
-  | STRING_LITERAL
-  | CHAR_LITERAL
+  literal
   | varname
   | call_expr
   | varname (DOT | ARROW) varname

@@ -24,7 +24,8 @@ typename -> ID STAR* | TYPE
 
 expr -> atom | atom op atom | preop atom
 expr_list -> EPSILON | expr | expr COMMA expr_list
-atom -> NUMBER | STRING_LITERAL | CHAR_LITERAL | varname | call_expr | varname (DOT | ARROW) varname | LPAREN expr RPAREN
+literal -> NUMBER | STRING_LITERAL | CHAR_LITERAL | TRUE | FALSE
+atom -> literal | varname | call_expr | varname (DOT|ARROW) varname | LPAREN expr RPAREN
 op -> PLUS | MINUS | STAR | DIVIDE | AND | OR | LT | GT | LTEQ | GTEQ | EQ | NEQ | COLON
 preop -> AMPERSAND | STAR | NOT
 

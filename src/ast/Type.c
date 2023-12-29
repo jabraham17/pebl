@@ -24,6 +24,7 @@ struct Type* Type_int_type(struct Context* ctx, int size) {
   char* name;
   if(size == 8) name = "int8";
   else if(size == 64) name = "int64";
+  else if(size == 1) name = "bool";
   else UNIMPLEMENTED("unknown number size '%d'\n", size);
 
   struct ScopeResult* scope = ctx->scope_table;

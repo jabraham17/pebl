@@ -20,6 +20,8 @@ enum lexer_tokentype {
   tt_ERROR,
   tt_ID,
   tt_NUMBER,
+  tt_TRUE,
+  tt_FALSE,
   tt_STRING_LITERAL,
   tt_CHAR_LITERAL,
   tt_LPAREN,
