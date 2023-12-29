@@ -311,7 +311,7 @@ static struct AstNode* parse_expr(struct Context* context) {
 static struct AstNode* parse_expr_list(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(t->tt == tt_AMPERSAND || t->tt == tt_STAR || t->tt == tt_NOT ||
-     t->tt == tt_NUMBER || t->tt == tt_STRING_LITERAL || t->tt == tt_ID) {
+     t->tt == tt_NUMBER || t->tt == tt_STRING_LITERAL || t->tt == tt_CHAR_LITERAL || t->tt == tt_ID) {
     struct AstNode* head = parse_expr(context);
     t = lexer_peek(context, 1);
     if(t->tt == tt_COMMA) {
@@ -323,13 +323,13 @@ static struct AstNode* parse_expr_list(struct Context* context) {
   }
   return NULL;
 }
-// atom -> NUMBER | STRING_LITERAL | varname | call_expr |
+// atom -> NUMBER | STRING_LITERAL | CHAR_LITERAL | varname | call_expr |
 // varname (DOT|ARROW) varname | LPAREN expr RPAREN
 static struct AstNode* parse_atom(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(t->tt == tt_NUMBER) {
     t = expect(context, tt_NUMBER);
-    struct AstNode* num_node = ast_build_Number(atoi(t->lexeme));
+    struct AstNode* num_node = ast_build_Number(atoi(t->lexeme), 64);
     add_location_for_token(context, num_node, t);
     return num_node;
   } else if(t->tt == tt_STRING_LITERAL) {
@@ -337,7 +337,14 @@ static struct AstNode* parse_atom(struct Context* context) {
     struct AstNode* string_node = ast_build_String(t->lexeme);
     add_location_for_token(context, string_node, t);
     return string_node;
-  } else if(t->tt == tt_ID) {
+  }
+else if(t->tt == tt_CHAR_LITERAL) {
+    t = expect(context, tt_CHAR_LITERAL);
+    struct AstNode* char_node = ast_build_Number((int)t->lexeme[0], 8);
+    add_location_for_token(context, char_node, t);
+    return char_node;
+  }
+   else if(t->tt == tt_ID) {
     if(lexer_peek(context, 2)->tt == tt_LPAREN) {
       return parse_call_expr(context);
     } else {

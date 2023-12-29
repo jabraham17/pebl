@@ -117,6 +117,45 @@ static void skip_whitespace_comments(struct Context* context) {
   }
 }
 
+// assumes we have already eaten the ', just reads until the next '
+static struct lexer_token* handle_char_literal(struct Context* context) {
+  struct lexer_token* t = empty_token(context);
+  char literal;
+  int pos = get_char_pos(context, &literal);
+  if(literal == EOF) {
+    // put the eof back and return error
+    seek_pos(context, pos);
+    return t;
+  }
+  if(literal == '\\') {
+    // consume the '\'
+    literal = get_char(context);
+    // if the escape is a valid escape, keep it
+    if(literal == '\\') {
+      literal = '\\';
+    } else if(literal == 'n') {
+      literal = '\n';
+    } else if(literal == 't') {
+      literal = '\t';
+    } else if(literal == '0') {
+      literal = '\0';
+    } else if(literal == '\'') {
+      literal = '\'';
+    } else {
+      WARNING(context, "invalid escape sequence '\\%c'\n", literal);
+      return t;
+    }
+  }
+  char next = get_char(context);
+  if(next != '\'') {
+    return t;
+  }
+  t->lexeme[0] = literal;
+  t->lexeme[1] = 0;
+  t->tt = tt_CHAR_LITERAL;
+  return t;
+}
+
 // assumes we have already eaten the '"', just reads until the next '"'
 static struct lexer_token* handle_strings(struct Context* context) {
   struct lexer_token* t = empty_token(context);
@@ -140,6 +179,10 @@ static struct lexer_token* handle_strings(struct Context* context) {
         next = '\n';
       } else if(next == 't') {
         next = '\t';
+      } else if(next == '0') {
+        next = '\0';
+      } else if(next == '"') {
+        next = '"';
       } else {
         WARNING(context, "invalid escape sequence '\\%c'\n", next);
         return t;
@@ -221,6 +264,11 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   // handle strings
   if(c1 == '"') {
     return handle_strings(context);
+  }
+
+  // handle char
+  if(c1 == '\'') {
+    return handle_char_literal(context);
   }
 
   // handle all 2 char tokens
@@ -318,6 +366,7 @@ void tokentype_to_string(char* s, enum lexer_tokentype tt) {
   else if(tt == tt_ID) bsstrcpy(s, "ID");
   else if(tt == tt_NUMBER) bsstrcpy(s, "NUMBER");
   else if(tt == tt_STRING_LITERAL) bsstrcpy(s, "STRING_LITERAL");
+  else if(tt == tt_CHAR_LITERAL) bsstrcpy(s, "CHAR_LITERAL");
   else if(tt == tt_LPAREN) bsstrcpy(s, "LPAREN");
   else if(tt == tt_RPAREN) bsstrcpy(s, "RPAREN");
   else if(tt == tt_LCURLY) bsstrcpy(s, "LCURLY");

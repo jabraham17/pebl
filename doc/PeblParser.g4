@@ -39,6 +39,7 @@ expr_list: expr | expr COMMA expr_list |;
 atom:
   NUMBER
   | STRING_LITERAL
+  | CHAR_LITERAL
   | varname
   | call_expr
   | varname (DOT | ARROW) varname

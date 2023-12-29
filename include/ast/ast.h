@@ -51,6 +51,7 @@ struct AstNode {
   struct AstNode* next;
   struct AstNode* children[AST_MAX_CHILDREN];
   int int_value;
+  int int_value2;
   char* str_value;
 };
 
@@ -210,9 +211,10 @@ struct AstNode* ast_Call_args(struct AstNode* ast); // returns an Identifier
 int ast_Call_num_args(struct AstNode* ast);
 
 /* Number */
-struct AstNode* ast_build_Number(int value);
+struct AstNode* ast_build_Number(int value, int size);
 int ast_verify_Number(struct AstNode* ast);
 int ast_Number_value(struct AstNode* ast);
+int ast_Number_size(struct AstNode* ast);
 
 /* String */
 struct AstNode* ast_build_String(char* value);
