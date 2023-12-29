@@ -13,6 +13,7 @@
 //
 
 #define Int "int"
+#define Int8 "int8"
 #define Ptr "*"
 #define Any ""
 
@@ -23,8 +24,12 @@ CODEGEN_BINARY_OPERATOR(PLUS, Int, Int, intBOp)
 CODEGEN_BINARY_OPERATOR(MINUS, Int, Int, intBOp)
 CODEGEN_BINARY_OPERATOR(MULT, Int, Int, intBOp)
 CODEGEN_BINARY_OPERATOR(DIVIDE, Int, Int, intBOp)
-CODEGEN_BINARY_OPERATOR(AND, Int, Int, intBOp)
-CODEGEN_BINARY_OPERATOR(OR, Int, Int, intBOp)
+
+CODEGEN_BINARY_OPERATOR(PLUS, Int8, Int8, intBOp)
+CODEGEN_BINARY_OPERATOR(MINUS, Int8, Int8, intBOp)
+CODEGEN_BINARY_OPERATOR(MULT, Int8, Int8, intBOp)
+CODEGEN_BINARY_OPERATOR(DIVIDE, Int8, Int8, intBOp)
+
 
 //
 // Int Comparison
