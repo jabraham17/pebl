@@ -67,7 +67,7 @@ call_expr: varname LPAREN expr_list RPAREN;
 assignment:
   STAR? varname ((DOT | ARROW) varname)? EQUALS expr SEMICOLON
 ;
-if_stmt: IF expr body (ELSE body)?;
+if_stmt: IF expr body (ELSE (body | if_stmt))?;
 while_stmt: WHILE expr body;
 return_stmt: RETURN expr? SEMICOLON;
 break_stmt: BREAK SEMICOLON;

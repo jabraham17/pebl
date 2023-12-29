@@ -6,3 +6,4 @@ build-*
 *.tmp.out
 __pycache__
 a.out
+.antlr

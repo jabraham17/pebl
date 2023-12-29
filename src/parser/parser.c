@@ -457,7 +457,7 @@ static struct AstNode* parse_assignment(struct Context* context) {
   add_location_for_token(context, assign_node, lhs_tok);
   return assign_node;
 }
-// if_stmt -> IF expr body (ELSE body)?
+// if_stmt -> IF expr body (ELSE (body | if_stmt))?
 static struct AstNode* parse_if_stmt(struct Context* context) {
   struct lexer_token* if_tok = expect(context, tt_IF);
   struct AstNode* cond = parse_expr(context);
@@ -465,7 +465,13 @@ static struct AstNode* parse_if_stmt(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(t->tt == tt_ELSE) {
     expect(context, tt_ELSE);
-    struct AstNode* else_body = parse_body(context);
+    struct AstNode* else_body = NULL;
+    if (lexer_peek(context,1)->tt == tt_IF) {
+      struct AstNode* nested_if = parse_if_stmt(context);
+      else_body = ast_build_Block(nested_if);
+    } else {
+      else_body = parse_body(context);
+    }
     struct AstNode* if_stmt = ast_build_Conditional(cond, if_body, else_body);
     add_location_for_token(context, if_stmt, if_tok);
     return if_stmt;
