@@ -94,9 +94,13 @@ int Type_get_num_fields(struct Type* t) {
 }
 
 int Type_is_pointer(struct Type* t) {
-  return t->kind == tk_POINTER && t->pointer_to != NULL;
+  struct Type* base_type = Type_get_base_type(t);
+  return base_type->kind == tk_POINTER && base_type->pointer_to != NULL;
 }
-int Type_is_opaque(struct Type* t) { return t->kind == tk_OPAQUE; }
+int Type_is_opaque(struct Type* t) {
+  struct Type* base_type = Type_get_base_type(t);
+  return base_type->kind == tk_OPAQUE;
+}
 
 int Type_is_signed(struct Type* t) {
   // all integers are signed, everything else is unsigned
