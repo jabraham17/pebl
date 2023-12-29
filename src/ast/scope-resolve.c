@@ -90,9 +90,6 @@ static void check_for_redefinition(
   } else if(ast_is_type(ast, ast_Type)) {
     name = ast_Identifier_name(ast_Type_name(ast));
     redef_type = "type";
-  } else if(ast_is_type(ast, ast_Function)) {
-    name = ast_Identifier_name(ast_Function_name(ast));
-    redef_type = "function";
   } else {
     UNIMPLEMENTED("unimplemented redefintion check\n");
   }
@@ -226,49 +223,76 @@ static void scope_resolve_internal(
     struct ScopeResult* scope,
     struct AstNode* ast);
 
+static void add_body_to_func_sym(
+    struct Context* ctx,
+    struct ScopeResult* sr,
+    struct ScopeSymbol* func_sym) {
+  ASSERT(func_sym->sst == sst_Function);
+  struct AstNode* func = func_sym->ss_function->function;
+  // build the arguments into the ScopeFunction entry
+  ast_foreach_idx(ast_Function_args(func), arg, idx) {
+    struct AstNode* typename = ast_Variable_type(arg);
+    if(!typename) {
+      ERROR_ON_AST(
+          ctx,
+          arg,
+          "cannot infer type for '%s'\n",
+          ast_Identifier_name(ast_Variable_name(arg)));
+    }
+    struct Type* arg_type = scope_get_Type_from_ast(ctx, sr, typename, 1);
+    func_sym->ss_function->args[idx] = ScopeSymbol_init_var(arg, arg_type);
+  }
+
+  // create a new scope for the func body, insert the arguments into it
+  struct AstNode* body = ast_Function_body(func);
+  struct ScopeResult* body_scope = allocate_ScopeResult(ctx, body, sr);
+  for(int i = 0; i < func_sym->ss_function->num_args; i++) {
+    LL_APPEND(body_scope->symbols, func_sym->ss_function->args[i]);
+  }
+  // traverse the body
+  ast_foreach(ast_Block_stmts(body), s) {
+    scope_resolve_internal(ctx, body_scope, s);
+  }
+}
+
 static struct ScopeSymbol* build_ScopeSymbol_for_func(
     struct Context* ctx,
     struct ScopeResult* sr,
     struct AstNode* func) {
   ASSERT(ast_is_type(func, ast_Function));
-  check_for_redefinition(ctx, sr, func);
 
-  // 1. a scope entry for the func name
-  // 2. build the arguments into the ScopeFunction entry
-  // 3. create a new scope for the func body, insert the arguments into it
-  // 4. traverse the body
+  char* name = ast_Identifier_name(ast_Function_name(func));
+  struct ScopeSymbol* ss = scope_lookup_name(ctx, sr, name, 0);
+  if(ss) {
+    if(ss->sst == sst_Function &&
+       ast_Function_has_body(ss->ss_function->function) &&
+       !ast_Function_has_body(func)) {
+        // func is just a prototype, can ignore
+      return ss;
+    } else if(
+        ss->sst == sst_Function &&
+        !ast_Function_has_body(ss->ss_function->function) &&
+        ast_Function_has_body(func)) {
+      // need to add a body
+      ss->ss_function->function = func;
+      add_body_to_func_sym(ctx, sr, ss);
+      return ss;
+    } else {
+      ERROR_ON_AST(
+          ctx,
+          func,
+          "cannot redefine function '%s'\n",
+          name);
+    }
+  }
 
-  // 1.
+  // create a scope entry for the func name
   struct AstNode* rettype_typename = ast_Function_ret_type(func);
   struct Type* rettype = scope_get_Type_from_ast(ctx, sr, rettype_typename, 1);
   struct ScopeSymbol* func_ss = ScopeSymbol_init_func(func, rettype);
   LL_APPEND(sr->symbols, func_ss);
-
   if(ast_Function_has_body(func)) {
-    // 2.
-    ast_foreach_idx(ast_Function_args(func), arg, idx) {
-      struct AstNode* typename = ast_Variable_type(arg);
-      if(!typename) {
-        ERROR_ON_AST(
-            ctx,
-            arg,
-            "cannot infer type for '%s'\n",
-            ast_Identifier_name(ast_Variable_name(arg)));
-      }
-      struct Type* arg_type = scope_get_Type_from_ast(ctx, sr, typename, 1);
-      func_ss->ss_function->args[idx] = ScopeSymbol_init_var(arg, arg_type);
-    }
-
-    // 3.
-    struct AstNode* body = ast_Function_body(func);
-    struct ScopeResult* body_scope = allocate_ScopeResult(ctx, body, sr);
-    for(int i = 0; i < func_ss->ss_function->num_args; i++) {
-      LL_APPEND(body_scope->symbols, func_ss->ss_function->args[i]);
-    }
-    // 4.
-    ast_foreach(ast_Block_stmts(body), s) {
-      scope_resolve_internal(ctx, body_scope, s);
-    }
+    add_body_to_func_sym(ctx, sr, func_ss);
   }
 
   return func_ss;
@@ -483,21 +507,16 @@ struct Type* scope_get_Type_from_ast(
     struct ScopeSymbol* sym = scope_lookup_name(ctx, sr, name, search_parent);
     if(sym && sym->sst == sst_Type) {
       return sym->ss_type;
-    }
-    else if(sym && sym->sst == sst_Variable) {
+    } else if(sym && sym->sst == sst_Variable) {
       return sym->ss_variable->type;
-    }
-    else {
+    } else {
       ERROR(ctx, "could not find type named '%s'\n", name);
     }
-  }
-  else if(ast_is_type(ast, ast_Number)) {
+  } else if(ast_is_type(ast, ast_Number)) {
     return scope_get_Type_from_name(ctx, sr, "int", 1);
-  }
-    else if(ast_is_type(ast, ast_String)) {
+  } else if(ast_is_type(ast, ast_String)) {
     return scope_get_Type_from_name(ctx, sr, "string", 1);
-  }
-  else if(ast_is_type(ast, ast_Expr)) {
+  } else if(ast_is_type(ast, ast_Expr)) {
     if(ast_Expr_is_plain(ast)) {
       struct Type* type =
           scope_get_Type_from_ast(ctx, sr, ast_Expr_lhs(ast), search_parent);
