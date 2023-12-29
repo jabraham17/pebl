@@ -373,8 +373,9 @@ struct ScopeResult* scope_lookup(struct Context* ctx, struct AstNode* ast) {
 // PTR_ALIAS(name, alias_to_basetpy)
 #define BUILTIN_TYPES(BUILTIN, ALIAS, PTR_ALIAS)                               \
   BUILTIN(void, 0)                                                             \
-  BUILTIN(int64, 8)                                                            \
-  BUILTIN(int8, 1)                                                             \
+  BUILTIN(int64, 64)                                                           \
+  BUILTIN(int8, 8)                                                             \
+  BUILTIN(bool, 1)                                                             \
   ALIAS(int, int64)                                                            \
   ALIAS(char, int8)                                                            \
   PTR_ALIAS(string, char)
@@ -510,11 +511,7 @@ struct Type* scope_get_Type_from_ast(
     }
   } else if(ast_is_type(ast, ast_Number)) {
     int size = ast_Number_size(ast);
-    struct Type* t = NULL;
-    if(size == 8) t = scope_get_Type_from_name(ctx, sr, "int8", 1);
-    else if(size == 64) t = scope_get_Type_from_name(ctx, sr, "int64", 1);
-    else ERROR_ON_AST(ctx, ast, "unknown number size '%d'\n", size);
-    return t;
+    return Type_int_type(ctx, size);
   } else if(ast_is_type(ast, ast_String)) {
     return scope_get_Type_from_name(ctx, sr, "string", 1);
   } else if(ast_is_type(ast, ast_Expr)) {

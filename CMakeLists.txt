@@ -35,6 +35,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 project(Pebl LANGUAGES C CXX)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 enable_language(Pebl)
+message(STATUS "Using peblc: ${CMAKE_Pebl_COMPILER}")
 
 # add linker flags to go faster
 message(STATUS "Using compiler from ${CMAKE_C_COMPILER_ID}")

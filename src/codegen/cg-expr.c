@@ -22,25 +22,21 @@ codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
       struct Type* rhsType =
           scope_get_Type_from_ast(ctx, sr, ast_Expr_rhs(ast), 1);
       struct Type* lhsType = lhsVal->type;
-      if(Type_eq(lhsType, rhsType)) {
-        return lhsVal;
-      } else {
-        LLVMValueRef val = LLVMBuildLoad2(
-            ctx->codegen->builder,
-            lhsVal->cg_type,
-            lhsVal->value,
-            "");
-        val = LLVMBuildIntCast2(
-            ctx->codegen->builder,
-            val,
-            get_llvm_type(ctx, sr, rhsType),
-            1,
-            "cast");
+      LLVMValueRef val = LLVMBuildLoad2(
+          ctx->codegen->builder,
+          lhsVal->cg_type,
+          lhsVal->value,
+          "");
+      struct cg_value* casted = build_cast(ctx, sr, lhsType, val, rhsType);
+      // if not casted, unknwon cast
+      if(casted) {
         return allocate_stack_for_temp(
             ctx,
-            get_llvm_type(ctx, sr, rhsType),
-            val,
-            rhsType);
+            casted->cg_type,
+            casted->value,
+            casted->type);
+      } else {
+        ERROR_ON_AST(ctx, ast, "no valid cast from '%s' to '%s'\n", Type_to_string(lhsType), Type_to_string(rhsType));
       }
     }
 

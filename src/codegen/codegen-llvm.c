@@ -134,10 +134,12 @@ static struct cg_value* codegen_constant_expr(
           codegen_constant_expr(ctx, ast_Expr_lhs(ast), sr);
       struct Type* rhsType =
           scope_get_Type_from_ast(ctx, sr, ast_Expr_rhs(ast), 1);
-      LLVMTypeRef rhsLLVMType = get_llvm_type(ctx, sr, rhsType);
-      LLVMValueRef val = LLVMConstIntCast(lhsVal->value, rhsLLVMType, 1);
 
-      return add_temp_value(ctx, val, rhsLLVMType, rhsType);
+      struct cg_value* casted = build_const_cast(ctx, sr, lhsVal->type, lhsVal->value, rhsType);
+      if(!casted) {
+        ERROR_ON_AST(ctx, ast, "no valid cast from '%s' to '%s'\n", Type_to_string(lhsVal->type), Type_to_string(rhsType));
+      }
+      return casted;
 
     } else {
       UNIMPLEMENTED("unknown constant expr type\n");

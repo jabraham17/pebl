@@ -26,7 +26,24 @@ struct cg_function* add_function(
 
 char* mangled_name(struct Context* ctx, struct AstNode* ast);
 
-struct cg_value* get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str);
+// always works on plain values, NOT stack ptrs
+// proper usage needs to load a value (if not one already) before calling these
+LLVMValueRef build_ptrtoint(struct Context* ctx, struct ScopeResult* scope, LLVMValueRef value, struct Type* intType);
+struct cg_value* build_cast(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct Type* valueType,
+    LLVMValueRef value,
+    struct Type* newType);
+struct cg_value* build_const_cast(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct Type* valueType,
+     LLVMValueRef value,
+    struct Type* newType);
+
+struct cg_value*
+get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str);
 
 LLVMTypeRef
 get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt);

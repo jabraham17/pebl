@@ -93,28 +93,203 @@ char* mangled_name(struct Context* ctx, struct AstNode* ast) {
   }
 }
 
-struct cg_value* get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str) {
-      int len = strlen(str) + 1;
+static LLVMValueRef build_ptrtoint_internal(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    LLVMValueRef value,
+    struct Type* intType,
+    int is_const) {
+  ASSERT(
+      LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind &&
+      Type_is_integer(intType));
+  int ptrSize = Type_ptr_size();
+  // cast to int
+  LLVMTypeRef intptrType =
+      LLVMIntTypeInContext(ctx->codegen->llvmContext, ptrSize);
+  LLVMValueRef llvmVal;
+  if(!is_const)
+    llvmVal =
+        LLVMBuildPtrToInt(ctx->codegen->builder, value, intptrType, "cast");
+  else llvmVal = LLVMConstPtrToInt(value, intptrType);
 
-    LLVMTypeRef strType =
-        LLVMArrayType2(LLVMInt8TypeInContext(ctx->codegen->llvmContext), len);
-    LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
-    LLVMSetInitializer(
-        strVal,
-        LLVMConstStringInContext(
-            ctx->codegen->llvmContext,
-            str,
-            len,
-            /*dont null term*/ 1));
-    LLVMSetGlobalConstant(strVal, 1);
-    LLVMSetLinkage(strVal, LLVMPrivateLinkage);
-    LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);
+  LLVMTypeRef intLLVMType = get_llvm_type(ctx, scope, intType);
+  // if the ptr size is not the size we are casting to, build int cast
+  if(ptrSize != Type_get_size(intType)) {
+    int sourceIsSigned = 0;
+    if(!is_const)
+      llvmVal = LLVMBuildIntCast2(
+          ctx->codegen->builder,
+          llvmVal,
+          intLLVMType,
+          sourceIsSigned,
+          "cast");
+    else llvmVal = LLVMConstIntCast(llvmVal, intLLVMType, sourceIsSigned);
+  }
+  ASSERT(LLVMGetTypeKind(LLVMTypeOf(llvmVal)) == LLVMGetTypeKind(intLLVMType));
+  return llvmVal;
+}
 
-    return add_temp_value(
-        ctx,
-        strVal,
-        LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0),
-        scope_get_Type_from_name(ctx, scope, "string", 1));
+static struct cg_value* build_cast_internal(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct Type* valueType,
+    LLVMValueRef value,
+    struct Type* newType,
+    int is_const) {
+  LLVMTypeRef newLLVMType = get_llvm_type(ctx, scope, newType);
+  // check for noop cast
+  if(Type_eq(valueType, newType)) {
+    return add_temp_value(ctx, value, newLLVMType, newType);
+  }
+
+  // ptr -> ptr
+  // also a noop cast in llvm terms, just adjust the Type
+  if(Type_is_pointer(valueType) && Type_is_pointer(newType)) {
+    return add_temp_value(ctx, value, newLLVMType, newType);
+  }
+
+  // int -> int
+  // potentially a noop cast if the ints are the same size (and samed
+  // signedness)
+  if(Type_is_integer(valueType) && Type_is_integer(newType)) {
+    if(Type_get_size(valueType) == Type_get_size(newType) &&
+       Type_is_signed(valueType) == Type_is_signed(newType)) {
+      // noop
+      return add_temp_value(ctx, value, newLLVMType, newType);
+    }
+    int sourceIsSigned = Type_is_signed(valueType);
+    LLVMValueRef llvmVal;
+    if(!is_const)
+      llvmVal = LLVMBuildIntCast2(
+          ctx->codegen->builder,
+          value,
+          newLLVMType,
+          sourceIsSigned,
+          "cast");
+    else llvmVal = LLVMConstIntCast(value, newLLVMType, sourceIsSigned);
+    return add_temp_value(ctx, llvmVal, newLLVMType, newType);
+  }
+
+  // ptrtoint
+  if(Type_is_pointer(valueType) && Type_is_integer(newType)) {
+    LLVMValueRef llvmVal =
+        build_ptrtoint_internal(ctx, scope, value, newType, is_const);
+    return add_temp_value(ctx, llvmVal, newLLVMType, newType);
+  }
+
+  // inttoptr
+  if(Type_is_integer(valueType) && Type_is_pointer(newType)) {
+    // if the integer is not the same size as a ptr, build int cast
+    int ptrSize = Type_ptr_size();
+    LLVMValueRef llvmVal = value;
+    if(ptrSize != Type_get_size(valueType)) {
+      int sourceIsSigned = Type_is_signed(valueType);
+      LLVMTypeRef intptrType =
+          LLVMIntTypeInContext(ctx->codegen->llvmContext, ptrSize);
+      if(!is_const)
+        llvmVal = LLVMBuildIntCast2(
+            ctx->codegen->builder,
+            llvmVal,
+            intptrType,
+            sourceIsSigned,
+            "cast");
+      else llvmVal = LLVMConstIntCast(llvmVal, intptrType, sourceIsSigned);
+    }
+    // cast to ptr
+    if(!is_const)
+      llvmVal = LLVMBuildIntToPtr(
+          ctx->codegen->builder,
+          llvmVal,
+          newLLVMType,
+          "cast");
+    else llvmVal = LLVMConstIntToPtr(llvmVal, newLLVMType);
+    return add_temp_value(ctx, llvmVal, newLLVMType, newType);
+  }
+
+  // ptr -> bool
+  // int -> bool
+  // build ne compare aginst null value
+  if((Type_is_integer(valueType) || Type_is_boolean(valueType)) && Type_is_boolean(newType)) {
+    LLVMValueRef nullValue = LLVMConstNull(LLVMTypeOf(value));
+    LLVMValueRef llvmVal;
+    if(!is_const)llvmVal = LLVMBuildICmp(
+        ctx->codegen->builder,
+        LLVMIntNE,
+        value,
+        nullValue,
+        "cast");
+        else llvmVal = LLVMConstICmp(LLVMIntNE, value, nullValue);
+    return add_temp_value(ctx, llvmVal, newLLVMType, newType);
+  }
+
+  // bool -> int
+  if(Type_is_boolean(valueType) && Type_is_integer(newType)) {
+    // do extension
+    int sourceIsSigned = Type_is_signed(valueType);
+    LLVMValueRef llvmVal;
+    if(!is_const)
+    llvmVal = LLVMBuildIntCast2(
+        ctx->codegen->builder,
+        value,
+        newLLVMType,
+        sourceIsSigned,
+        "cast");
+        else llvmVal = LLVMConstIntCast(value, newLLVMType, sourceIsSigned);
+    return add_temp_value(ctx, llvmVal, newLLVMType, newType);
+  }
+
+  // unimplemtned cast type
+  return NULL;
+}
+
+LLVMValueRef build_ptrtoint(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    LLVMValueRef value,
+    struct Type* intType) {
+  return build_ptrtoint_internal(ctx, scope, value, intType, 0);
+}
+
+struct cg_value* build_cast(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct Type* valueType,
+    LLVMValueRef value,
+    struct Type* newType) {
+  return build_cast_internal(ctx, scope, valueType, value, newType, 0);
+}
+struct cg_value* build_const_cast(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct Type* valueType,
+    LLVMValueRef value,
+    struct Type* newType) {
+  return build_cast_internal(ctx, scope, valueType, value, newType, 1);
+}
+
+struct cg_value*
+get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str) {
+  int len = strlen(str) + 1;
+
+  LLVMTypeRef strType =
+      LLVMArrayType2(LLVMInt8TypeInContext(ctx->codegen->llvmContext), len);
+  LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
+  LLVMSetInitializer(
+      strVal,
+      LLVMConstStringInContext(
+          ctx->codegen->llvmContext,
+          str,
+          len,
+          /*dont null term*/ 1));
+  LLVMSetGlobalConstant(strVal, 1);
+  LLVMSetLinkage(strVal, LLVMPrivateLinkage);
+  LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);
+
+  return add_temp_value(
+      ctx,
+      strVal,
+      LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0),
+      scope_get_Type_from_name(ctx, scope, "string", 1));
 }
 
 LLVMTypeRef
@@ -123,10 +298,10 @@ get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt) {
   if(tt->kind == tk_BUILTIN) {
 
     // special case for 'void'
-    if(Type_eq(tt, scope_get_Type_from_name(ctx, scope, "void", 1))) {
+    if(Type_is_void(tt)) {
       return LLVMVoidTypeInContext(ctx->codegen->llvmContext);
     } else { // assumes ints
-      return LLVMIntTypeInContext(ctx->codegen->llvmContext, tt->size * 8);
+      return LLVMIntTypeInContext(ctx->codegen->llvmContext, Type_get_size(tt));
     }
 
   } else if(tt->kind == tk_POINTER) {
