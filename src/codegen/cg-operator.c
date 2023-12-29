@@ -44,7 +44,7 @@ static struct cg_value* codegenOperator_intBOp(
 
 static struct cg_value* codegenOperator_intCompare(
     struct Context* ctx,
-    __attribute__((unused)) struct ScopeResult* scope,
+    struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
@@ -66,18 +66,21 @@ static struct cg_value* codegenOperator_intCompare(
   }
   LLVMValueRef resVal =
       LLVMBuildICmp(ctx->codegen->builder, pred, lhsVal, rhsVal, "");
+  struct Type* resType = scope_get_Type_from_name(ctx, scope, "int", 1);
+  LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
+  resVal = LLVMBuildIntCast2(ctx->codegen->builder, resVal, resLLVMType, 1, "");
 
   struct cg_value* res = allocate_stack_for_temp(
       ctx,
-      LLVMTypeOf(resVal),
+      resLLVMType,
       resVal,
-      NULL /**TODO:this is probably wrong*/);
+      resType);
   return res;
 }
 
 static struct cg_value* codegenOperator_ptrCompare(
     struct Context* ctx,
-    __attribute__((unused)) struct ScopeResult* scope,
+    struct ScopeResult* scope,
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
@@ -114,12 +117,15 @@ static struct cg_value* codegenOperator_ptrCompare(
   }
   LLVMValueRef resVal =
       LLVMBuildICmp(ctx->codegen->builder, pred, lhsVal, rhsVal, "");
+  struct Type* resType = scope_get_Type_from_name(ctx, scope, "int", 1);
+  LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
+  resVal = LLVMBuildIntCast2(ctx->codegen->builder, resVal, resLLVMType, 1, "");
 
   struct cg_value* res = allocate_stack_for_temp(
       ctx,
-      LLVMTypeOf(resVal),
+      resLLVMType,
       resVal,
-      NULL /**TODO:this is probably wrong*/);
+      resType);
   return res;
 }
 
