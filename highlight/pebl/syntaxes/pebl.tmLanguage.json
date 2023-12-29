@@ -95,8 +95,29 @@
           "name": "string.quoted.double.pebl",
           "patterns": [
             {
-              "matches": "\\\\(\\\\|[nt\"])",
-              "name": "constant.character.escapes.pebl"
+              "match": "\\\\(\\\\|[nt0\"])",
+              "name": "constant.character.escape.pebl"
+            }
+          ]
+        },
+        {
+          "begin": "'",
+          "end": "'",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.pebl"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.pebl"
+            }
+          },
+          "name": "string.quoted.single.pebl",
+          "patterns": [
+            {
+              "match": "\\\\(\\\\|[nt0'])",
+              "name": "constant.character.escape.pebl"
             }
           ]
         }
