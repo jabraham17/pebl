@@ -270,7 +270,11 @@ def main(raw_args: List[str]) -> int:
     if args.compile:
         stop_after = None
         if args.human_readable:
-            stop_after = StopAfter.COMPILE if args.opt == optimization.OptNone else StopAfter.OPTIMIZE
+            stop_after = (
+                StopAfter.COMPILE
+                if args.opt == optimization.OptNone
+                else StopAfter.OPTIMIZE
+            )
 
         file = args.files[0]
         build_file(file, toolchain, temp_dir, stop_after, args.output)
