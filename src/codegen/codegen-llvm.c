@@ -45,7 +45,11 @@ static struct cg_function* codegen_function_prototype(
     LLVMTypeRef* params = malloc(sizeof(*params) * n_args);
     ast_foreach_idx(ast_Function_args(ast_func), arg, i) {
       if(!ast_Variable_type(arg)) {
-        ERROR_ON_AST(ctx, arg, "cannot infer type of '%s'\n", ast_Identifier_name(ast_Variable_name(arg)));
+        ERROR_ON_AST(
+            ctx,
+            arg,
+            "cannot infer type of '%s'\n",
+            ast_Identifier_name(ast_Variable_name(arg)));
       }
       params[i] = get_llvm_type_ast(ctx, surroundScope, ast_Variable_type(arg));
     }
@@ -95,6 +99,10 @@ static int ast_is_constant_expr(struct AstNode* ast) {
     // currently only allows very simple constants
     if(ast_Expr_is_plain(ast) && ast_is_constant_expr(ast_Expr_lhs(ast)))
       return 1;
+    else if(
+        ast_Expr_is_binop(ast) && ast_Expr_op(ast) == op_CAST &&
+        ast_is_constant_expr(ast_Expr_lhs(ast)))
+      return 1;
     else return 0;
   }
   return ast_is_constant(ast);
@@ -140,6 +148,19 @@ static struct cg_value* codegen_constant_expr(
   } else if(ast_is_type(ast, ast_Expr)) {
     if(ast_Expr_is_plain(ast) && ast_is_constant_expr(ast_Expr_lhs(ast))) {
       return codegen_constant_expr(ctx, ast_Expr_lhs(ast), sr);
+    } else if(
+        ast_Expr_is_binop(ast) && ast_Expr_op(ast) == op_CAST &&
+        ast_is_constant_expr(ast_Expr_lhs(ast))) {
+
+      struct cg_value* lhsVal =
+          codegen_constant_expr(ctx, ast_Expr_lhs(ast), sr);
+      struct Type* rhsType =
+          scope_get_Type_from_ast(ctx, sr, ast_Expr_rhs(ast), 1);
+      LLVMTypeRef rhsLLVMType = get_llvm_type(ctx, sr, rhsType);
+      LLVMValueRef val = LLVMConstIntCast(lhsVal->value, rhsLLVMType, 1);
+
+      return add_temp_value(ctx, val, rhsLLVMType, rhsType);
+
     } else {
       UNIMPLEMENTED("unknown constant expr type\n");
     }
