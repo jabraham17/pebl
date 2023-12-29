@@ -19,7 +19,7 @@ static void check_allowed_at_file_scope_helper(
             a,
             "function '%s' can only be declared at file scope\n",
             ast_Identifier_name(ast_Function_name(a)));
-      }else if(ast_is_type(a, ast_Type)) {
+      } else if(ast_is_type(a, ast_Type)) {
         ERROR_ON_AST(
             context,
             a,
@@ -27,7 +27,8 @@ static void check_allowed_at_file_scope_helper(
             ast_Identifier_name(ast_Type_name(a)));
       }
     } else {
-      if(!ast_is_type(a, ast_Function) && !ast_is_type(a, ast_Type) && !ast_is_type(a, ast_Variable)) {
+      if(!ast_is_type(a, ast_Function) && !ast_is_type(a, ast_Type) &&
+         !ast_is_type(a, ast_Variable)) {
         ERROR_ON_AST(
             context,
             a,

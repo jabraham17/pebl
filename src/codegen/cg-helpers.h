@@ -26,9 +26,16 @@ struct cg_function* add_function(
 
 char* mangled_name(struct Context* ctx, struct AstNode* ast);
 
-LLVMTypeRef get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt);
-LLVMTypeRef get_llvm_type_ast(struct Context* ctx, struct ScopeResult* scope, struct AstNode* ast);
-LLVMTypeRef get_llvm_type_sym(struct Context* ctx, struct ScopeResult* scope, struct ScopeSymbol* sym);
+LLVMTypeRef
+get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt);
+LLVMTypeRef get_llvm_type_ast(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct AstNode* ast);
+LLVMTypeRef get_llvm_type_sym(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct ScopeSymbol* sym);
 
 struct cg_value* allocate_stack_for_sym(
     struct Context* ctx,

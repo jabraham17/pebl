@@ -38,11 +38,11 @@ enable_language(Pebl)
 
 # add linker flags to go faster
 message(STATUS "Using compiler from ${CMAKE_C_COMPILER_ID}")
-if (CMAKE_C_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
   add_link_options(-fuse-ld=mold)
   message(STATUS "Using mold linker")
-elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  # sadly, not all versions of gcc accept fuse=mold 
+elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  # sadly, not all versions of gcc accept fuse=mold
   add_link_options(-fuse-ld=gold)
   message(STATUS "Using gold linker")
 endif()

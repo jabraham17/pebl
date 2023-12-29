@@ -2,13 +2,12 @@
 #include "cg-expr.h"
 
 #include "ast/Type.h"
-#include "ast/scope-resolve.h"
 #include "ast/ast.h"
+#include "ast/scope-resolve.h"
 
 #include "cg-helpers.h"
 #include "cg-inst.h"
 #include "cg-operator.h"
-
 
 struct cg_value*
 codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
@@ -20,7 +19,8 @@ codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
     // TODO: make cast look better
     if(ast_Expr_op(ast) == op_CAST) {
       struct cg_value* lhsVal = codegen_helper(ctx, ast_Expr_lhs(ast), sr);
-      struct Type* rhsType = scope_get_Type_from_ast(ctx, sr, ast_Expr_rhs(ast), 1);
+      struct Type* rhsType =
+          scope_get_Type_from_ast(ctx, sr, ast_Expr_rhs(ast), 1);
       struct Type* lhsType = lhsVal->type;
       if(Type_eq(lhsType, rhsType)) {
         return lhsVal;

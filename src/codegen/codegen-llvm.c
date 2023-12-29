@@ -115,20 +115,15 @@ static struct cg_value* codegen_constant_expr(
   ASSERT(ast_is_constant_expr(ast));
   if(ast_is_type(ast, ast_Number)) {
     int size = ast_Number_size(ast);
-struct Type* t = NULL;
-    if (size == 8)
-    t = scope_get_Type_from_name(ctx, sr, "int8", 1);
-    else if (size == 64)
-    t = scope_get_Type_from_name(ctx, sr, "int", 1);
+    struct Type* t = NULL;
+    if(size == 8) t = scope_get_Type_from_name(ctx, sr, "int8", 1);
+    else if(size == 64) t = scope_get_Type_from_name(ctx, sr, "int", 1);
     else ERROR_ON_AST(ctx, ast, "unknown number size '%d'\n", size);
 
     LLVMTypeRef cg_type = get_llvm_type(ctx, sr, t);
-    LLVMValueRef val = LLVMConstInt(cg_type, ast_Number_value(ast), /*signext*/ 1);
-    return add_temp_value(
-        ctx,
-        val,
-        cg_type,
-        t);
+    LLVMValueRef val =
+        LLVMConstInt(cg_type, ast_Number_value(ast), /*signext*/ 1);
+    return add_temp_value(ctx, val, cg_type, t);
   } else if(ast_is_type(ast, ast_String)) {
     char* str = ast_String_value(ast);
     int len = strlen(str) + 1;

@@ -1,8 +1,8 @@
 #include "ast/ast.h"
 #include "ast/scope-resolve.h"
+#include "common/bsstring.h"
 #include "common/ll-common.h"
 #include "context/context.h"
-#include "common/bsstring.h"
 
 void print_indent(int indent) {
   while(indent--)
@@ -59,7 +59,7 @@ void do_scope_internal(struct Context* ctx, struct AstNode* ast, int indent) {
     struct AstNode* body = ast_Function_body(ast);
     struct ScopeResult* scope = scope_lookup(ctx, body);
     char* name = ast_Identifier_name(ast_Function_name(ast));
-    print_scope(bsstrcat("func: ", name) , scope, indent);
+    print_scope(bsstrcat("func: ", name), scope, indent);
     ast_foreach(ast_Block_stmts(body), s) {
       do_scope_internal(ctx, s, indent + 4);
     }

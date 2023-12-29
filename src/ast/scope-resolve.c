@@ -267,7 +267,7 @@ static struct ScopeSymbol* build_ScopeSymbol_for_func(
     if(ss->sst == sst_Function &&
        ast_Function_has_body(ss->ss_function->function) &&
        !ast_Function_has_body(func)) {
-        // func is just a prototype, can ignore
+      // func is just a prototype, can ignore
       return ss;
     } else if(
         ss->sst == sst_Function &&
@@ -278,11 +278,7 @@ static struct ScopeSymbol* build_ScopeSymbol_for_func(
       add_body_to_func_sym(ctx, sr, ss);
       return ss;
     } else {
-      ERROR_ON_AST(
-          ctx,
-          func,
-          "cannot redefine function '%s'\n",
-          name);
+      ERROR_ON_AST(ctx, func, "cannot redefine function '%s'\n", name);
     }
   }
 

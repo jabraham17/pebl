@@ -1,10 +1,10 @@
 
 #include "ast/Type.h"
+#include "ast/scope-resolve.h"
 #include "builtins/compiler-builtin.h"
 #include "codegen/codegen-llvm.h"
 #include "common/bsstring.h"
 #include "common/ll-common.h"
-#include "ast/scope-resolve.h"
 
 #include <llvm-c/Core.h>
 #include <stdlib.h>
@@ -41,7 +41,6 @@ compiler_builtin_lookup_name(struct Context* ctx, char* name) {
   return NULL;
 }
 
-
 static struct cg_value* codegenBuiltin_codegenSizeof(
     struct Context* ctx,
     struct ScopeResult* scope,
@@ -77,7 +76,7 @@ struct cg_value* codegenBuiltin(
 
 #define COMPILER_BUILTIN(name_, numArgs_, codegenFunc)                         \
   if(strcmp(#name_, builtin->name) == 0 && numArgs_ == builtin->numArgs) {     \
-    return codegenBuiltin_##codegenFunc(ctx, scope, builtin, call);                   \
+    return codegenBuiltin_##codegenFunc(ctx, scope, builtin, call);            \
   }
 #include "compiler-builtins.def"
 

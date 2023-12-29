@@ -37,7 +37,8 @@ struct cg_value* add_value(
     LLVMTypeRef cg_type,
     struct ScopeSymbol* ss) {
   ASSERT(ss->sst == sst_Variable);
-  struct cg_value* val = add_temp_value(ctx, value, cg_type, ss->ss_variable->type);
+  struct cg_value* val =
+      add_temp_value(ctx, value, cg_type, ss->ss_variable->type);
   val->variable = ss;
   return val;
 }
@@ -92,7 +93,8 @@ char* mangled_name(struct Context* ctx, struct AstNode* ast) {
   }
 }
 
-LLVMTypeRef get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt) {
+LLVMTypeRef
+get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt) {
   tt = Type_get_base_type(tt);
   if(tt->kind == tk_BUILTIN) {
 
@@ -125,12 +127,18 @@ LLVMTypeRef get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct
   }
 }
 
-LLVMTypeRef get_llvm_type_ast(struct Context* ctx, struct ScopeResult* scope, struct AstNode* ast) {
+LLVMTypeRef get_llvm_type_ast(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct AstNode* ast) {
   struct Type* tt = scope_get_Type_from_ast(ctx, scope, ast, 1);
   LLVMTypeRef llvmTT = get_llvm_type(ctx, scope, tt);
   return llvmTT;
 }
-LLVMTypeRef get_llvm_type_sym(struct Context* ctx, struct ScopeResult* scope, struct ScopeSymbol* sym) {
+LLVMTypeRef get_llvm_type_sym(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct ScopeSymbol* sym) {
   ASSERT(sym->sst == sst_Variable);
   struct Type* tt = sym->ss_variable->type;
   LLVMTypeRef llvmTT = get_llvm_type(ctx, scope, tt);
@@ -143,8 +151,8 @@ static struct cg_value* allocate_stack_helper(
     LLVMValueRef initial,
     struct ScopeSymbol* sym,
     struct Type* type) {
-      // sym can be NULL, or it must be a variable
-      ASSERT(!sym || sym->sst == sst_Variable);
+  // sym can be NULL, or it must be a variable
+  ASSERT(!sym || sym->sst == sst_Variable);
   // allocate a variable, make sure to switch the entry
   LLVMBasicBlockRef previousBB = LLVMGetInsertBlock(ctx->codegen->builder);
   LLVMBasicBlockRef entryBB =
@@ -153,7 +161,9 @@ static struct cg_value* allocate_stack_helper(
   if(firstInst) LLVMPositionBuilderBefore(ctx->codegen->builder, firstInst);
   else LLVMPositionBuilderAtEnd(ctx->codegen->builder, entryBB);
 
-  char* name = sym ? ast_Identifier_name(ast_Variable_name(sym->ss_variable->variable)) : "temp";
+  char* name =
+      sym ? ast_Identifier_name(ast_Variable_name(sym->ss_variable->variable))
+          : "temp";
 
   // get the alloca, add as a value
   LLVMValueRef stack_ptr =
@@ -174,8 +184,13 @@ struct cg_value* allocate_stack_for_sym(
     LLVMTypeRef cg_type,
     LLVMValueRef initial,
     struct ScopeSymbol* sym) {
-      ASSERT(sym->sst == sst_Variable);
-      return allocate_stack_helper(ctx, cg_type, initial, sym, sym->ss_variable->type);
+  ASSERT(sym->sst == sst_Variable);
+  return allocate_stack_helper(
+      ctx,
+      cg_type,
+      initial,
+      sym,
+      sym->ss_variable->type);
 }
 struct cg_value* allocate_stack_for_temp(
     struct Context* ctx,

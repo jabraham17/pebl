@@ -1,13 +1,12 @@
 
 
-
 #include "ast/parse-checks.h"
+#include "ast/scope-resolve.h"
 #include "builtins/compiler-builtin.h"
 #include "codegen/codegen-llvm.h"
 #include "common/bsstring.h"
 #include "context/context.h"
 #include "parser/parser.h"
-#include "ast/scope-resolve.h"
 
 #include <string.h>
 

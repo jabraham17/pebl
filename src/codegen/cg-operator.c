@@ -70,11 +70,8 @@ static struct cg_value* codegenOperator_intCompare(
   LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
   resVal = LLVMBuildIntCast2(ctx->codegen->builder, resVal, resLLVMType, 1, "");
 
-  struct cg_value* res = allocate_stack_for_temp(
-      ctx,
-      resLLVMType,
-      resVal,
-      resType);
+  struct cg_value* res =
+      allocate_stack_for_temp(ctx, resLLVMType, resVal, resType);
   return res;
 }
 
@@ -121,11 +118,8 @@ static struct cg_value* codegenOperator_ptrCompare(
   LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
   resVal = LLVMBuildIntCast2(ctx->codegen->builder, resVal, resLLVMType, 1, "");
 
-  struct cg_value* res = allocate_stack_for_temp(
-      ctx,
-      resLLVMType,
-      resVal,
-      resType);
+  struct cg_value* res =
+      allocate_stack_for_temp(ctx, resLLVMType, resVal, resType);
   return res;
 }
 
@@ -207,7 +201,8 @@ static struct cg_value* codegenOperator_getValueAtAddress(
   // value should be a pointer, load it, then its pointer
 
   ASSERT(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
-  LLVMTypeRef pointerToLLVMType = get_llvm_type(ctx, scope, ptrType->pointer_to);
+  LLVMTypeRef pointerToLLVMType =
+      get_llvm_type(ctx, scope, ptrType->pointer_to);
   LLVMValueRef loaded =
       LLVMBuildLoad2(ctx->codegen->builder, pointerToLLVMType, ptr, "");
   struct cg_value* derefed_val = allocate_stack_for_temp(
@@ -234,7 +229,11 @@ static struct cg_value* codegenOperator_getAddressOfValue(
   return address;
 }
 
-static int typesMatch(struct Context* ctx, struct ScopeResult* scope, struct cg_value* val, char* type) {
+static int typesMatch(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct cg_value* val,
+    char* type) {
   // any type
   if(type == NULL) return 1;
   if(type[0] == '\0') return 1;
@@ -257,9 +256,9 @@ struct cg_value* codegenBinaryOperator(
     struct cg_value* rhs) {
 
 #define CODEGEN_BINARY_OPERATOR(opType, lhsType, rhsType, funcName)            \
-  if(op == op_##opType && typesMatch(ctx, scope, lhs, lhsType) &&                     \
-     typesMatch(ctx, scope, rhs, rhsType)) {                                          \
-    return codegenOperator_##funcName(ctx, scope, op, lhs, rhs);                      \
+  if(op == op_##opType && typesMatch(ctx, scope, lhs, lhsType) &&              \
+     typesMatch(ctx, scope, rhs, rhsType)) {                                   \
+    return codegenOperator_##funcName(ctx, scope, op, lhs, rhs);               \
   }
 #include "cg-operator.def"
 
@@ -273,8 +272,8 @@ struct cg_value* codegenUnaryOperator(
     struct cg_value* operand) {
 
 #define CODEGEN_UNARY_OPERATOR(opType, operandType, funcName)                  \
-  if(op == op_##opType && typesMatch(ctx, scope, operand, operandType)) {             \
-    return codegenOperator_##funcName(ctx, scope, op, operand);                       \
+  if(op == op_##opType && typesMatch(ctx, scope, operand, operandType)) {      \
+    return codegenOperator_##funcName(ctx, scope, op, operand);                \
   }
 #include "cg-operator.def"
 
