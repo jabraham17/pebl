@@ -43,7 +43,7 @@ compiler_builtin_lookup_name(struct Context* ctx, char* name) {
 }
 
 static int validArgumentToSizeof(struct AstNode* arg) {
-  if (arg == NULL) return 0;
+  if(arg == NULL) return 0;
   if(ast_is_type(arg, ast_Identifier)) return 1;
   if(ast_is_type(arg, ast_Typename)) return 1;
   if(ast_is_type(arg, ast_Expr) && ast_Expr_is_plain(arg)) {
