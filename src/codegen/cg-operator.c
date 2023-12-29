@@ -48,6 +48,7 @@ static struct cg_value* codegenOperator_intCompare(
     enum OperatorType op,
     struct cg_value* lhs,
     struct cg_value* rhs) {
+    ASSERT(Type_eq(lhs->type, rhs->type));
 
   LLVMValueRef lhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
@@ -66,7 +67,7 @@ static struct cg_value* codegenOperator_intCompare(
   }
   LLVMValueRef resVal =
       LLVMBuildICmp(ctx->codegen->builder, pred, lhsVal, rhsVal, "");
-  struct Type* resType = scope_get_Type_from_name(ctx, scope, "int", 1);
+  struct Type* resType = lhs->type
   LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
   resVal = LLVMBuildIntCast2(ctx->codegen->builder, resVal, resLLVMType, 1, "");
 
