@@ -42,6 +42,16 @@ compiler_builtin_lookup_name(struct Context* ctx, char* name) {
   return NULL;
 }
 
+static int validArgumentToSizeof(struct AstNode* arg) {
+  if (arg == NULL) return 0;
+  if(ast_is_type(arg, ast_Identifier)) return 1;
+  if(ast_is_type(arg, ast_Typename)) return 1;
+  if(ast_is_type(arg, ast_Expr) && ast_Expr_is_plain(arg)) {
+    return validArgumentToSizeof(ast_Expr_lhs(arg));
+  }
+  return 0;
+}
+
 static struct cg_value* codegenBuiltin_codegenSizeof(
     struct Context* ctx,
     struct ScopeResult* scope,
@@ -54,7 +64,7 @@ static struct cg_value* codegenBuiltin_codegenSizeof(
     ERROR_ON_AST(ctx, call, "sizeof() expects 1 argument\n");
   }
   struct AstNode* arg = ast_Call_args(call);
-  if(!ast_is_type(arg, ast_Identifier) && !ast_is_type(arg, ast_Typename)) {
+  if(!validArgumentToSizeof(arg)) {
     ERROR_ON_AST(ctx, call, "illegal usage of sizeof()\n");
   }
   struct Type* type = scope_get_Type_from_ast(ctx, scope, arg, 1);
