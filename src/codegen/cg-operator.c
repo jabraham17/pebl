@@ -13,7 +13,9 @@ static struct cg_value* codegenOperator_sintBOp(
     struct cg_value* lhs,
     struct cg_value* rhs,
     struct Type* resType) {
-    ASSERT(Type_is_signed(lhs->type) && Type_is_signed(rhs->type) && Type_is_signed(resType));
+  ASSERT(
+      Type_is_signed(lhs->type) && Type_is_signed(rhs->type) &&
+      Type_is_signed(resType));
 
   LLVMValueRef lhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
@@ -68,10 +70,18 @@ static struct cg_value* codegenOperator_compare(
   if(LLVMGetTypeKind(LLVMTypeOf(lhsVal)) != LLVMPointerTypeKind ||
      LLVMGetTypeKind(LLVMTypeOf(rhsVal)) != LLVMPointerTypeKind) {
     if(LLVMGetTypeKind(LLVMTypeOf(lhsVal)) == LLVMPointerTypeKind) {
-      lhsVal = build_ptrtoint(ctx, scope, lhsVal, Type_int_type(ctx, Type_ptr_size()));
+      lhsVal = build_ptrtoint(
+          ctx,
+          scope,
+          lhsVal,
+          Type_int_type(ctx, Type_ptr_size()));
     }
     if(LLVMGetTypeKind(LLVMTypeOf(rhsVal)) == LLVMPointerTypeKind) {
-      rhsVal = build_ptrtoint(ctx, scope, rhsVal, Type_int_type(ctx, Type_ptr_size()));
+      rhsVal = build_ptrtoint(
+          ctx,
+          scope,
+          rhsVal,
+          Type_int_type(ctx, Type_ptr_size()));
     }
   }
 

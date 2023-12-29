@@ -36,7 +36,12 @@ codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
             casted->value,
             casted->type);
       } else {
-        ERROR_ON_AST(ctx, ast, "no valid cast from '%s' to '%s'\n", Type_to_string(lhsType), Type_to_string(rhsType));
+        ERROR_ON_AST(
+            ctx,
+            ast,
+            "no valid cast from '%s' to '%s'\n",
+            Type_to_string(lhsType),
+            Type_to_string(rhsType));
       }
     }
 

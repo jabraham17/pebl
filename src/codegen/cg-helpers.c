@@ -209,16 +209,18 @@ static struct cg_value* build_cast_internal(
   // ptr -> bool
   // int -> bool
   // build ne compare aginst null value
-  if((Type_is_integer(valueType) || Type_is_boolean(valueType)) && Type_is_boolean(newType)) {
+  if((Type_is_integer(valueType) || Type_is_boolean(valueType)) &&
+     Type_is_boolean(newType)) {
     LLVMValueRef nullValue = LLVMConstNull(LLVMTypeOf(value));
     LLVMValueRef llvmVal;
-    if(!is_const)llvmVal = LLVMBuildICmp(
-        ctx->codegen->builder,
-        LLVMIntNE,
-        value,
-        nullValue,
-        "cast");
-        else llvmVal = LLVMConstICmp(LLVMIntNE, value, nullValue);
+    if(!is_const)
+      llvmVal = LLVMBuildICmp(
+          ctx->codegen->builder,
+          LLVMIntNE,
+          value,
+          nullValue,
+          "cast");
+    else llvmVal = LLVMConstICmp(LLVMIntNE, value, nullValue);
     return add_temp_value(ctx, llvmVal, newLLVMType, newType);
   }
 
@@ -228,13 +230,13 @@ static struct cg_value* build_cast_internal(
     int sourceIsSigned = Type_is_signed(valueType);
     LLVMValueRef llvmVal;
     if(!is_const)
-    llvmVal = LLVMBuildIntCast2(
-        ctx->codegen->builder,
-        value,
-        newLLVMType,
-        sourceIsSigned,
-        "cast");
-        else llvmVal = LLVMConstIntCast(value, newLLVMType, sourceIsSigned);
+      llvmVal = LLVMBuildIntCast2(
+          ctx->codegen->builder,
+          value,
+          newLLVMType,
+          sourceIsSigned,
+          "cast");
+    else llvmVal = LLVMConstIntCast(value, newLLVMType, sourceIsSigned);
     return add_temp_value(ctx, llvmVal, newLLVMType, newType);
   }
 

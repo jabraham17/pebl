@@ -28,7 +28,11 @@ char* mangled_name(struct Context* ctx, struct AstNode* ast);
 
 // always works on plain values, NOT stack ptrs
 // proper usage needs to load a value (if not one already) before calling these
-LLVMValueRef build_ptrtoint(struct Context* ctx, struct ScopeResult* scope, LLVMValueRef value, struct Type* intType);
+LLVMValueRef build_ptrtoint(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    LLVMValueRef value,
+    struct Type* intType);
 struct cg_value* build_cast(
     struct Context* ctx,
     struct ScopeResult* scope,
@@ -39,7 +43,7 @@ struct cg_value* build_const_cast(
     struct Context* ctx,
     struct ScopeResult* scope,
     struct Type* valueType,
-     LLVMValueRef value,
+    LLVMValueRef value,
     struct Type* newType);
 
 struct cg_value*

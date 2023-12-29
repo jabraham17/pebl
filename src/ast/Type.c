@@ -19,17 +19,15 @@ static struct Type* Type_allocate(char* name) {
   return t;
 }
 
-int Type_ptr_size() {
-  return 64;
-}
+int Type_ptr_size() { return 64; }
 struct Type* Type_int_type(struct Context* ctx, int size) {
   char* name;
-    if(size == 8) name = "int8";
+  if(size == 8) name = "int8";
   else if(size == 64) name = "int64";
   else UNIMPLEMENTED("unknown number size '%d'\n", size);
 
   struct ScopeResult* scope = ctx->scope_table;
-  return scope_get_Type_from_name(ctx, scope, name,1);
+  return scope_get_Type_from_name(ctx, scope, name, 1);
 }
 
 static struct Type* Type_allocate_Pointer(struct Type* pointer_to) {
@@ -107,7 +105,8 @@ int Type_is_signed(struct Type* t) {
 int Type_is_integer(struct Type* t) {
   struct Type* base_type = Type_get_base_type(t);
   if(base_type->kind == tk_BUILTIN) {
-    return strcmp(base_type->name, "int64") == 0 || strcmp(base_type->name, "int8") == 0;
+    return strcmp(base_type->name, "int64") == 0 ||
+           strcmp(base_type->name, "int8") == 0;
   }
   return 0;
 }

@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cg-helpers.h"
 #include "cg-expr.h"
+#include "cg-helpers.h"
 
 static struct CompilerBuiltin*
 allocate_Builtin(struct Context* ctx, char* name, int numArgs) {
@@ -116,61 +116,57 @@ static struct cg_value* codegenBuiltin_codegenAssert(
   }
 
   // build a conditional trap
-    LLVMBasicBlockRef currBB = LLVMGetInsertBlock(ctx->codegen->builder);
-    LLVMValueRef currentFunc = LLVMGetBasicBlockParent(currBB);
-    // create BBs
-    LLVMBasicBlockRef thenBB =
-        LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.body");
-    LLVMBasicBlockRef endBB =
-        LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.end");
+  LLVMBasicBlockRef currBB = LLVMGetInsertBlock(ctx->codegen->builder);
+  LLVMValueRef currentFunc = LLVMGetBasicBlockParent(currBB);
+  // create BBs
+  LLVMBasicBlockRef thenBB =
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.body");
+  LLVMBasicBlockRef endBB =
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.end");
 
-    struct cg_value* expr = codegen_expr(ctx, arg, scope);
-    LLVMValueRef exprVal =
-        LLVMBuildLoad2(ctx->codegen->builder, expr->cg_type, expr->value, "");
+  struct cg_value* expr = codegen_expr(ctx, arg, scope);
+  LLVMValueRef exprVal =
+      LLVMBuildLoad2(ctx->codegen->builder, expr->cg_type, expr->value, "");
 
-    LLVMValueRef cond = LLVMBuildICmp(
-        ctx->codegen->builder,
-        LLVMIntEQ,
-        exprVal,
-        LLVMConstNull(LLVMTypeOf(exprVal)),
-        "");
-    LLVMBuildCondBr(
-        ctx->codegen->builder,
-        cond,
-        thenBB,
-        endBB);
+  LLVMValueRef cond = LLVMBuildICmp(
+      ctx->codegen->builder,
+      LLVMIntEQ,
+      exprVal,
+      LLVMConstNull(LLVMTypeOf(exprVal)),
+      "");
+  LLVMBuildCondBr(ctx->codegen->builder, cond, thenBB, endBB);
 
-    // build the body
-    LLVMAppendExistingBasicBlock(currentFunc, thenBB);
-    LLVMPositionBuilderAtEnd(ctx->codegen->builder, thenBB);
+  // build the body
+  LLVMAppendExistingBasicBlock(currentFunc, thenBB);
+  LLVMPositionBuilderAtEnd(ctx->codegen->builder, thenBB);
 
-    // the body is just a trap
-    char* name = "llvm.debugtrap";
-    unsigned ID = LLVMLookupIntrinsicID(name, strlen(name));
-    LLVMTypeRef intrinsicTy = LLVMIntrinsicGetType(ctx->codegen->llvmContext, ID, NULL, 0);
-    LLVMValueRef intrinsic = LLVMGetIntrinsicDeclaration(ctx->codegen->module, ID, NULL, 0);
-    LLVMBuildCall2(ctx->codegen->builder, intrinsicTy, intrinsic, NULL, 0, "");
+  // the body is just a trap
+  char* name = "llvm.debugtrap";
+  unsigned ID = LLVMLookupIntrinsicID(name, strlen(name));
+  LLVMTypeRef intrinsicTy =
+      LLVMIntrinsicGetType(ctx->codegen->llvmContext, ID, NULL, 0);
+  LLVMValueRef intrinsic =
+      LLVMGetIntrinsicDeclaration(ctx->codegen->module, ID, NULL, 0);
+  LLVMBuildCall2(ctx->codegen->builder, intrinsicTy, intrinsic, NULL, 0, "");
 
-    // if previous inst was a terminator, dont add one here
-    if(!LLVMGetBasicBlockTerminator(
-           LLVMGetInsertBlock(ctx->codegen->builder))) {
-      // create br to endBB
-      LLVMBuildBr(ctx->codegen->builder, endBB);
-    }
+  // if previous inst was a terminator, dont add one here
+  if(!LLVMGetBasicBlockTerminator(LLVMGetInsertBlock(ctx->codegen->builder))) {
+    // create br to endBB
+    LLVMBuildBr(ctx->codegen->builder, endBB);
+  }
 
-    // move to end and keep going
-    LLVMAppendExistingBasicBlock(currentFunc, endBB);
-    LLVMPositionBuilderAtEnd(ctx->codegen->builder, endBB);
+  // move to end and keep going
+  LLVMAppendExistingBasicBlock(currentFunc, endBB);
+  LLVMPositionBuilderAtEnd(ctx->codegen->builder, endBB);
 
   // return poison
   LLVMTypeRef poisonType =
-          LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0);
-      return allocate_stack_for_temp(
-          ctx,
-          poisonType,
-          LLVMGetPoison(poisonType),
-          NULL);
-
+      LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0);
+  return allocate_stack_for_temp(
+      ctx,
+      poisonType,
+      LLVMGetPoison(poisonType),
+      NULL);
 }
 
 struct cg_value* codegenBuiltin(
