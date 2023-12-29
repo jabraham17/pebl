@@ -35,6 +35,8 @@ struct TypeField {
 
 int Type_eq(struct Type* t1, struct Type* t2);
 
+char* Type_to_string(struct Type* t);
+
 struct Type* Type_get_ptr_type(struct Type* t);
 // follow alias chains to base type
 struct Type* Type_get_base_type(struct Type* t);

@@ -10,5 +10,6 @@
 //
 
 COMPILER_BUILTIN(sizeof, 1, codegenSizeof)
+COMPILER_BUILTIN(typeof, 1, codegenTypeof)
 
 #undef COMPILER_BUILTIN

@@ -68,6 +68,33 @@ static struct cg_value* codegenBuiltin_codegenSizeof(
       scope_get_Type_from_name(ctx, scope, "int", 1));
 }
 
+static struct cg_value* codegenBuiltin_codegenTypeof(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    __attribute__((unused)) struct CompilerBuiltin* builtin,
+    struct AstNode* call) {
+  ASSERT(ast_is_type(call, ast_Call));
+
+  // call should have one arg, an identifier representing a typename
+  if(ast_Call_num_args(call) != 1) {
+    ERROR_ON_AST(ctx, call, "typeof() expects 1 argument\n");
+  }
+  struct AstNode* arg = ast_Call_args(call);
+  struct Type* type = scope_get_Type_from_ast(ctx, scope, arg, 1);
+  if(!type) {
+    ERROR_ON_AST(ctx, call, "could not find type for typeof()\n");
+  }
+
+  char* typename = Type_to_string(type);
+
+  struct cg_value* str_lit = get_string_literal(ctx, scope, typename);
+   return allocate_stack_for_temp(
+        ctx,
+        str_lit->cg_type,
+        str_lit->value,
+        str_lit->type);
+}
+
 struct cg_value* codegenBuiltin(
     struct Context* ctx,
     struct ScopeResult* scope,

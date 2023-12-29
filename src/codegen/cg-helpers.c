@@ -93,6 +93,30 @@ char* mangled_name(struct Context* ctx, struct AstNode* ast) {
   }
 }
 
+struct cg_value* get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str) {
+      int len = strlen(str) + 1;
+
+    LLVMTypeRef strType =
+        LLVMArrayType2(LLVMInt8TypeInContext(ctx->codegen->llvmContext), len);
+    LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
+    LLVMSetInitializer(
+        strVal,
+        LLVMConstStringInContext(
+            ctx->codegen->llvmContext,
+            str,
+            len,
+            /*dont null term*/ 1));
+    LLVMSetGlobalConstant(strVal, 1);
+    LLVMSetLinkage(strVal, LLVMPrivateLinkage);
+    LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);
+
+    return add_temp_value(
+        ctx,
+        strVal,
+        LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0),
+        scope_get_Type_from_name(ctx, scope, "string", 1));
+}
+
 LLVMTypeRef
 get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt) {
   tt = Type_get_base_type(tt);

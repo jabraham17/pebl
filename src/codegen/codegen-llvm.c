@@ -126,31 +126,11 @@ static struct cg_value* codegen_constant_expr(
     return add_temp_value(ctx, val, cg_type, t);
   } else if(ast_is_type(ast, ast_String)) {
     char* str = ast_String_value(ast);
-    int len = strlen(str) + 1;
-
-    LLVMTypeRef strType =
-        LLVMArrayType2(LLVMInt8TypeInContext(ctx->codegen->llvmContext), len);
-    LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
-    LLVMSetInitializer(
-        strVal,
-        LLVMConstStringInContext(
-            ctx->codegen->llvmContext,
-            str,
-            len,
-            /*dont null term*/ 1));
-    LLVMSetGlobalConstant(strVal, 1);
-    LLVMSetLinkage(strVal, LLVMPrivateLinkage);
-    LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);
-
-    return add_temp_value(
-        ctx,
-        strVal,
-        LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0),
-        scope_get_Type_from_name(ctx, sr, "string", 1));
-
+    return get_string_literal(ctx, sr, str);
   } else if(ast_is_type(ast, ast_Expr)) {
     if(ast_Expr_is_plain(ast) && ast_is_constant_expr(ast_Expr_lhs(ast))) {
       return codegen_constant_expr(ctx, ast_Expr_lhs(ast), sr);
+      // TODO: better cast logic
     } else if(
         ast_Expr_is_binop(ast) && ast_Expr_op(ast) == op_CAST &&
         ast_is_constant_expr(ast_Expr_lhs(ast))) {

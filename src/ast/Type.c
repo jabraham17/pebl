@@ -43,6 +43,23 @@ int Type_eq(struct Type* t1, struct Type* t2) {
   return t1->kind == t2->kind && strcmp(t1->name, t2->name) == 0;
 }
 
+char* Type_to_string(struct Type* type) {
+  char* name = type->name;
+  struct Type* t = type;
+  int num_stars = 0;
+  while (Type_is_pointer(t)) {
+    num_stars += 1;
+    t = t->pointer_to;
+  }
+  if (num_stars > 0) {
+    char* stars = malloc(sizeof(*stars)*(num_stars+1));
+    for(int i = 0; i < num_stars; i++) stars[i]='*';
+    stars[num_stars]='\0';
+    name = bsstrcat(name, stars);
+  }
+  return name;
+}
+
 struct Type* Type_get_ptr_type(struct Type* t) {
   struct Type* ptr_type = Type_allocate_Pointer(t);
   return ptr_type;

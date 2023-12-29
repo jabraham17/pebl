@@ -26,6 +26,8 @@ struct cg_function* add_function(
 
 char* mangled_name(struct Context* ctx, struct AstNode* ast);
 
+struct cg_value* get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str);
+
 LLVMTypeRef
 get_llvm_type(struct Context* ctx, struct ScopeResult* scope, struct Type* tt);
 LLVMTypeRef get_llvm_type_ast(
