@@ -31,18 +31,6 @@ struct ScopeSymbol {
   struct ScopeBuiltin* ss_builtin;
 };
 
-// struct ScopeSymbol {
-//   struct AstNode* scope_for;
-//   // common
-//   char* name;
-//   struct Type* type;
-//   int is_var;
-
-//   int num_args;
-//   struct ScopeSymbol** args;
-
-//   struct ScopeSymbol* next;
-// };
 char* ScopeSymbol_name(struct ScopeSymbol* sym);
 int ScopeSymbol_eq(struct ScopeSymbol* lhs, struct ScopeSymbol* rhs);
 

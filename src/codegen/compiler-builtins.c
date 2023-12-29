@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "cg-helpers.h"
+#include "cg-expr.h"
 
 static struct CompilerBuiltin*
 allocate_Builtin(struct Context* ctx, char* name, int numArgs) {
@@ -53,6 +54,9 @@ static struct cg_value* codegenBuiltin_codegenSizeof(
     ERROR_ON_AST(ctx, call, "sizeof() expects 1 argument\n");
   }
   struct AstNode* arg = ast_Call_args(call);
+  if(!ast_is_type(arg, ast_Identifier) && !ast_is_type(arg, ast_Typename)) {
+    ERROR_ON_AST(ctx, call, "illegal usage of sizeof()\n");
+  }
   struct Type* type = scope_get_Type_from_ast(ctx, scope, arg, 1);
   if(!type) {
     ERROR_ON_AST(ctx, call, "could not find type for sizeof()\n");
@@ -75,7 +79,7 @@ static struct cg_value* codegenBuiltin_codegenTypeof(
     struct AstNode* call) {
   ASSERT(ast_is_type(call, ast_Call));
 
-  // call should have one arg, an identifier representing a typename
+  // call should have one arg
   if(ast_Call_num_args(call) != 1) {
     ERROR_ON_AST(ctx, call, "typeof() expects 1 argument\n");
   }
@@ -88,11 +92,85 @@ static struct cg_value* codegenBuiltin_codegenTypeof(
   char* typename = Type_to_string(type);
 
   struct cg_value* str_lit = get_string_literal(ctx, scope, typename);
-   return allocate_stack_for_temp(
-        ctx,
-        str_lit->cg_type,
-        str_lit->value,
-        str_lit->type);
+  return allocate_stack_for_temp(
+      ctx,
+      str_lit->cg_type,
+      str_lit->value,
+      str_lit->type);
+}
+
+static struct cg_value* codegenBuiltin_codegenAssert(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    __attribute__((unused)) struct CompilerBuiltin* builtin,
+    struct AstNode* call) {
+  ASSERT(ast_is_type(call, ast_Call));
+
+  // call should have one arg, an expression
+  if(ast_Call_num_args(call) != 1) {
+    ERROR_ON_AST(ctx, call, "assert() expects 1 argument\n");
+  }
+  struct AstNode* arg = ast_Call_args(call);
+  if(!ast_is_type(arg, ast_Expr)) {
+    ERROR_ON_AST(ctx, call, "illegal usage of assert()\n");
+  }
+
+  // build a conditional trap
+    LLVMBasicBlockRef currBB = LLVMGetInsertBlock(ctx->codegen->builder);
+    LLVMValueRef currentFunc = LLVMGetBasicBlockParent(currBB);
+    // create BBs
+    LLVMBasicBlockRef thenBB =
+        LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.body");
+    LLVMBasicBlockRef endBB =
+        LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.end");
+
+    struct cg_value* expr = codegen_expr(ctx, arg, scope);
+    LLVMValueRef exprVal =
+        LLVMBuildLoad2(ctx->codegen->builder, expr->cg_type, expr->value, "");
+
+    LLVMValueRef cond = LLVMBuildICmp(
+        ctx->codegen->builder,
+        LLVMIntEQ,
+        exprVal,
+        LLVMConstNull(LLVMTypeOf(exprVal)),
+        "");
+    LLVMBuildCondBr(
+        ctx->codegen->builder,
+        cond,
+        thenBB,
+        endBB);
+
+    // build the body
+    LLVMAppendExistingBasicBlock(currentFunc, thenBB);
+    LLVMPositionBuilderAtEnd(ctx->codegen->builder, thenBB);
+
+    // the body is just a trap
+    char* name = "llvm.debugtrap";
+    unsigned ID = LLVMLookupIntrinsicID(name, strlen(name));
+    LLVMTypeRef intrinsicTy = LLVMIntrinsicGetType(ctx->codegen->llvmContext, ID, NULL, 0);
+    LLVMValueRef intrinsic = LLVMGetIntrinsicDeclaration(ctx->codegen->module, ID, NULL, 0);
+    LLVMBuildCall2(ctx->codegen->builder, intrinsicTy, intrinsic, NULL, 0, "");
+
+    // if previous inst was a terminator, dont add one here
+    if(!LLVMGetBasicBlockTerminator(
+           LLVMGetInsertBlock(ctx->codegen->builder))) {
+      // create br to endBB
+      LLVMBuildBr(ctx->codegen->builder, endBB);
+    }
+
+    // move to end and keep going
+    LLVMAppendExistingBasicBlock(currentFunc, endBB);
+    LLVMPositionBuilderAtEnd(ctx->codegen->builder, endBB);
+
+  // return poison
+  LLVMTypeRef poisonType =
+          LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0);
+      return allocate_stack_for_temp(
+          ctx,
+          poisonType,
+          LLVMGetPoison(poisonType),
+          NULL);
+
 }
 
 struct cg_value* codegenBuiltin(

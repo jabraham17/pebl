@@ -10,6 +10,10 @@
 //
 
 COMPILER_BUILTIN(sizeof, 1, codegenSizeof)
+// TODO: currently returns a string, really should return a custom cg_value for types
 COMPILER_BUILTIN(typeof, 1, codegenTypeof)
+
+// TODO: this currently just aborts with llvm.debugtrap, it should create some nice strings and pass them to a library func like __pebl_abort
+COMPILER_BUILTIN(assert, 1, codegenAssert)
 
 #undef COMPILER_BUILTIN
