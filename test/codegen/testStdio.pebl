@@ -1,0 +1,28 @@
+
+type File;
+func print(s: string): void;
+func getStdin(): File*;
+func getStdout(): File*;
+func getChar(file:File*):char;
+func putChar(file:File*, c:char):void;
+
+extern func intToString(i:int):string;
+
+func main(args: string*, nargs: int): int {
+
+  let stdout: File* = getStdout();
+  let stdin: File* = getStdin();
+
+  let c: char = getChar(stdin);
+
+  while ((c:int) != ((10:char):int)) && ((c:int) != ((0:char):int)) {
+    print(intToString(c:int));
+    print("\n");
+    c = getChar(stdin);
+  }
+  
+
+  return 0;
+}
+
+

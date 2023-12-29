@@ -17,3 +17,6 @@ void c_putChar(void* fp, int8_t c) {
 void* c_getStdout() {
   return (void*)stdout;
 }
+void* c_getStdin() {
+  return (void*)stdin;
+}

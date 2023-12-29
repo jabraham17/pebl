@@ -5,11 +5,14 @@
 type File = {fp:void*;}
 func openFile(name:string, mode:string):File*;
 func closeFile(file:File*):void;
-func getChar(file:File*):int8;
-func putChar(file:File*, c:int8):void;
+func getChar(file:File*):char;
+func putChar(file:File*, c:char):void;
+func putChars(file:File*, c:char*, n:int):void;
 func putString(file:File*, s:string):void;
 func print(s: string): void;
-func printn(s:string, len:int):void;
+
+func getStdout(): File*;
+func getStdin(): File*;
 
 
 #
@@ -24,9 +27,10 @@ func deallocate(p: void*):void;
 #
 extern func c_openFilePointer(name:string, mode:string):void*;
 extern func c_closeFilePointer(fp:void*):void;
-extern func c_getChar(fp:void*):int8;
-extern func c_putChar(fp:void*, c:int8):void;
+extern func c_getChar(fp:void*):char;
+extern func c_putChar(fp:void*, c:char):void;
 extern func c_getStdout():void*;
+extern func c_getStdin():void*;
 
 #
 # defs
@@ -47,13 +51,21 @@ func closeFile(file:File*):void {
   deallocate(file);
 }
 
-func getChar(file:File*):int8 {
-  let c:int8 = c_getChar(file->fp);
+func getChar(file:File*):char {
+  let c:char = c_getChar(file->fp);
   return c;
 }
 
-func putChar(file:File*, c:int8):void {
+func putChar(file:File*, c:char):void {
   c_putChar(file->fp, c);
+}
+
+func putChars(file:File*, c:char*, n:int):void {
+  let i: int = 0;
+  while i < n {
+    putChar(file, *(c+i));
+    i=i+1;
+  }
 }
 
 func putString(file:File*, s:string):void {
@@ -64,18 +76,24 @@ func putString(file:File*, s:string):void {
 }
 
 func print(s:string):void {
-  let stdout:void* = c_getStdout();
-  while ((*s):int) != 0 {
-    c_putChar(stdout, *s);
-    s = s + 1;
-  }
+  putString(getStdout(), s);
 }
-func printn(s:string, len:int):void {
-  let stdout:void* = c_getStdout();
-  let i: int = 0;
-  while i < len {
-    c_putChar(stdout, *(s+i));
-    i=i+1;
+
+type FILEPTR = File*;
+let stdout: File* = 0:FILEPTR;
+let stdin: File* = 0:FILEPTR;
+func getStdout(): File* {
+  if !stdout {
+    stdout = allocate(sizeof(File));
+    stdout->fp = c_getStdout();
   }
+  return stdout;
+}
+func getStdin(): File* {
+  if !stdin {
+    stdin = allocate(sizeof(File));
+    stdin->fp = c_getStdin();
+  }
+  return stdin;
 }
 
