@@ -5,23 +5,70 @@
   "patterns": [
     { "include": "#comments" },
     { "include": "#keywords" },
+    { "include": "#functions" },
+    { "include": "#variables" },
     { "include": "#builtin_types" },
     { "include": "#types" },
     { "include": "#operators" },
     { "include": "#builtins" },
-    { "include": "#numbers" },
-    { "include": "#strings" }
+    { "include": "#literals" }
   ],
   "repository": {
     "keywords": {
       "patterns": [
         {
-          "match": "\\b(let|func|extern|export|type)\\b",
-          "name": "storage.type.pebl"
+          "match": "\\b(extern|export)\\b",
+          "name": "storage.modifier.pebl"
         },
         {
           "match": "\\b(if|else|while|break|return)\\b",
           "name": "keyword.control.pebl"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "match": "\\b(let)\\s+([_a-zA-Z0-9]+)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.pebl"
+            },
+            "2": {
+              "name": "variable.other.pebl"
+            }
+          }
+        },
+        {
+          "match": "\\b(let)\\b",
+          "name": "keyword.declaration.pebl"
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "match": "\\b(func)\\s+([_a-zA-Z0-9]+)\\b",
+          "captures": {
+            "1": {
+              "name": "storage.type.function.pebl keyword.declaration.function.pebl"
+            },
+            "2": {
+              "name": "entity.name.function.pebl"
+            }
+          }
+        },
+        {
+          "match": "\\b(func)\\b",
+          "name": "storage.type.function.pebl keyword.declaration.function.pebl"
+        },
+        {
+          "match": "\\b([_a-zA-Z0-9]+)\\s*\\(",
+          "captures": {
+            "1": {
+              "name": "variable.function.pebl"
+            }
+          }
         }
       ]
     },
@@ -33,6 +80,10 @@
         },
         {
           "match": "\\b(int8|int64)\\b",
+          "name": "storage.type.pebl"
+        },
+        {
+          "match": "\\b(bool)\\b",
           "name": "storage.type.pebl"
         },
         {
@@ -50,6 +101,21 @@
               "name": "storage.type.pebl"
             }
           }
+        },
+        {
+          "match": "\\b(type)\\s+([_a-zA-Z0-9]+)\\s*[=;]",
+          "captures": {
+            "1": {
+              "name": "storage.type.pebl keyword.declaration.type.pebl"
+            },
+            "2": {
+              "name": "entity.name.type.pebl"
+            }
+          }
+        },
+        {
+          "match": "\\b(type)\\b",
+          "name": "storage.type.pebl keyword.declaration.type.pebl"
         }
       ]
     },
@@ -64,21 +130,33 @@
     "builtins": {
       "patterns": [
         {
-          "match": "sizeof",
+          "match": "\\b(sizeof)\\b",
           "name": "keyword.other.sizeof.pebl"
+        },
+        {
+          "match": "\\b(typeof)\\b",
+          "name": "keyword.other.typeof.pebl"
+        },
+        {
+          "match": "\\b(assert)\\b",
+          "name": "keyword.other.assert.pebl"
         }
       ]
     },
-    "numbers": {
+    "literals": {
       "patterns": [
         {
           "match": "\\b([0-9]+)\\b",
           "name": "constant.numeric.pebl"
-        }
-      ]
-    },
-    "strings": {
-      "patterns": [
+        },
+        {
+          "match": "\\b(true)\\b",
+          "name": "constant.language.true.pebl"
+        },
+        {
+          "match": "\\b(false)\\b",
+          "name": "constant.language.false.pebl"
+        },
         {
           "begin": "\"",
           "end": "\"",
