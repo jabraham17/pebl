@@ -19,11 +19,11 @@ static void check_allowed_at_file_scope_helper(
             a,
             "function '%s' can only be declared at file scope\n",
             ast_Identifier_name(ast_Function_name(a)));
-      } else if(ast_is_type(a, ast_Type)) {
+      } else if(ast_is_type(a, ast_Type) && !ast_Type_is_alias(a) && !ast_Type_is_opaque(a)) {
         ERROR_ON_AST(
             context,
             a,
-            "type '%s' can only be declared at file scope\n",
+            "type declarations '%s' can only be declared at file scope\n",
             ast_Identifier_name(ast_Type_name(a)));
       }
     } else {
