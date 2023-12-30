@@ -44,8 +44,57 @@ struct AstNode* ast_get_child(struct AstNode* ast, int i) {
 }
 
 char* ast_to_string(struct AstNode* ast) {
-  UNIMPLEMENTED("ast_to_string\n");
-  return "UNIMPLEMENTED\n";
+  if(ast_is_type(ast, ast_Identifier)) {
+    return ast_Identifier_name(ast);
+  } else if(ast_is_type(ast, ast_Typename)) {
+    char* name = ast_Typename_name(ast);
+    int num_stars = ast_Typename_ptr_level(ast);
+    if(num_stars > 0) {
+      char* stars = malloc(sizeof(*stars) * (num_stars + 1));
+      for(int i = 0; i < num_stars; i++)
+        stars[i] = '*';
+      stars[num_stars] = '\0';
+      name = bsstrcat(name, stars);
+    }
+    return name;
+  } else if(ast_is_type(ast, ast_Number)) {
+    int buf_len = 16;
+    char* buf = malloc(sizeof(*buf) * buf_len);
+    if(ast_Number_size(ast) == 1) {
+      snprintf(buf, buf_len, "%s", ast_Number_value(ast) ? "true" : "false");
+    } else if(ast_Number_size(ast) == 8) {
+      snprintf(buf, buf_len, "%c", ast_Number_value(ast));
+    } else if(ast_Number_size(ast) == 64) {
+      snprintf(buf, buf_len, "%d", ast_Number_value(ast));
+    } else {
+      UNIMPLEMENTED("unknown number size of %d\n", ast_Number_size(ast));
+    }
+    return buf;
+  } else if(ast_is_type(ast, ast_Expr)) {
+    if(ast_Expr_is_plain(ast)) return ast_to_string(ast_Expr_lhs(ast));
+    else if(ast_Expr_is_binop(ast)) {
+      char* lhs = ast_to_string(ast_Expr_lhs(ast));
+      char* op = OperatorType_to_string(ast_Expr_op(ast));
+      char* rhs = ast_to_string(ast_Expr_rhs(ast));
+      return bsstrcat(bsstrcat(lhs, op), rhs);
+    } else {
+      ASSERT(ast_Expr_is_uop(ast));
+      char* op = OperatorType_to_string(ast_Expr_op(ast));
+      char* operand = ast_to_string(ast_Expr_lhs(ast));
+      return bsstrcat(op, operand);
+    }
+  } else if(ast_is_type(ast, ast_Call)) {
+    char* str = ast_Identifier_name(ast_Call_name(ast));
+    str = bsstrcat(str, "(");
+    char* sep = "";
+    ast_foreach(ast_Call_args(ast), arg) {
+      str = bsstrcat(str, bsstrcat(sep, ast_to_string(arg)));
+      sep = ",";
+    }
+    str = bsstrcat(str, ")");
+    return str;
+  }
+  return "UNIMPLEMENTED ast_to_str";
 }
 
 static void ast_type_to_string(char* buf, enum AstType at) {
@@ -67,23 +116,44 @@ static void ast_type_to_string(char* buf, enum AstType at) {
   else if(at == ast_String) bsstrcpy(buf, "String");
 }
 
-void OperatorType_tostring(char* buf, enum OperatorType op) {
-  if(op == op_PLUS) bsstrcpy(buf, "PLUS");
-  else if(op == op_MINUS) bsstrcpy(buf, "MINUS");
-  else if(op == op_MULT) bsstrcpy(buf, "MULT");
-  else if(op == op_DIVIDE) bsstrcpy(buf, "DIVIDE");
-  else if(op == op_AND) bsstrcpy(buf, "AND");
-  else if(op == op_OR) bsstrcpy(buf, "OR");
-  else if(op == op_LT) bsstrcpy(buf, "LT");
-  else if(op == op_GT) bsstrcpy(buf, "GT");
-  else if(op == op_LTEQ) bsstrcpy(buf, "LTEQ");
-  else if(op == op_GTEQ) bsstrcpy(buf, "GTEQ");
-  else if(op == op_EQ) bsstrcpy(buf, "EQ");
-  else if(op == op_NEQ) bsstrcpy(buf, "NEQ");
-  else if(op == op_NOT) bsstrcpy(buf, "NOT");
-  else if(op == op_CAST) bsstrcpy(buf, "CAST");
-  else if(op == op_TAKE_ADDRESS) bsstrcpy(buf, "TAKE_ADDRESS");
-  else if(op == op_PTR_DEREFERENCE) bsstrcpy(buf, "PTR_DEREFERENCE");
+char* OperatorType_to_string(enum OperatorType op) {
+  if(op == op_PLUS) return "+";
+  else if(op == op_MINUS) return "-";
+  else if(op == op_MULT) return "*";
+  else if(op == op_DIVIDE) return "/";
+  else if(op == op_AND) return "&&";
+  else if(op == op_OR) return "||";
+  else if(op == op_LT) return "<";
+  else if(op == op_GT) return ">";
+  else if(op == op_LTEQ) return "<=";
+  else if(op == op_GTEQ) return ">=";
+  else if(op == op_EQ) return "==";
+  else if(op == op_NEQ) return "!=";
+  else if(op == op_NOT) return "!";
+  else if(op == op_CAST) return ":";
+  else if(op == op_TAKE_ADDRESS) return "&";
+  else if(op == op_PTR_DEREFERENCE) return "*";
+  UNIMPLEMENTED("unknown op type\n");
+}
+
+char* OperatorType_name(enum OperatorType op) {
+  if(op == op_PLUS) return "PLUS";
+  else if(op == op_MINUS) return "MINUS";
+  else if(op == op_MULT) return "MULT";
+  else if(op == op_DIVIDE) return "DIVIDE";
+  else if(op == op_AND) return "AND";
+  else if(op == op_OR) return "OR";
+  else if(op == op_LT) return "LT";
+  else if(op == op_GT) return "GT";
+  else if(op == op_LTEQ) return "LTEQ";
+  else if(op == op_GTEQ) return "GTEQ";
+  else if(op == op_EQ) return "EQ";
+  else if(op == op_NEQ) return "NEQ";
+  else if(op == op_NOT) return "NOT";
+  else if(op == op_CAST) return "CAST";
+  else if(op == op_TAKE_ADDRESS) return "TAKE_ADDRESS";
+  else if(op == op_PTR_DEREFERENCE) return "PTR_DEREFERENCE";
+  UNIMPLEMENTED("unknown op type\n");
 }
 static void
 ast_dump_helper(struct Context* context, struct AstNode* root, int indent) {
@@ -118,10 +188,8 @@ ast_dump_helper(struct Context* context, struct AstNode* root, int indent) {
       PRINT_INDENT;
       printf(" value='%s'\n", ast_String_value(ast));
     } else if(ast_is_type(ast, ast_Expr) && ast_Expr_op(ast) != op_NONE) {
-      char opstr[32];
-      OperatorType_tostring(opstr, ast_Expr_op(ast));
       PRINT_INDENT;
-      printf(" op='%s'\n", opstr);
+      printf(" op='%s'\n", OperatorType_name(ast_Expr_op(ast)));
     }
     ast_foreach_child(ast, c) { ast_dump_helper(context, c, indent + 2); }
   }

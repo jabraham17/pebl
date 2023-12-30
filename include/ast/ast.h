@@ -25,7 +25,8 @@ enum OperatorType {
   op_PTR_DEREFERENCE,
 
 };
-void OperatorType_tostring(char* buf, enum OperatorType op);
+char* OperatorType_to_string(enum OperatorType op);
+char* OperatorType_name(enum OperatorType op);
 enum AstType {
   ast_Identifier,
   ast_Typename,
