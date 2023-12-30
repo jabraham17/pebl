@@ -115,19 +115,23 @@
         },
         {
           "begin": ":",
-          "end": "[^ _a-zA-Z0-9]",
+          "end": "[_a-zA-Z0-9]+",
           "beginCaptures": {
             "0": {
               "name": "keyword.operator.pebl"
             }
           },
-          "patterns": [
-            { "include": "#typenames" },
-            {
-              "match": "[_a-zA-Z0-9]+",
-              "name": "entity.name.type.pebl"
+          "endCaptures": {
+            "0": {
+              "patterns": [
+                { "include": "#typenames" },
+                {
+                  "match": "[_a-zA-Z0-9]+",
+                  "name": "entity.name.type.pebl"
+                }
+              ]
             }
-          ]
+          }
         },
         { "include": "#typenames" }
       ]
