@@ -7,7 +7,6 @@
     { "include": "#keywords" },
     { "include": "#functions" },
     { "include": "#variables" },
-    { "include": "#builtin_types" },
     { "include": "#types" },
     { "include": "#operators" },
     { "include": "#builtins" },
@@ -72,7 +71,7 @@
         }
       ]
     },
-    "builtin_types": {
+    "typenames": {
       "patterns": [
         {
           "match": "\\b(void)\\b",
@@ -89,40 +88,54 @@
         {
           "match": "\\b(int|char|string)\\b",
           "name": "storage.type.pebl"
+        },
+        {
+          "match": "\\*",
+          "name": "keyword.operator.pebl"
         }
       ]
     },
     "types": {
       "patterns": [
         {
-          "match": "(:\\s*([_a-zA-Z0-9*]+))\\b",
-          "captures": {
-            "2": {
-              "name": "storage.type.pebl"
-            }
-          }
-        },
-        {
-          "match": "\\b(type)\\s+([_a-zA-Z0-9]+)\\s*[=;]",
-          "captures": {
-            "1": {
+          "begin": "\\b(type)\\b",
+          "end": ";|\\{",
+          "beginCaptures": {
+            "0": {
               "name": "storage.type.pebl keyword.declaration.type.pebl"
-            },
-            "2": {
+            }
+          },
+          "patterns": [
+            { "include": "#typenames" },
+            {
+              "match": "[_a-zA-Z0-9]+",
               "name": "entity.name.type.pebl"
             }
-          }
+          ]
         },
         {
-          "match": "\\b(type)\\b",
-          "name": "storage.type.pebl keyword.declaration.type.pebl"
-        }
+          "begin": ":",
+          "end": "[^ _a-zA-Z0-9]",
+          "beginCaptures": {
+            "0": {
+              "name": "keyword.operator.pebl"
+            }
+          },
+          "patterns": [
+            { "include": "#typenames" },
+            {
+              "match": "[_a-zA-Z0-9]+",
+              "name": "entity.name.type.pebl"
+            }
+          ]
+        },
+        { "include": "#typenames" }
       ]
     },
     "operators": {
       "patterns": [
         {
-          "match": "&&|\\|\\||<|>|<=|>=|==|!=|\\+|-|\\*|/|&|!|=",
+          "match": "&&|\\|\\||<|>|<=|>=|==|!=|\\+|-|\\*|/|&|!|=|:",
           "name": "keyword.operator.pebl"
         }
       ]
