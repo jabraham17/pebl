@@ -1,0 +1,69 @@
+func print(s: string): void;
+extern func intToString(i:int):string;
+
+func printBool(b:bool):void {
+  if b == true {
+    print("true\n");
+  } else {
+    print("false\n");
+  }
+}
+
+func a(x:bool): bool {
+  print("a\n");
+  return x;
+}
+func b(x:bool): bool {
+  print("b\n");
+  return x;
+}
+func c(x:bool): bool {
+  print("c\n");
+  return x;
+}
+
+func test1():bool {
+  print("test 1\n");
+  return (a(false)) && (b(false));
+}
+func test2():bool {
+  print("test 2\n");
+  return (a(false)) && (b(true));
+}
+func test3():bool {
+  print("test 3\n");
+  return (a(true)) && (b(false));
+}
+func test4():bool {
+  print("test 4\n");
+  return (a(true)) && (b(true));
+}
+
+func test5():bool {
+  print("test 5\n");
+  return ((a(true)) && (b(false))) && (c(true));
+}
+func test6():bool {
+  print("test 6\n");
+  return (a(true)) && ((b(false)) && (c(true)));
+}
+func test7():bool {
+  print("test 7\n");
+  return (a(true)) && ((b(true)) && (c(true)));
+}
+func test8():bool {
+  print("test 8\n");
+  return ((a(true)) && (b(true))) && (c(true));
+}
+
+func main(args: string*, nargs: int): int {
+  printBool(test1());
+  printBool(test2());
+  printBool(test3());
+  printBool(test4());
+
+  printBool(test5());
+  printBool(test6());
+  printBool(test7());
+  printBool(test8());
+}
