@@ -5,14 +5,17 @@
 #include "ast/scope-resolve.h"
 
 #include "cg-helpers.h"
+#include "cg-inst.h"
 
 static struct cg_value* codegenOperator_sintBOp(
     struct Context* ctx,
     __attribute__((unused)) struct ScopeResult* scope,
     enum OperatorType op,
-    struct cg_value* lhs,
-    struct cg_value* rhs,
+    struct AstNode* lhsAst,
+    struct AstNode* rhsAst,
     struct Type* resType) {
+  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
+  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
   ASSERT(
       Type_is_signed(lhs->type) && Type_is_signed(rhs->type) &&
       Type_is_signed(resType));
@@ -56,9 +59,11 @@ static struct cg_value* codegenOperator_compare(
     struct Context* ctx,
     struct ScopeResult* scope,
     enum OperatorType op,
-    struct cg_value* lhs,
-    struct cg_value* rhs,
+    struct AstNode* lhsAst,
+    struct AstNode* rhsAst,
     struct Type* resType) {
+  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
+  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
 
   LLVMValueRef lhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
@@ -105,41 +110,76 @@ static struct cg_value* codegenOperator_compare(
   return res;
 }
 
-// static struct cg_value* codegenOperator_booleanAnd(
-//     struct Context* ctx,
-//     struct ScopeResult* scope,
-//     enum OperatorType op,
-//     struct cg_value* lhs,
-//     struct cg_value* rhs,
-//     struct Type* resType) {
+static struct cg_value* codegenOperator_booleanAnd(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    __attribute__((unused)) enum OperatorType op,
+    struct AstNode* lhsAst,
+    struct AstNode* rhsAst,
+    struct Type* resType) {
 
-//   LLVMValueRef lhsVal =
-//       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
-//   LLVMValueRef rhsVal =
-//       LLVMBuildLoad2(ctx->codegen->builder, rhs->cg_type, rhs->value, "");
+  ASSERT(Type_is_boolean(resType));
+  LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
 
-//   if(LLVMGetTypeKind(LLVMTypeOf(lhsVal)) == LLVMPointerTypeKind) {
-//     lhsVal = LLVMBuildPtrToInt(
-//         ctx->codegen->builder,
-//         lhsVal,
-//         LLVMInt64TypeInContext(ctx->codegen->llvmContext),
-//         "");
-//   }
-//   if(LLVMGetTypeKind(LLVMTypeOf(rhsVal)) == LLVMPointerTypeKind) {
-//     rhsVal = LLVMBuildPtrToInt(
-//         ctx->codegen->builder,
-//         rhsVal,
-//         LLVMInt64TypeInContext(ctx->codegen->llvmContext),
-//         "");
-//   }
-// }
+  struct cg_value* res = allocate_stack_for_temp(
+      ctx,
+      resLLVMType,
+      LLVMConstInt(resLLVMType, 0, 0),
+      resType);
+
+  // this works by creating two branches. We always eval the lhs. if its true,
+  // we have to eval the rhs. If the lhs is false, no need to eval the rhs
+  // (shortcircuit) this is easy to do with branching
+
+  LLVMBasicBlockRef currBB = LLVMGetInsertBlock(ctx->codegen->builder);
+  LLVMValueRef currentFunc = LLVMGetBasicBlockParent(currBB);
+  // create BBs
+  LLVMBasicBlockRef rhsBB =
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "and.rhs");
+  LLVMBasicBlockRef endBB =
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "and.end");
+
+  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
+  LLVMValueRef lhsVal =
+      LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
+  LLVMValueRef lhsCond = LLVMBuildICmp(
+      ctx->codegen->builder,
+      LLVMIntNE,
+      lhsVal,
+      LLVMConstNull(LLVMTypeOf(lhsVal)),
+      "");
+  LLVMBuildCondBr(ctx->codegen->builder, lhsCond, rhsBB, endBB);
+
+  LLVMAppendExistingBasicBlock(currentFunc, rhsBB);
+  LLVMPositionBuilderAtEnd(ctx->codegen->builder, rhsBB);
+
+  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
+  LLVMValueRef rhsVal =
+      LLVMBuildLoad2(ctx->codegen->builder, rhs->cg_type, rhs->value, "");
+  LLVMValueRef rhsCond = LLVMBuildICmp(
+      ctx->codegen->builder,
+      LLVMIntNE,
+      rhsVal,
+      LLVMConstNull(LLVMTypeOf(rhsVal)),
+      "");
+  ASSERT(LLVMGetTypeKind(resLLVMType) == LLVMGetTypeKind(LLVMTypeOf(rhsCond)));
+  LLVMBuildStore(ctx->codegen->builder, rhsCond, res->value);
+  LLVMBuildBr(ctx->codegen->builder, endBB);
+
+  // move to end and keep going
+  LLVMAppendExistingBasicBlock(currentFunc, endBB);
+  LLVMPositionBuilderAtEnd(ctx->codegen->builder, endBB);
+
+  return res;
+}
 
 static struct cg_value* codegenOperator_negate(
     struct Context* ctx,
     __attribute__((unused)) struct ScopeResult* scope,
     __attribute__((unused)) enum OperatorType op,
-    struct cg_value* operand,
+    struct AstNode* operandAst,
     struct Type* resType) {
+  struct cg_value* operand = codegen_helper(ctx, operandAst, scope);
 
   LLVMValueRef operandVal = LLVMBuildLoad2(
       ctx->codegen->builder,
@@ -159,13 +199,42 @@ static struct cg_value* codegenOperator_negate(
   return res;
 }
 
+static struct cg_value* codegenOperator_cast(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    __attribute__((unused)) enum OperatorType op,
+    struct AstNode* lhsAst,
+    struct AstNode* rhsAst,
+    __attribute__((unused)) struct Type* resType) {
+
+  struct cg_value* lhsVal = codegen_helper(ctx, lhsAst, scope);
+  struct Type* rhsType = scope_get_Type_from_ast(ctx, scope, rhsAst, 1);
+  struct Type* lhsType = lhsVal->type;
+  LLVMValueRef val =
+      LLVMBuildLoad2(ctx->codegen->builder, lhsVal->cg_type, lhsVal->value, "");
+  struct cg_value* casted = build_cast(ctx, scope, lhsType, val, rhsType);
+  // if not casted, unknown cast
+  if(casted) {
+    return allocate_stack_for_temp(
+        ctx,
+        casted->cg_type,
+        casted->value,
+        casted->type);
+  } else {
+    return NULL;
+  }
+}
+
 static struct cg_value* codegenOperator_addrOffset(
     struct Context* ctx,
     struct ScopeResult* scope,
     enum OperatorType op,
-    struct cg_value* lhs,
-    struct cg_value* rhs,
+    struct AstNode* lhsAst,
+    struct AstNode* rhsAst,
     __attribute__((unused)) struct Type* resType) {
+
+  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
+  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
 
   struct cg_value* ptr;
   struct cg_value* offset;
@@ -202,8 +271,11 @@ static struct cg_value* codegenOperator_getValueAtAddress(
     struct Context* ctx,
     struct ScopeResult* scope,
     __attribute__((unused)) enum OperatorType op,
-    struct cg_value* operand,
+    struct AstNode* operandAst,
     __attribute__((unused)) struct Type* resType) {
+
+  struct cg_value* operand = codegen_helper(ctx, operandAst, scope);
+
   struct Type* ptrType = Type_get_base_type(operand->type);
   ASSERT(Type_is_pointer(ptrType));
   LLVMValueRef ptr = LLVMBuildLoad2(
@@ -230,11 +302,13 @@ static struct cg_value* codegenOperator_getAddressOfValue(
     struct Context* ctx,
     __attribute__((unused)) struct ScopeResult* scope,
     __attribute__((unused)) enum OperatorType op,
-    struct cg_value* operand,
+    struct AstNode* operandAst,
     __attribute__((unused)) struct Type* resType) {
   // just return the stack ptr for this
+  struct cg_value* operand = codegen_helper(ctx, operandAst, scope);
   struct Type* operandTypePtr = Type_get_ptr_type(operand->type);
   ASSERT(LLVMGetTypeKind(LLVMTypeOf(operand->value)) == LLVMPointerTypeKind);
+
   struct cg_value* address = allocate_stack_for_temp(
       ctx,
       LLVMTypeOf(operand->value),
@@ -246,20 +320,20 @@ static struct cg_value* codegenOperator_getAddressOfValue(
 static int typesMatch(
     struct Context* ctx,
     struct ScopeResult* scope,
-    struct cg_value* val,
-    char* type) {
+    struct Type* type,
+    char* typename) {
   // any type
-  if(type == NULL) return 1;
-  if(type[0] == '\0') return 1;
+  if(typename == NULL) return 1;
+  if(typename[0] == '\0') return 1;
 
   // type is any pointer
-  if(type[0] == '*' && type[1] == '\0') {
-    return Type_is_pointer(Type_get_base_type(val->type));
+  if(typename[0] == '*' && typename[1] == '\0') {
+    return Type_is_pointer(Type_get_base_type(type));
   }
 
-  struct Type* t = scope_get_Type_from_name(ctx, scope, type, 1);
+  struct Type* t = scope_get_Type_from_name(ctx, scope, typename, 1);
 
-  return Type_eq(val->type, t);
+  return Type_eq(type, t);
 }
 
 // convert the types specified in .def into a Type
@@ -281,13 +355,16 @@ static struct Type* get_type_from_def_type(
 struct cg_value* codegenBinaryOperator(
     struct Context* ctx,
     struct ScopeResult* scope,
-    enum OperatorType op,
-    struct cg_value* lhs,
-    struct cg_value* rhs) {
+    struct AstNode* expr) {
+  enum OperatorType op = ast_Expr_op(expr);
+  struct AstNode* lhs = ast_Expr_lhs(expr);
+  struct AstNode* rhs = ast_Expr_rhs(expr);
+  struct Type* lhsAstType = scope_get_Type_from_ast(ctx, scope, lhs, 1);
+  struct Type* rhsAstType = scope_get_Type_from_ast(ctx, scope, rhs, 1);
 
-#define CODEGEN_BINARY_OPERATOR(opType, lhsType, rhsType, resType, funcName)   \
-  if(op == op_##opType && typesMatch(ctx, scope, lhs, lhsType) &&              \
-     typesMatch(ctx, scope, rhs, rhsType)) {                                   \
+#define BINARY_EXPR(opType, lhsType, rhsType, resType, funcName)               \
+  if(op == op_##opType && typesMatch(ctx, scope, lhsAstType, lhsType) &&       \
+     typesMatch(ctx, scope, rhsAstType, rhsType)) {                            \
     return codegenOperator_##funcName(                                         \
         ctx,                                                                   \
         scope,                                                                 \
@@ -296,7 +373,7 @@ struct cg_value* codegenBinaryOperator(
         rhs,                                                                   \
         get_type_from_def_type(ctx, scope, resType));                          \
   }
-#include "cg-operator.def"
+#include "definitions/expression-types.def"
 
   return NULL;
 }
@@ -304,11 +381,14 @@ struct cg_value* codegenBinaryOperator(
 struct cg_value* codegenUnaryOperator(
     struct Context* ctx,
     struct ScopeResult* scope,
-    enum OperatorType op,
-    struct cg_value* operand) {
+    struct AstNode* expr) {
+  enum OperatorType op = ast_Expr_op(expr);
+  struct AstNode* operand = ast_Expr_lhs(expr);
+  struct Type* operandAstType = scope_get_Type_from_ast(ctx, scope, operand, 1);
 
-#define CODEGEN_UNARY_OPERATOR(opType, operandType, resType, funcName)         \
-  if(op == op_##opType && typesMatch(ctx, scope, operand, operandType)) {      \
+#define UNARY_EXPR(opType, operandType, resType, funcName)                     \
+  if(op == op_##opType &&                                                      \
+     typesMatch(ctx, scope, operandAstType, operandType)) {                    \
     return codegenOperator_##funcName(                                         \
         ctx,                                                                   \
         scope,                                                                 \
@@ -316,7 +396,7 @@ struct cg_value* codegenUnaryOperator(
         operand,                                                               \
         get_type_from_def_type(ctx, scope, resType));                          \
   }
-#include "cg-operator.def"
+#include "definitions/expression-types.def"
 
   return NULL;
 }

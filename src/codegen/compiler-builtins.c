@@ -130,9 +130,9 @@ static struct cg_value* codegenBuiltin_codegenAssert(
   LLVMValueRef currentFunc = LLVMGetBasicBlockParent(currBB);
   // create BBs
   LLVMBasicBlockRef thenBB =
-      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.body");
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "assert");
   LLVMBasicBlockRef endBB =
-      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "if.end");
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "");
 
   struct cg_value* expr = codegen_expr(ctx, arg, scope);
   LLVMValueRef exprVal =
@@ -159,11 +159,8 @@ static struct cg_value* codegenBuiltin_codegenAssert(
       LLVMGetIntrinsicDeclaration(ctx->codegen->module, ID, NULL, 0);
   LLVMBuildCall2(ctx->codegen->builder, intrinsicTy, intrinsic, NULL, 0, "");
 
-  // if previous inst was a terminator, dont add one here
-  if(!LLVMGetBasicBlockTerminator(LLVMGetInsertBlock(ctx->codegen->builder))) {
-    // create br to endBB
-    LLVMBuildBr(ctx->codegen->builder, endBB);
-  }
+  // create br to endBB
+  LLVMBuildBr(ctx->codegen->builder, endBB);
 
   // move to end and keep going
   LLVMAppendExistingBasicBlock(currentFunc, endBB);

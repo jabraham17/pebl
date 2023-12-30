@@ -483,6 +483,155 @@ struct Type* scope_get_Type_from_name(
   }
   return sym->ss_type;
 }
+
+// TODO: duplicated from cg-operator.c
+static int typesMatch(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct Type* type,
+    char* typename) {
+  // any type
+  if(typename == NULL) return 1;
+  if(typename[0] == '\0') return 1;
+
+  // type is any pointer
+  if(typename[0] == '*' && typename[1] == '\0') {
+    return Type_is_pointer(Type_get_base_type(type));
+  }
+
+  struct Type* t = scope_get_Type_from_name(ctx, scope, typename, 1);
+
+  return Type_eq(type, t);
+}
+
+static int is_generic_def_type(char* type) {
+  // any type
+  if(type == NULL || type[0] == '\0') {
+    return 1;
+  }
+  // any ptr type
+  if(type[0] == '*' && type[1] == '\0') {
+    return 1;
+  }
+  return 0;
+}
+static struct Type* get_concrete_def_type(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    char* type) {
+  ASSERT(!is_generic_def_type(type));
+  return scope_get_Type_from_name(ctx, scope, type, 1);
+}
+
+static struct Type* determine_result_type_binop(
+    struct Context* ctx,
+    __attribute__((unused)) struct ScopeResult* scope,
+    struct AstNode* expr,
+    enum OperatorType op,
+    struct Type* lhsType,
+    struct Type* rhsType) {
+
+  // casts result in the rhsType
+  if(op == op_CAST) {
+    return rhsType;
+  }
+
+  // pointer arithmentic (int +- ptr) OR (ptr +- int) results in the ptr type
+  if(op == op_PLUS || op == op_MINUS) {
+    if(Type_is_integer(lhsType) && Type_is_pointer(rhsType)) {
+      return rhsType;
+    }
+    if(Type_is_pointer(lhsType) && Type_is_integer(rhsType)) {
+      return lhsType;
+    }
+  }
+
+  ERROR_ON_AST(
+      ctx,
+      expr,
+      "could not determine type of '%s'\n",
+      ast_to_string(expr));
+}
+
+static struct Type* determine_result_type_uop(
+    struct Context* ctx,
+    __attribute__((unused)) struct ScopeResult* scope,
+    struct AstNode* expr,
+    enum OperatorType op,
+    struct Type* operandType) {
+
+  // get_addr results in the pointer type
+  if(op == op_TAKE_ADDRESS) {
+    return Type_get_ptr_type(operandType);
+  }
+
+  // deref results in the base type
+  if(op == op_PTR_DEREFERENCE && Type_is_pointer(operandType)) {
+    return operandType->pointer_to;
+  }
+
+  ERROR_ON_AST(
+      ctx,
+      expr,
+      "could not determine type of '%s'\n",
+      ast_to_string(expr));
+}
+
+static struct Type* scope_get_Type_from_binop(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct AstNode* expr) {
+  enum OperatorType op = ast_Expr_op(expr);
+  struct Type* lhsAstType =
+      scope_get_Type_from_ast(ctx, scope, ast_Expr_lhs(expr), 1);
+  struct Type* rhsAstType =
+      scope_get_Type_from_ast(ctx, scope, ast_Expr_rhs(expr), 1);
+#define BINARY_EXPR(opType, lhsType, rhsType, resType, _)                      \
+  if(op == op_##opType && typesMatch(ctx, scope, lhsAstType, lhsType) &&       \
+     typesMatch(ctx, scope, rhsAstType, rhsType)) {                            \
+    if(!is_generic_def_type(resType))                                          \
+      return get_concrete_def_type(ctx, scope, resType);                       \
+    else                                                                       \
+      return determine_result_type_binop(                                      \
+          ctx,                                                                 \
+          scope,                                                               \
+          expr,                                                                \
+          op,                                                                  \
+          lhsAstType,                                                          \
+          rhsAstType);                                                         \
+  }
+#include "definitions/expression-types.def"
+
+  ERROR_ON_AST(
+      ctx,
+      expr,
+      "could not determine type of '%s'\n",
+      ast_to_string(expr));
+}
+static struct Type* scope_get_Type_from_uop(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct AstNode* expr) {
+  enum OperatorType op = ast_Expr_op(expr);
+  struct Type* operandAstType =
+      scope_get_Type_from_ast(ctx, scope, ast_Expr_lhs(expr), 1);
+#define UNARY_EXPR(opType, operandType, resType, _)                            \
+  if(op == op_##opType &&                                                      \
+     typesMatch(ctx, scope, operandAstType, operandType)) {                    \
+    if(!is_generic_def_type(resType))                                          \
+      return get_concrete_def_type(ctx, scope, resType);                       \
+    else                                                                       \
+      return determine_result_type_uop(ctx, scope, expr, op, operandAstType);  \
+  }
+#include "definitions/expression-types.def"
+
+  ERROR_ON_AST(
+      ctx,
+      expr,
+      "could not determine type of '%s'\n",
+      ast_to_string(expr));
+}
+
 struct Type* scope_get_Type_from_ast(
     struct Context* ctx,
     struct ScopeResult* sr,
@@ -507,7 +656,7 @@ struct Type* scope_get_Type_from_ast(
     } else if(sym && sym->sst == sst_Variable) {
       return sym->ss_variable->type;
     } else {
-      ERROR(ctx, "could not find type named '%s'\n", name);
+      ERROR_ON_AST(ctx, ast, "could not find type named '%s'\n", name);
     }
   } else if(ast_is_type(ast, ast_Number)) {
     int size = ast_Number_size(ast);
@@ -519,8 +668,20 @@ struct Type* scope_get_Type_from_ast(
       struct Type* type =
           scope_get_Type_from_ast(ctx, sr, ast_Expr_lhs(ast), search_parent);
       return type;
+    } else if(ast_Expr_is_binop(ast)) {
+      return scope_get_Type_from_binop(ctx, sr, ast);
     } else {
-      UNIMPLEMENTED("getting type from expr\n");
+      ASSERT(ast_Expr_is_uop(ast));
+      return scope_get_Type_from_uop(ctx, sr, ast);
+    }
+  } else if(ast_is_type(ast, ast_Call)) {
+    // get the return type of the function we are calling
+    char* name = ast_Identifier_name(ast_Call_name(ast));
+    struct ScopeSymbol* sym = scope_lookup_name(ctx, sr, name, search_parent);
+    if(sym && sym->sst == sst_Function) {
+      return sym->ss_function->rettype;
+    } else {
+      ERROR_ON_AST(ctx, ast, "could not find function named '%s'\n", name);
     }
   } else {
     UNIMPLEMENTED("getting type from ast\n");

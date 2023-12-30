@@ -62,6 +62,7 @@ enum AstType ast_type(struct AstNode* ast);
 int ast_is_type(struct AstNode* ast, enum AstType at);
 int ast_num_children(struct AstNode* ast);
 struct AstNode* ast_get_child(struct AstNode* ast, int);
+char* ast_to_string(struct AstNode* ast);
 
 void dump_ast(struct Context* context);
 void verify_ast(struct Context* context);

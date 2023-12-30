@@ -7,13 +7,10 @@
 struct cg_value* codegenBinaryOperator(
     struct Context* context,
     struct ScopeResult* scope,
-    enum OperatorType op,
-    struct cg_value* lhs,
-    struct cg_value* rhs);
+    struct AstNode* expr);
 struct cg_value* codegenUnaryOperator(
     struct Context* context,
     struct ScopeResult* scope,
-    enum OperatorType op,
-    struct cg_value* operand);
+    struct AstNode* expr);
 
 #endif

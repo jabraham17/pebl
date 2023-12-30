@@ -43,6 +43,11 @@ struct AstNode* ast_get_child(struct AstNode* ast, int i) {
   return ast->children[i];
 }
 
+char* ast_to_string(struct AstNode* ast) {
+  UNIMPLEMENTED("ast_to_string\n");
+  return "UNIMPLEMENTED\n";
+}
+
 static void ast_type_to_string(char* buf, enum AstType at) {
   if(at == ast_Identifier) bsstrcpy(buf, "Identifier");
   else if(at == ast_Typename) bsstrcpy(buf, "Typename");
