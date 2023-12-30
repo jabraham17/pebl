@@ -39,7 +39,7 @@ BINARY_EXPR(DIVIDE, Int8, Int8, Int8, sintBOp)
 // boolean logic
 //
 BINARY_EXPR(AND, Any, Any, Bool, booleanAnd)
-// BINARY_EXPR(OR, Any, Any, Bool, booleanOr)
+BINARY_EXPR(OR, Any, Any, Bool, booleanOr)
 
 BINARY_EXPR(EQ, Bool, Bool, Bool, compare)
 BINARY_EXPR(NEQ, Bool, Bool, Bool, compare)

@@ -1,0 +1,17 @@
+func print(s: string): void;
+extern func intToString(i:int):string;
+
+func main(args: string*, nargs: int): int {
+  let next = ' ';
+  print(typeof(next));
+  print("\n");
+  let i = 0;
+  let buf_len = 16;
+  let done = 0;
+  if ((next == ' ') || 
+     (next == '\n')) || (i >= buf_len) {
+    done = 1;
+  }
+  print(intToString(done));
+  print("\n");
+}

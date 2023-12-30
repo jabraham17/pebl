@@ -173,6 +173,69 @@ static struct cg_value* codegenOperator_booleanAnd(
   return res;
 }
 
+static struct cg_value* codegenOperator_booleanOr(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    __attribute__((unused)) enum OperatorType op,
+    struct AstNode* lhsAst,
+    struct AstNode* rhsAst,
+    struct Type* resType) {
+
+  ASSERT(Type_is_boolean(resType));
+  LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
+
+  struct cg_value* res = allocate_stack_for_temp(
+      ctx,
+      resLLVMType,
+      LLVMConstInt(resLLVMType, 1, 0),
+      resType);
+
+  // this works by creating two branches. We always eval the lhs. if its false,
+  // we have to eval the rhs. If the lhs is true, no need to eval the rhs
+  // (shortcircuit). this is easy to do with branching
+
+  LLVMBasicBlockRef currBB = LLVMGetInsertBlock(ctx->codegen->builder);
+  LLVMValueRef currentFunc = LLVMGetBasicBlockParent(currBB);
+  // create BBs
+  LLVMBasicBlockRef rhsBB =
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "or.rhs");
+  LLVMBasicBlockRef endBB =
+      LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "or.end");
+
+  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
+  LLVMValueRef lhsVal =
+      LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
+  LLVMValueRef lhsCond = LLVMBuildICmp(
+      ctx->codegen->builder,
+      LLVMIntNE,
+      lhsVal,
+      LLVMConstNull(LLVMTypeOf(lhsVal)),
+      "");
+  LLVMBuildCondBr(ctx->codegen->builder, lhsCond, endBB, rhsBB);
+
+  LLVMAppendExistingBasicBlock(currentFunc, rhsBB);
+  LLVMPositionBuilderAtEnd(ctx->codegen->builder, rhsBB);
+
+  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
+  LLVMValueRef rhsVal =
+      LLVMBuildLoad2(ctx->codegen->builder, rhs->cg_type, rhs->value, "");
+  LLVMValueRef rhsCond = LLVMBuildICmp(
+      ctx->codegen->builder,
+      LLVMIntNE,
+      rhsVal,
+      LLVMConstNull(LLVMTypeOf(rhsVal)),
+      "");
+  ASSERT(LLVMGetTypeKind(resLLVMType) == LLVMGetTypeKind(LLVMTypeOf(rhsCond)));
+  LLVMBuildStore(ctx->codegen->builder, rhsCond, res->value);
+  LLVMBuildBr(ctx->codegen->builder, endBB);
+
+  // move to end and keep going
+  LLVMAppendExistingBasicBlock(currentFunc, endBB);
+  LLVMPositionBuilderAtEnd(ctx->codegen->builder, endBB);
+
+  return res;
+}
+
 static struct cg_value* codegenOperator_negate(
     struct Context* ctx,
     __attribute__((unused)) struct ScopeResult* scope,
