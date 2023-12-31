@@ -1,0 +1,320 @@
+
+type File;
+func openFile(name:string, mode:string):File*;
+func fileIsOpen(file:File*):bool;
+func closeFile(file:File*):void;
+func print(s: string): void;
+func getStdin(): File*;
+func getStdout(): File*;
+func getChar(file:File*):char;
+func putChars(file:File*, c:char*, n:int):void;
+func putChar(file:File*, c:char):void;
+
+func pathExists(path: string):bool;
+func pathIsFile(path: string):bool;
+
+func getFilePos(file:File*): int;
+func SEEK_SET(): int;
+func SEEK_CUR(): int;
+func SEEK_END(): int;
+func setFilePos(file:File*, offset:int, seek_type:int):void;
+
+func pebl_memset(ptr: void*, len: int, value: int):void;
+func pebl_memcpy(dst:void*, src:void*, len:int):void;
+
+func EOF(): char;
+
+func allocate(n:int): void*;
+
+extern func intToString(i:int):string;
+
+
+func stringLength(str: string): int {
+  let i = 0;
+  while (*str) != '\0' {
+    i = i + 1;
+    str = str + 1;
+  }
+  return i;
+}
+
+type IncludePath = {
+  path: string;
+  next: IncludePath*;
+}
+type IncludePathPtr = IncludePath*;
+func createIncludePath(path:string):IncludePath* {
+  let np: IncludePath* = allocate(sizeof(IncludePath));
+  pebl_memset(np, sizeof(IncludePath), 0);
+  np->path = path;
+  return np;
+}
+func appendIncludePath(head_ptr:IncludePath**, n:IncludePath*):void {
+  if (*head_ptr) == 0 {
+    *head_ptr = n;
+  } else {
+    let temp = *head_ptr;
+    while (temp->next) != 0 {
+      temp = temp->next;
+    }
+    temp->next = n;
+  }
+}
+
+func pathJoin(p1: string, p2:string): string {
+  let p1Size = stringLength(p1);
+  let p2Size = stringLength(p2);
+  let newSize = (p1Size + p2Size) + 2; # 1 for null, 1 for /
+  let newStr: string = allocate(sizeof(char)*newSize);
+  pebl_memcpy(newStr, p1, p1Size);
+  let newStr_p = newStr + p1Size;
+  *newStr_p = '/';
+  newStr_p = newStr_p + 1;
+  pebl_memcpy(newStr_p, p2, p2Size);
+  newStr_p = newStr + newSize;
+  *newStr_p = '\0';
+  return newStr;
+}
+
+func searchIncludePath(paths:IncludePath*, path: string): string {
+  while paths {
+    let base = paths->path;
+    let p = pathJoin(base, path);
+    if pathExists(p) && pathIsFile(p) {
+      return p;
+    }
+    paths = paths->next;
+  }
+
+  return 0:string;
+}
+
+
+func stringCompareWithLen(str1: string, str2: string, len: int): bool {
+  let i = 0;
+  while ((i < len) && ((*str1) != '\0')) && ((*str2) != '\0')  {
+    if (*str1) != (*str2) {
+      return false;
+    }
+    str1 = str1 + 1;
+    str2 = str2 + 1;
+    i = i + 1;
+  }
+  return true;
+}
+func findSubstring(str: string, substr: string): int {
+  let substrLen = stringLength(substr);
+  let i = 0;
+  while (*(str+i)) != '\0' {
+    if stringCompareWithLen(str + i, substr, substrLen) {
+      return i;
+    }
+    i = i + 1;
+  }
+  return 0-1;
+}
+func replaceSubstring(str: string, substr: string, replacement: string): string {
+  let replacementSize = stringLength(replacement);
+  let substrStart = findSubstring(str, substr);
+  let substrSize = stringLength(substr);
+
+  let prefixStart = 0;
+  let prefixSize = substrStart;
+  
+  let suffixStart = substrStart + substrSize;
+  let suffixSize = stringLength(str) - suffixStart;
+
+  let newStrLen = (prefixSize + suffixSize) + replacementSize;
+  let newStr: string = allocate(sizeof(char)*(newStrLen+1));
+  pebl_memcpy(newStr, str+prefixStart, prefixSize);
+  pebl_memcpy(newStr+prefixSize, replacement, replacementSize);
+  pebl_memcpy((newStr+prefixSize)+replacementSize, str+suffixStart, suffixSize);
+  if 1 {
+    let p = newStr + newStrLen;
+    *p = '\0';
+  }
+  return newStr;
+}
+
+
+func readLine(str: string, line: string*):int {
+  let i = 0;
+  let line_ptr = *line;
+  while ((*str) != '\0') && ((*str) != '\n') {
+    *line_ptr = *str;
+    line_ptr = line_ptr + 1;
+    str = str + 1;
+    i = i + 1;
+  }
+  return i;
+}
+
+
+type IncludeDirective = {
+  # all offsets are absolute
+  directive_offset: int;
+  directive_length: int;
+  path_offset: int;
+  path_length: int;
+}
+func allocateIncludeDirective(): IncludeDirective* {
+  return allocate(sizeof(IncludeDirective));
+}
+func printIncludeDirective(contents: string, id: IncludeDirective*): void {
+  print("full directive: '");
+  putChars(getStdout(), contents+id->directive_offset, id->directive_length);
+  print("'\n");
+  print("  path: '");
+  putChars(getStdout(), contents+id->path_offset, id->path_length);
+  print("'\n");
+}
+
+
+func IncDir_getDirective(contents: string, id: IncludeDirective*): string {
+
+  let path: string = allocate(sizeof(char)*(id->directive_length+1));
+  pebl_memcpy(path, contents+id->directive_offset, id->directive_length);
+  if 1 {
+    let p = path + id->directive_length;
+    *p = '\0';
+  }
+  return path;
+}
+func IncDir_getFilePath(contents: string, id: IncludeDirective*): string {
+
+  let path: string = allocate(sizeof(char)*(id->path_length+1));
+  pebl_memcpy(path, contents+id->path_offset, id->path_length);
+  if 1 {
+    let p = path + id->path_length;
+    *p = '\0';
+  }
+  return path;
+}
+
+
+func getNextInclude(contents: string): IncludeDirective* {
+  type x = void*;
+  type IDptr = IncludeDirective*;
+  let includeStr = "$include \"";
+  let includeStart = findSubstring(contents, includeStr);
+  if includeStart == (0-1) {
+    return 0:IDptr;
+  }
+
+  # read until the newline
+  let includeEnd = findSubstring(contents+includeStart, "\n") + includeStart;
+  let includeSize = includeEnd - includeStart;
+
+  # find the first '"'
+  let firstQuote = findSubstring(contents+includeStart, "\"") + includeStart;
+  let pathStart = firstQuote+1;
+  # find the second quote
+  let secondQuote = findSubstring(contents+pathStart, "\"") + pathStart;
+  let pathSize = secondQuote - pathStart;
+
+  # checks
+  # pathSize must be greater than 0 and path must be inside include
+  if pathSize <= 0 {
+    return 0:IDptr;
+  }
+  if !((pathStart+pathSize) < (includeStart+includeSize)) {
+    return 0:IDptr;
+  }
+
+  let res = allocateIncludeDirective();
+  res->directive_offset = includeStart;
+  res->directive_length = includeSize;
+  res->path_offset = pathStart;
+  res->path_length = pathSize;
+
+  return res;
+}
+
+
+func getFileSize(file: File*): int {
+  let current_pos = getFilePos(file);
+  setFilePos(file, 0, SEEK_END());
+  let size = getFilePos(file);
+  setFilePos(file, current_pos, SEEK_SET());
+  return size;
+}
+
+func readFileContents(path: string): string {
+  let file = openFile(path, "rb");
+  if !fileIsOpen(file) {
+    return 0:string;
+  }
+
+  let fileSize = getFileSize(file);
+  let contents: string = allocate(sizeof(string)*(fileSize+1)); 
+  let contents_ptr = contents;
+  let c = getChar(file);
+  while c != EOF() {
+    *contents_ptr = c;
+    contents_ptr = contents_ptr + 1;
+    c = getChar(file);
+  }
+  *contents_ptr = '\0';
+
+  closeFile(file);
+
+  return contents;
+}
+
+func writeFileContents(path: string, contents: string):void {
+  let file = openFile(path, "wb");
+  if !fileIsOpen(file) {
+    return;
+  }
+  putChars(file, contents, stringLength(contents));
+  closeFile(file);
+}
+
+func main(args: string*, nargs: int): int {
+
+  if nargs != 3 {
+    print("must specify files\n");
+    return 1;
+  }
+
+
+  let paths = 0:IncludePathPtr;
+  appendIncludePath(&paths, createIncludePath("."));
+  appendIncludePath(&paths, createIncludePath("stdlib"));
+  appendIncludePath(&paths, createIncludePath("runtime"));
+
+
+  let sourceFile = *(args + 1);
+  let outputFile = *(args + 2);
+  let contents = readFileContents(sourceFile);
+  if !contents {
+    print("error opening file\n");
+    return 1;
+  }
+
+  let next = getNextInclude(contents);
+  if !next {
+    print("no valid include\n");
+    return 1;
+  }
+  # printIncludeDirective(contents, next);
+  let path = IncDir_getFilePath(contents, next);
+  let fullPath = searchIncludePath(paths, path);
+  if !fullPath {
+    print("could not find file '");
+    print(path);
+    print("'\n");
+    return 1;
+  }
+
+  let replacement = readFileContents(fullPath);
+  assert(replacement);
+  let dir = IncDir_getDirective(contents, next);
+  let newFile = replaceSubstring(contents, dir, replacement);
+
+  writeFileContents(outputFile, newFile);
+
+  return 0;
+}
+
+
