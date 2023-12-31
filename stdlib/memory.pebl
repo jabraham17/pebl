@@ -5,6 +5,8 @@
 #
 func allocate(n: int):void*;
 func deallocate(p: void*):void;
+func pebl_memset(ptr: void*, len: int, value: int):void;
+func pebl_memcpy(dst:void*, src:void*, len:int):void;
 
 #
 # includes
@@ -24,4 +26,24 @@ func allocate(n: int):void* {
 }
 func deallocate(p: void*):void {
   c_deallocate(p);
+}
+
+func pebl_memset(ptr: void*, len: int, value: int):void {
+  type int8ptr_ = int8*;
+  let i = 0;
+  while i < len {
+    let p = (ptr:int8ptr_) + i;
+    *p = value:int8;
+    i = i + 1;
+  }
+}
+
+func pebl_memcpy(dst:void*, src:void*, len:int):void {
+  type int8ptr_ = int8*;
+  let i = 0;
+  while i < len {
+    let p = (dst:int8ptr_) + i;
+    *p = *((src:int8ptr_) + i);
+    i = i + 1;
+  }
 }

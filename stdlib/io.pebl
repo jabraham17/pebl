@@ -4,6 +4,7 @@
 #
 type File = {fp:void*;}
 func openFile(name:string, mode:string):File*;
+func fileIsOpen(file:File*):bool;
 func closeFile(file:File*):void;
 func getChar(file:File*):char;
 func putChar(file:File*, c:char):void;
@@ -11,9 +12,19 @@ func putChars(file:File*, c:char*, n:int):void;
 func putString(file:File*, s:string):void;
 func print(s: string): void;
 
+func getFilePos(file:File*): int;
+func SEEK_SET(): int;
+func SEEK_CUR(): int;
+func SEEK_END(): int;
+func setFilePos(file:File*, offset:int, seek_type:int):void;
+
 func getStdout(): File*;
 func getStdin(): File*;
 
+func EOF(): char;
+
+func pathExists(path: string):bool;
+func pathIsFile(path: string):bool;
 
 #
 # includes
@@ -32,18 +43,24 @@ extern func c_putChar(fp:void*, c:char):void;
 extern func c_getStdout():void*;
 extern func c_getStdin():void*;
 
+extern func c_ftell(fp:void*):int;
+extern func c_fseek(fp:void*, offset:int,seek_type:int):void;
+extern func c_fseek_seek_type(seek_type:int):int;
+
+extern func c_pathExists(path:string):int;
+extern func c_pathIsFile(path:string):int;
+
 #
 # defs
 #
 func openFile(name:string, mode:string):File* {
-  let fp: void* = c_openFilePointer(name, mode);
-  if fp == 0 {
-    let file:File* = 0;
-    return file;
-  }
   let file:File* = allocate(sizeof(File));
-  file->fp = fp;
+  file->fp = c_openFilePointer(name, mode);
   return file;
+}
+
+func fileIsOpen(file:File*):bool {
+  return file->fp != 0;
 }
 
 func closeFile(file:File*):void {
@@ -79,6 +96,17 @@ func print(s:string):void {
   putString(getStdout(), s);
 }
 
+
+func getFilePos(file:File*): int {
+  return c_ftell(file->fp);
+}
+func SEEK_SET(): int { return c_fseek_seek_type(0); }
+func SEEK_CUR(): int { return c_fseek_seek_type(1); }
+func SEEK_END(): int { return c_fseek_seek_type(2); }
+func setFilePos(file:File*, offset:int, seek_type:int):void {
+  c_fseek(file->fp, offset, seek_type);
+}
+
 type FILEPTR = File*;
 let stdout: File* = 0:FILEPTR;
 let stdin: File* = 0:FILEPTR;
@@ -97,3 +125,15 @@ func getStdin(): File* {
   return stdin;
 }
 
+
+func EOF(): char {
+  return 255:char;
+}
+
+
+func pathExists(path: string):bool {
+  return c_pathExists(path):bool;
+}
+func pathIsFile(path: string):bool {
+  return c_pathIsFile(path):bool;
+}
