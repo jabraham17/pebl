@@ -246,11 +246,14 @@ struct cg_value* codegen_helper(
     struct cg_value* object =
         codegen_helper(ctx, ast_FieldAccess_object(ast), sr);
 
+    // TODO: much of this logic is now duplicated during scope resolution, we
+    // should be able to just  call scope resolve to get types
+
     struct Type* objectType = Type_get_base_type(object->type);
     struct Type* objectPtrType = NULL;
     if(Type_is_pointer(objectType)) {
       objectPtrType = objectType;
-      objectType = Type_get_base_type(objectPtrType->pointer_to);
+      objectType = Type_get_pointee_type(objectPtrType);
     }
 
     // check types

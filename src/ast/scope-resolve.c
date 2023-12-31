@@ -567,7 +567,7 @@ static struct Type* determine_result_type_uop(
 
   // deref results in the base type
   if(op == op_PTR_DEREFERENCE && Type_is_pointer(operandType)) {
-    return operandType->pointer_to;
+    return Type_get_pointee_type(operandType);
   }
 
   ERROR_ON_AST(
@@ -667,12 +667,17 @@ struct Type* scope_get_Type_from_ast(
     if(ast_Expr_is_plain(ast)) {
       struct Type* type =
           scope_get_Type_from_ast(ctx, sr, ast_Expr_lhs(ast), search_parent);
+      ASSERT_MSG(type, "plain expr type is null\n");
       return type;
     } else if(ast_Expr_is_binop(ast)) {
-      return scope_get_Type_from_binop(ctx, sr, ast);
+      struct Type* type = scope_get_Type_from_binop(ctx, sr, ast);
+      ASSERT_MSG(type, "binop expr type is null\n");
+      return type;
     } else {
       ASSERT(ast_Expr_is_uop(ast));
-      return scope_get_Type_from_uop(ctx, sr, ast);
+      struct Type* type = scope_get_Type_from_uop(ctx, sr, ast);
+      ASSERT_MSG(type, "uop expr type is null\n");
+      return type;
     }
   } else if(ast_is_type(ast, ast_Call)) {
     // get the return type of the function we are calling

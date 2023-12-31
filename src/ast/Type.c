@@ -47,9 +47,7 @@ int Type_eq(struct Type* t1, struct Type* t2) {
 
   // if both ptr, check pointer_to equivalence
   if(t1->kind == tk_POINTER && t2->kind == tk_POINTER) {
-    return Type_eq(
-        Type_get_base_type(t1->pointer_to),
-        Type_get_base_type(t2->pointer_to));
+    return Type_eq(Type_get_pointee_type(t1), Type_get_pointee_type(t2));
   }
 
   // check name
@@ -85,6 +83,11 @@ struct Type* Type_get_base_type(struct Type* t) {
     ret = ret->alias_of;
   }
   return ret;
+}
+
+struct Type* Type_get_pointee_type(struct Type* t) {
+  struct Type* base_type = Type_get_base_type(t);
+  return base_type->pointer_to;
 }
 
 int Type_get_num_fields(struct Type* t) {

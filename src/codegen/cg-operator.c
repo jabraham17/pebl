@@ -320,7 +320,8 @@ static struct cg_value* codegenOperator_addrOffset(
   LLVMValueRef offsetVal =
       LLVMBuildLoad2(ctx->codegen->builder, offset->cg_type, offset->value, "");
 
-  LLVMTypeRef gepType = get_llvm_type(ctx, scope, ptrType->pointer_to);
+  LLVMTypeRef gepType =
+      get_llvm_type(ctx, scope, Type_get_pointee_type(ptrType));
   LLVMValueRef* gepIdx = &offsetVal;
   LLVMValueRef resVal =
       LLVMBuildGEP2(ctx->codegen->builder, gepType, ptrVal, gepIdx, 1, "");
@@ -350,14 +351,14 @@ static struct cg_value* codegenOperator_getValueAtAddress(
 
   ASSERT(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind);
   LLVMTypeRef pointerToLLVMType =
-      get_llvm_type(ctx, scope, ptrType->pointer_to);
+      get_llvm_type(ctx, scope, Type_get_pointee_type(ptrType));
   LLVMValueRef loaded =
       LLVMBuildLoad2(ctx->codegen->builder, pointerToLLVMType, ptr, "");
   struct cg_value* derefed_val = allocate_stack_for_temp(
       ctx,
       pointerToLLVMType,
       loaded,
-      ptrType->pointer_to);
+      Type_get_pointee_type(ptrType));
   return derefed_val;
 }
 
