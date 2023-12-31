@@ -44,6 +44,8 @@ struct Type* Type_get_ptr_type(struct Type* t);
 // follow alias chains to base type
 struct Type* Type_get_base_type(struct Type* t);
 
+struct Type* Type_get_pointee_type(struct Type* t);
+
 int Type_get_num_fields(struct Type* t);
 int Type_is_pointer(struct Type* t);
 int Type_is_opaque(struct Type* t);
