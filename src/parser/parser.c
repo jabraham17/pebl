@@ -318,7 +318,7 @@ static int is_literal(struct lexer_token* t) {
 static struct AstNode* parse_expr_list(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(t->tt == tt_AMPERSAND || t->tt == tt_STAR || t->tt == tt_NOT ||
-     is_literal(t) || t->tt == tt_ID) {
+     is_literal(t) || t->tt == tt_ID || t->tt == tt_LPAREN) {
     struct AstNode* head = parse_expr(context);
     t = lexer_peek(context, 1);
     if(t->tt == tt_COMMA) {
