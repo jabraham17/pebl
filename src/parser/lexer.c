@@ -127,7 +127,7 @@ static struct lexer_token* handle_char_literal(struct Context* context) {
     seek_pos(context, pos);
     return t;
   }
-  if(literal == '\\') {
+  else if(literal == '\\') {
     // consume the '\'
     literal = get_char(context);
     // if the escape is a valid escape, keep it
@@ -169,7 +169,7 @@ static struct lexer_token* handle_strings(struct Context* context) {
       seek_pos(context, pos);
       return t;
     }
-    if(next == '\\') {
+    else if(next == '\\') {
       // consume the '\'
       next = get_char(context);
       // if the escape is a valid escape, keep it
@@ -188,7 +188,7 @@ static struct lexer_token* handle_strings(struct Context* context) {
         return t;
       }
     }
-    if(next == '"') {
+    else if(next == '"') {
       // consume the '"'
       break;
     }
