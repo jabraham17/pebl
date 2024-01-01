@@ -1,0 +1,13 @@
+variables:
+  COMPILER: ${BIN_DIR}/peblc${EXT}
+  COMP_CMD: ${COMPILER} ${FILE} -output ${TEMP_FILE}
+# check that stdlib compiles fine
+tests:
+- file: ${ROOT}/stdlib/io.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    good-file: no-error.good
+- file: ${ROOT}/stdlib/memory.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    good-file: no-error.good
