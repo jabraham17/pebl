@@ -4,9 +4,7 @@
 #include "parser/parser.h"
 
 void print_token(struct lexer_token* t) {
-  char buf[32];
-  tokentype_to_string(buf, t->tt);
-  printf("{%s, lexeme='%s'}\n", buf, t->lexeme);
+  printf("{%s, lexeme='%s'}\n", tokentype_to_string(LT_type(t)), LT_lexeme(t));
 }
 
 int main(int argc, char** argv) {
@@ -27,7 +25,7 @@ int main(int argc, char** argv) {
   while(1) {
     t = lexer_gettoken(context);
     print_token(t);
-    if(t->tt == tt_EOF || t->tt == tt_ERROR) break;
+    if(LT_type(t) == tt_EOF || LT_type(t) == tt_ERROR) break;
   }
 
   lexer_deinit(context);

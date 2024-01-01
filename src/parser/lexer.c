@@ -7,6 +7,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MIN_LEXEME_SIZE 8
+
+enum lexer_tokentype LT_type(struct lexer_token* t) {
+  return t->tt;
+}
+char* LT_lexeme(struct lexer_token* t) {
+  return t->lexeme;
+}
+int LT_lineno(struct lexer_token* t) {
+  return t->lineno;
+}
+
 void lexer_init(struct Context* context) {
   context->lexer = malloc(sizeof(*context->lexer));
   memset(context->lexer, 0, sizeof(*context->lexer));
@@ -41,8 +53,8 @@ struct lexer_token* lexer_peek(struct Context* context, int lookahead) {
 static struct lexer_token* empty_token(struct Context* context) {
   struct lexer_token* t = malloc(sizeof(*t));
   t->tt = tt_ERROR;
+  t->lexeme = calloc(MIN_LEXEME_SIZE, sizeof(*t->lexeme));
   t->lineno = context->lexer->current_line;
-  memset(t->lexeme, 0, LEXER_LEXEME_SIZE);
   return t;
 }
 static struct lexer_token* eof_token(struct Context* context) {
@@ -151,54 +163,71 @@ static struct lexer_token* handle_char_literal(struct Context* context) {
     return t;
   }
   t->lexeme[0] = literal;
-  t->lexeme[1] = 0;
   t->tt = tt_CHAR_LITERAL;
   return t;
+}
+
+// returns 0 if a charcter was read, 1 if its time to break, and -1 if an error occured.
+static int handle_strings_get_char(struct Context* context, char* next) {
+    int pos = get_char_pos(context, next);
+    if(*next == EOF) {
+      // put the eof back and return error
+      seek_pos(context, pos);
+      return -1;
+    }
+    else if(*next == '\\') {
+      // consume the '\'
+      *next = get_char(context);
+      // if the escape is a valid escape, keep it
+      if(*next == '\\') {
+        *next = '\\';
+      } else if(*next == 'n') {
+        *next = '\n';
+      } else if(*next == 't') {
+        *next = '\t';
+      } else if(*next == '0') {
+        *next = '\0';
+      } else if(*next == '"') {
+        *next = '"';
+      } else {
+        WARNING(context, "invalid escape sequence '\\%c'\n", *next);
+        return -1;
+      }
+    }
+    else if(*next == '"') {
+      // consume the '"'
+      return 1;
+    }
+    //keep going
+    return 0;
 }
 
 // assumes we have already eaten the '"', just reads until the next '"'
 static struct lexer_token* handle_strings(struct Context* context) {
   struct lexer_token* t = empty_token(context);
+
+  int lexemeSize = MIN_LEXEME_SIZE;
   int nChars = 0;
   // read until we run out of chars or a space is encountered
-  while(nChars < LEXER_LEXEME_SIZE) {
+  while(1) {
     char next;
-    int pos = get_char_pos(context, &next);
-    if(next == EOF) {
-      // put the eof back and return error
-      seek_pos(context, pos);
-      return t;
-    }
-    else if(next == '\\') {
-      // consume the '\'
-      next = get_char(context);
-      // if the escape is a valid escape, keep it
-      if(next == '\\') {
-        next = '\\';
-      } else if(next == 'n') {
-        next = '\n';
-      } else if(next == 't') {
-        next = '\t';
-      } else if(next == '0') {
-        next = '\0';
-      } else if(next == '"') {
-        next = '"';
-      } else {
-        WARNING(context, "invalid escape sequence '\\%c'\n", next);
-        return t;
-      }
-    }
-    else if(next == '"') {
-      // consume the '"'
-      break;
+    int res = handle_strings_get_char(context, &next);
+    if (res == 1) break;
+    else if(res == -1) return t; // ERROR
+
+    if (nChars >= lexemeSize) {
+      lexemeSize *= 2;
+      t->lexeme = realloc(t->lexeme, lexemeSize);
     }
     t->lexeme[nChars] = next;
     nChars++;
   }
-  if(nChars == LEXER_LEXEME_SIZE) {
-    WARNING(context, "lexeme too big\n");
-    return t; // error, token was too big
+  // allocate just a bit more if needed for NUL
+  if (nChars >= lexemeSize) {
+    lexemeSize += 1;
+    t->lexeme = realloc(t->lexeme, lexemeSize);
   }
+  t->lexeme[nChars] = '\0';
 
   // its a valid string literal
   t->tt = tt_STRING_LITERAL;
@@ -324,83 +353,95 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   seek_pos(context, pos1);
 
   struct lexer_token* t = empty_token(context);
+  int lexemeSize = MIN_LEXEME_SIZE;
   int nChars = 0;
-  // read until we run out of chars or a non alphanumeric/underscore is found
   char next;
-  while(nChars < LEXER_LEXEME_SIZE) {
+  // read until we run out of chars or a non alphanumeric/underscore is found
+  while(1) {
     int pos = get_char_pos(context, &next);
     if(!isalnum(next) && next != '_') {
       seek_pos(context, pos);
       break;
     }
     if(next == EOF) break;
+
+    if (nChars >= lexemeSize) {
+      lexemeSize *= 2;
+      t->lexeme = realloc(t->lexeme, lexemeSize);
+    }
     t->lexeme[nChars] = next;
     nChars++;
-  }
-  if(nChars == LEXER_LEXEME_SIZE) {
-    return empty_token(context); // error, token was too big
   }
   if(next == EOF) {
     return eof_token(context);
   }
+  // allocate just a bit more if needed for NUL
+  if (nChars >= lexemeSize) {
+    lexemeSize += 1;
+    t->lexeme = realloc(t->lexeme, lexemeSize);
+  }
+  t->lexeme[nChars] = '\0';
 
-  if(is_keyword(t->lexeme, "if")) t->tt = tt_IF;
-  else if(is_keyword(t->lexeme, "else")) t->tt = tt_ELSE;
-  else if(is_keyword(t->lexeme, "while")) t->tt = tt_WHILE;
-  else if(is_keyword(t->lexeme, "return")) t->tt = tt_RETURN;
-  else if(is_keyword(t->lexeme, "break")) t->tt = tt_BREAK;
-  else if(is_keyword(t->lexeme, "func")) t->tt = tt_FUNC;
-  else if(is_keyword(t->lexeme, "extern")) t->tt = tt_EXTERN;
-  else if(is_keyword(t->lexeme, "export")) t->tt = tt_EXPORT;
-  else if(is_keyword(t->lexeme, "type")) t->tt = tt_TYPE;
-  else if(is_keyword(t->lexeme, "let")) t->tt = tt_LET;
-  else if(is_keyword(t->lexeme, "true")) t->tt = tt_TRUE;
-  else if(is_keyword(t->lexeme, "false")) t->tt = tt_FALSE;
+  char* tokenLexeme = LT_lexeme(t);
+  if(is_keyword(tokenLexeme, "if")) t->tt = tt_IF;
+  else if(is_keyword(tokenLexeme, "else")) t->tt = tt_ELSE;
+  else if(is_keyword(tokenLexeme, "while")) t->tt = tt_WHILE;
+  else if(is_keyword(tokenLexeme, "return")) t->tt = tt_RETURN;
+  else if(is_keyword(tokenLexeme, "break")) t->tt = tt_BREAK;
+  else if(is_keyword(tokenLexeme, "func")) t->tt = tt_FUNC;
+  else if(is_keyword(tokenLexeme, "extern")) t->tt = tt_EXTERN;
+  else if(is_keyword(tokenLexeme, "export")) t->tt = tt_EXPORT;
+  else if(is_keyword(tokenLexeme, "type")) t->tt = tt_TYPE;
+  else if(is_keyword(tokenLexeme, "let")) t->tt = tt_LET;
+  else if(is_keyword(tokenLexeme, "true")) t->tt = tt_TRUE;
+  else if(is_keyword(tokenLexeme, "false")) t->tt = tt_FALSE;
   // THESE MUST GO LAST
-  else if(is_valid_id(t->lexeme)) t->tt = tt_ID;
-  else if(is_valid_num(t->lexeme)) t->tt = tt_NUMBER;
+  else if(is_valid_id(tokenLexeme)) t->tt = tt_ID;
+  else if(is_valid_num(tokenLexeme)) t->tt = tt_NUMBER;
 
   return t;
 }
 
-void tokentype_to_string(char* s, enum lexer_tokentype tt) {
-  if(tt == tt_EOF) bsstrcpy(s, "EOF");
-  else if(tt == tt_ERROR) bsstrcpy(s, "ERROR");
-  else if(tt == tt_ID) bsstrcpy(s, "ID");
-  else if(tt == tt_NUMBER) bsstrcpy(s, "NUMBER");
-  else if(tt == tt_TRUE) bsstrcpy(s, "TRUE");
-  else if(tt == tt_FALSE) bsstrcpy(s, "FALSE");
-  else if(tt == tt_STRING_LITERAL) bsstrcpy(s, "STRING_LITERAL");
-  else if(tt == tt_CHAR_LITERAL) bsstrcpy(s, "CHAR_LITERAL");
-  else if(tt == tt_LPAREN) bsstrcpy(s, "LPAREN");
-  else if(tt == tt_RPAREN) bsstrcpy(s, "RPAREN");
-  else if(tt == tt_LCURLY) bsstrcpy(s, "LCURLY");
-  else if(tt == tt_RCURLY) bsstrcpy(s, "RCURLY");
-  else if(tt == tt_COMMA) bsstrcpy(s, "COMMA");
-  else if(tt == tt_COLON) bsstrcpy(s, "COLON");
-  else if(tt == tt_SEMICOLON) bsstrcpy(s, "SEMICOLON");
-  else if(tt == tt_FUNC) bsstrcpy(s, "FUNC");
-  else if(tt == tt_EXTERN) bsstrcpy(s, "EXTERN");
-  else if(tt == tt_TYPE) bsstrcpy(s, "TYPE");
-  else if(tt == tt_LET) bsstrcpy(s, "LET");
-  else if(tt == tt_PLUS) bsstrcpy(s, "PLUS");
-  else if(tt == tt_MINUS) bsstrcpy(s, "MINUS");
-  else if(tt == tt_STAR) bsstrcpy(s, "STAR");
-  else if(tt == tt_DIVIDE) bsstrcpy(s, "DIVIDE");
-  else if(tt == tt_AND) bsstrcpy(s, "AND");
-  else if(tt == tt_OR) bsstrcpy(s, "OR");
-  else if(tt == tt_LT) bsstrcpy(s, "LT");
-  else if(tt == tt_GT) bsstrcpy(s, "GT");
-  else if(tt == tt_LTEQ) bsstrcpy(s, "LTEQ");
-  else if(tt == tt_GTEQ) bsstrcpy(s, "GTEQ");
-  else if(tt == tt_EQ) bsstrcpy(s, "EQ");
-  else if(tt == tt_NEQ) bsstrcpy(s, "NEQ");
-  else if(tt == tt_EQUALS) bsstrcpy(s, "EQUALS");
-  else if(tt == tt_AMPERSAND) bsstrcpy(s, "AMPERSAND");
-  else if(tt == tt_NOT) bsstrcpy(s, "NOT");
-  else if(tt == tt_IF) bsstrcpy(s, "IF");
-  else if(tt == tt_ELSE) bsstrcpy(s, "ELSE");
-  else if(tt == tt_WHILE) bsstrcpy(s, "WHILE");
-  else if(tt == tt_RETURN) bsstrcpy(s, "RETURN");
-  else if(tt == tt_BREAK) bsstrcpy(s, "BREAK");
+char* tokentype_to_string(enum lexer_tokentype tt) {
+  if(tt == tt_EOF) return "EOF";
+  else if(tt == tt_ERROR) return "ERROR";
+  else if(tt == tt_ID) return "ID";
+  else if(tt == tt_NUMBER) return "NUMBER";
+  else if(tt == tt_TRUE) return "TRUE";
+  else if(tt == tt_FALSE) return "FALSE";
+  else if(tt == tt_STRING_LITERAL) return "STRING_LITERAL";
+  else if(tt == tt_CHAR_LITERAL) return "CHAR_LITERAL";
+  else if(tt == tt_LPAREN) return "LPAREN";
+  else if(tt == tt_RPAREN) return "RPAREN";
+  else if(tt == tt_LCURLY) return "LCURLY";
+  else if(tt == tt_RCURLY) return "RCURLY";
+  else if(tt == tt_COMMA) return "COMMA";
+  else if(tt == tt_COLON) return "COLON";
+  else if(tt == tt_SEMICOLON) return "SEMICOLON";
+  else if(tt == tt_FUNC) return "FUNC";
+  else if(tt == tt_EXTERN) return "EXTERN";
+  else if(tt == tt_TYPE) return "TYPE";
+  else if(tt == tt_LET) return "LET";
+  else if(tt == tt_PLUS) return "PLUS";
+  else if(tt == tt_MINUS) return "MINUS";
+  else if(tt == tt_STAR) return "STAR";
+  else if(tt == tt_DIVIDE) return "DIVIDE";
+  else if(tt == tt_AND) return "AND";
+  else if(tt == tt_OR) return "OR";
+  else if(tt == tt_LT) return "LT";
+  else if(tt == tt_GT) return "GT";
+  else if(tt == tt_LTEQ) return "LTEQ";
+  else if(tt == tt_GTEQ) return "GTEQ";
+  else if(tt == tt_EQ) return "EQ";
+  else if(tt == tt_NEQ) return "NEQ";
+  else if(tt == tt_EQUALS) return "EQUALS";
+  else if(tt == tt_AMPERSAND) return "AMPERSAND";
+  else if(tt == tt_NOT) return "NOT";
+  else if(tt == tt_IF) return "IF";
+  else if(tt == tt_ELSE) return "ELSE";
+  else if(tt == tt_WHILE) return "WHILE";
+  else if(tt == tt_RETURN) return "RETURN";
+  else if(tt == tt_BREAK) return "BREAK";
+  UNIMPLEMENTED("unknown token type");
+  return "";
 }

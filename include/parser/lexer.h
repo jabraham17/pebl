@@ -13,8 +13,6 @@ struct lexer_state {
   int current_line;
 };
 
-#define LEXER_LEXEME_SIZE 64
-
 enum lexer_tokentype {
   tt_EOF,
   tt_ERROR,
@@ -59,13 +57,17 @@ enum lexer_tokentype {
   tt_RETURN,
   tt_BREAK
 };
-void tokentype_to_string(char* s, enum lexer_tokentype tt);
+char* tokentype_to_string(enum lexer_tokentype tt);
 
 struct lexer_token {
   enum lexer_tokentype tt;
-  char lexeme[LEXER_LEXEME_SIZE];
+  char* lexeme;
   int lineno;
 };
+
+enum lexer_tokentype LT_type(struct lexer_token* t);
+char* LT_lexeme(struct lexer_token* t);
+int LT_lineno(struct lexer_token* t);
 
 void lexer_init(struct Context* context);
 void lexer_deinit(struct Context* context);
