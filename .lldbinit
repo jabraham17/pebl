@@ -1,0 +1,3 @@
+command regex ast_print 's/(.*)/print ast_to_string(%1)/'
+
+breakpoint set -n BREAKPOINT
