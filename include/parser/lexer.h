@@ -4,6 +4,7 @@
 #include "context/context.h"
 
 #include <stdio.h>
+#include <wchar.h>
 
 struct lexer_token;
 
@@ -57,16 +58,16 @@ enum lexer_tokentype {
   tt_RETURN,
   tt_BREAK
 };
-char* tokentype_to_string(enum lexer_tokentype tt);
+wchar_t* tokentype_to_string(enum lexer_tokentype tt);
 
 struct lexer_token {
   enum lexer_tokentype tt;
-  char* lexeme;
+  wchar_t* lexeme;
   int lineno;
 };
 
 enum lexer_tokentype LT_type(struct lexer_token* t);
-char* LT_lexeme(struct lexer_token* t);
+wchar_t* LT_lexeme(struct lexer_token* t);
 int LT_lineno(struct lexer_token* t);
 
 void lexer_init(struct Context* context);

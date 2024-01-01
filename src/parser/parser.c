@@ -1,6 +1,7 @@
 #include "parser/parser.h"
 
 #include "ast/location.h"
+#include "common/bsstring.h"
 #include "context/context.h"
 
 #include <stdlib.h>
@@ -37,7 +38,7 @@ syntax_error(struct Context* context, struct lexer_token* t) {
   ERROR_ON_LINE(
       context,
       LT_lineno(t),
-      "syntax error on token {%s, '%s'}\n",
+      "syntax error on token {%ls, '%s'}\n",
       tokentype_to_string(LT_type(t)),
       LT_lexeme(t));
 }
@@ -58,10 +59,11 @@ static void add_location_for_token(
 // statement_list -> EPSILON | statement | statement statement_list
 static struct AstNode* parse_statement_list(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
-  if(LT_type(t) == tt_FUNC || LT_type(t) == tt_EXTERN || LT_type(t) == tt_EXPORT ||
-     LT_type(t) == tt_TYPE || LT_type(t) == tt_LET || LT_type(t) == tt_ID ||
-     LT_type(t) == tt_STAR || LT_type(t) == tt_IF || LT_type(t) == tt_WHILE ||
-     LT_type(t) == tt_RETURN || LT_type(t) == tt_BREAK) {
+  if(LT_type(t) == tt_FUNC || LT_type(t) == tt_EXTERN ||
+     LT_type(t) == tt_EXPORT || LT_type(t) == tt_TYPE || LT_type(t) == tt_LET ||
+     LT_type(t) == tt_ID || LT_type(t) == tt_STAR || LT_type(t) == tt_IF ||
+     LT_type(t) == tt_WHILE || LT_type(t) == tt_RETURN ||
+     LT_type(t) == tt_BREAK) {
     struct AstNode* head = parse_statement(context);
     struct AstNode* tail = parse_statement_list(context);
     ast_append(&head, tail);
@@ -75,7 +77,8 @@ static struct AstNode* parse_statement_list(struct Context* context) {
 // block_statement
 static struct AstNode* parse_statement(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
-  if(LT_type(t) == tt_FUNC || LT_type(t) == tt_EXPORT || LT_type(t) == tt_EXTERN) {
+  if(LT_type(t) == tt_FUNC || LT_type(t) == tt_EXPORT ||
+     LT_type(t) == tt_EXTERN) {
     return parse_function_def(context);
   } else if(LT_type(t) == tt_TYPE) {
     return parse_type_def(context);
@@ -253,7 +256,15 @@ static struct AstNode* parse_var_def(struct Context* context) {
 // varname -> ID
 static struct AstNode* parse_varname(struct Context* context) {
   struct lexer_token* t = expect(context, tt_ID);
-  struct AstNode* ident = ast_build_Identifier(LT_lexeme(t));
+  wchar_t* wname = LT_lexeme(t);
+  int len = wcslen(wname);
+  char* name = malloc(sizeof(*name) * (len + 1));
+  for(int i = 0; i < len; i++) {
+    ASSERT_MSG(wname[i] < 255, "only ascii idents");
+    name[i] = (char)wname[i];
+  }
+  name[len] = '\0';
+  struct AstNode* ident = ast_build_Identifier(name);
   add_location_for_token(context, ident, t);
   return ident;
 }
@@ -271,7 +282,15 @@ static struct AstNode* parse_typename(struct Context* context) {
       expect(context, tt_STAR);
       ptr_level++;
     }
-    struct AstNode* typename = ast_build_Typename2(LT_lexeme(t), ptr_level);
+    wchar_t* wname = LT_lexeme(t);
+    int len = wcslen(wname);
+    char* name = malloc(sizeof(*name) * (len + 1));
+    for(int i = 0; i < len; i++) {
+      ASSERT_MSG(wname[i] < 255, "only ascii idents");
+      name[i] = (char)wname[i];
+    }
+    name[len] = '\0';
+    struct AstNode* typename = ast_build_Typename2(name, ptr_level);
     add_location_for_token(context, typename, t);
     return typename;
   }
@@ -279,7 +298,8 @@ static struct AstNode* parse_typename(struct Context* context) {
 // expr -> atom | atom op atom | preop atom
 static struct AstNode* parse_expr(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
-  if(LT_type(t) == tt_AMPERSAND || LT_type(t) == tt_STAR || LT_type(t) == tt_NOT) {
+  if(LT_type(t) == tt_AMPERSAND || LT_type(t) == tt_STAR ||
+     LT_type(t) == tt_NOT) {
     enum OperatorType op = parse_preop(context);
     struct AstNode* lhs = parse_atom(context);
     struct AstNode* expr_node = ast_build_Expr_uop(lhs, op);
@@ -289,11 +309,11 @@ static struct AstNode* parse_expr(struct Context* context) {
     struct lexer_token* tok_for_loc = t;
     struct AstNode* lhs = parse_atom(context);
     t = lexer_peek(context, 1);
-    if(LT_type(t) == tt_PLUS || LT_type(t) == tt_MINUS || LT_type(t) == tt_STAR ||
-       LT_type(t) == tt_DIVIDE || LT_type(t) == tt_AND || LT_type(t) == tt_OR ||
-       LT_type(t) == tt_LT || LT_type(t) == tt_GT || LT_type(t) == tt_LTEQ ||
-       LT_type(t) == tt_GTEQ || LT_type(t) == tt_EQ || LT_type(t) == tt_NEQ ||
-       LT_type(t) == tt_COLON) {
+    if(LT_type(t) == tt_PLUS || LT_type(t) == tt_MINUS ||
+       LT_type(t) == tt_STAR || LT_type(t) == tt_DIVIDE ||
+       LT_type(t) == tt_AND || LT_type(t) == tt_OR || LT_type(t) == tt_LT ||
+       LT_type(t) == tt_GT || LT_type(t) == tt_LTEQ || LT_type(t) == tt_GTEQ ||
+       LT_type(t) == tt_EQ || LT_type(t) == tt_NEQ || LT_type(t) == tt_COLON) {
       enum OperatorType op = parse_op(context);
       struct AstNode* rhs = parse_atom(context);
       struct AstNode* expr_node = ast_build_Expr_binop(lhs, rhs, op);
@@ -309,14 +329,16 @@ static struct AstNode* parse_expr(struct Context* context) {
 
 static int is_literal(struct lexer_token* t) {
   return LT_type(t) == tt_NUMBER || LT_type(t) == tt_STRING_LITERAL ||
-         LT_type(t) == tt_CHAR_LITERAL || LT_type(t) == tt_TRUE || LT_type(t) == tt_FALSE;
+         LT_type(t) == tt_CHAR_LITERAL || LT_type(t) == tt_TRUE ||
+         LT_type(t) == tt_FALSE;
 }
 
 // expr_list -> EPSILON | expr | expr COMMA expr_list
 static struct AstNode* parse_expr_list(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
-  if(LT_type(t) == tt_AMPERSAND || LT_type(t) == tt_STAR || LT_type(t) == tt_NOT ||
-     is_literal(t) || LT_type(t) == tt_ID || LT_type(t) == tt_LPAREN) {
+  if(LT_type(t) == tt_AMPERSAND || LT_type(t) == tt_STAR ||
+     LT_type(t) == tt_NOT || is_literal(t) || LT_type(t) == tt_ID ||
+     LT_type(t) == tt_LPAREN) {
     struct AstNode* head = parse_expr(context);
     t = lexer_peek(context, 1);
     if(LT_type(t) == tt_COMMA) {
@@ -333,7 +355,7 @@ static struct AstNode* parse_literal(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(LT_type(t) == tt_NUMBER) {
     t = expect(context, tt_NUMBER);
-    struct AstNode* num_node = ast_build_Number(atoi(LT_lexeme(t)), 64);
+    struct AstNode* num_node = ast_build_Number(wcs_to_int(LT_lexeme(t)), 64);
     add_location_for_token(context, num_node, t);
     return num_node;
   } else if(LT_type(t) == tt_STRING_LITERAL) {
@@ -343,7 +365,8 @@ static struct AstNode* parse_literal(struct Context* context) {
     return string_node;
   } else if(LT_type(t) == tt_CHAR_LITERAL) {
     t = expect(context, tt_CHAR_LITERAL);
-    struct AstNode* char_node = ast_build_Number((int)LT_lexeme(t)[0], 8);
+    struct AstNode* char_node =
+        ast_build_Number((int)LT_lexeme(t)[0], sizeof(wchar_t) * 8);
     add_location_for_token(context, char_node, t);
     return char_node;
   } else if(LT_type(t) == tt_TRUE) {

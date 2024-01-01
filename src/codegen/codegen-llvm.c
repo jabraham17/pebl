@@ -120,8 +120,8 @@ static struct cg_value* codegen_constant_expr(
         LLVMConstInt(cg_type, ast_Number_value(ast), /*signext*/ 1);
     return add_temp_value(ctx, val, cg_type, t);
   } else if(ast_is_type(ast, ast_String)) {
-    char* str = ast_String_value(ast);
-    return get_string_literal(ctx, sr, str);
+    wchar_t* str = ast_String_value(ast);
+    return get_wide_string_literal(ctx, sr, str);
   } else if(ast_is_type(ast, ast_Expr)) {
     if(ast_Expr_is_plain(ast) && ast_is_constant_expr(ast_Expr_lhs(ast))) {
       return codegen_constant_expr(ctx, ast_Expr_lhs(ast), sr);

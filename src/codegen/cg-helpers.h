@@ -3,6 +3,8 @@
 
 #include "codegen/codegen-llvm.h"
 
+#include <wchar.h>
+
 struct cg_value* get_value(struct Context* ctx, struct ScopeSymbol* ss);
 struct cg_value* add_temp_value(
     struct Context* ctx,
@@ -45,6 +47,11 @@ struct cg_value* build_const_cast(
     struct Type* valueType,
     LLVMValueRef value,
     struct Type* newType);
+
+struct cg_value* get_wide_string_literal(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    wchar_t* str);
 
 struct cg_value*
 get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str);

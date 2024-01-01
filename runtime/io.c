@@ -4,25 +4,52 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <wchar.h>
 
+
+void* c_allocate(int64_t n);
 
 __attribute__((noreturn))
 void pebl_panic(char* message) {
-  fprintf(stderr, "%s\n", message);
+  fwprintf(stderr, L"%s\n", message);
   abort();
 }
+static int is_char_only(wchar_t* s) {
+  while (*s) {
+    if (*s > 255) return 0;
+    s++;
+  }
+  return 1;
+}
+// assumes char only
+static char* to_char_only(wchar_t* s) {
+  int len = wcslen(s);
+  char* only_chars = c_allocate(sizeof(*only_chars)*(len+1));
+  only_chars[len] = '\0';
+  for (int i = 0; i < len; i++) {
+    only_chars[i] = (char)s[i];
+  }
+  return only_chars;
+}
 
-void* c_openFilePointer(int8_t* name, int8_t* mode) {
-  return (void*)fopen((char*)name, (char*)mode);
+
+void* c_openFilePointer(wchar_t* name, wchar_t* mode) {
+  if(!is_char_only(name) || !is_char_only(mode)) {
+    pebl_panic("only ascii characters allowed");
+  }
+  return (void*)fopen(to_char_only(name), to_char_only(mode));
 }
 void c_closeFilePointer(void* fp) {
   fclose((FILE*)fp);
 }
-int8_t c_getChar(void* fp) {
-  return (int8_t)fgetc((FILE*)fp);
+wchar_t c_getChar(void* fp) {
+  return fgetwc((FILE*)fp);
 }
-void c_putChar(void* fp, int8_t c) {
-  fputc((char)c, (FILE*)fp);
+void c_putChar(void* fp, wchar_t c) {
+  fputwc(c, (FILE*)fp);
+}
+void c_putWChar(void* fp, wchar_t c) {
+  fputwc(c, (FILE*)fp);
 }
 void* c_getStdout() {
   return (void*)stdout;
@@ -44,11 +71,17 @@ int64_t c_fseek_seek_type(int64_t seek_type) {
   else { pebl_panic("unknown seek type"); }
 }
 
-int64_t c_pathExists(int8_t* path) {
-  return (access((char*)path, F_OK) == 0);
+int64_t c_pathExists(wchar_t* path) {
+  if(is_char_only(path)) {
+    return (access(to_char_only(path), F_OK) == 0);
+  }
+  pebl_panic("cannot check for a non-ascii path");
 }
-int64_t c_pathIsFile(int8_t* path) {
-  struct stat path_stat;
-  if(stat((char*)path, &path_stat) != 0) return 0;
-  return S_ISREG(path_stat.st_mode);
+int64_t c_pathIsFile(wchar_t* path) {
+  if(is_char_only(path)) {
+    struct stat path_stat;
+    if(stat(to_char_only(path), &path_stat) != 0) return 0;
+    return S_ISREG(path_stat.st_mode);
+  }
+  pebl_panic("cannot check for a non-ascii path");
 }

@@ -19,7 +19,7 @@ codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
     if(val) {
       return val;
     } else {
-      ERROR_ON_AST(ctx, ast, "invalid expression '%s'\n", ast_to_string(ast));
+      ERROR_ON_AST(ctx, ast, "invalid expression '%ls'\n", ast_to_string(ast));
     }
   } else {
     ASSERT(ast_Expr_is_uop(ast));
@@ -27,7 +27,7 @@ codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
     if(val) {
       return val;
     } else {
-      ERROR_ON_AST(ctx, ast, "invalid expression '%s'\n", ast_to_string(ast));
+      ERROR_ON_AST(ctx, ast, "invalid expression '%ls'\n", ast_to_string(ast));
     }
   }
 }

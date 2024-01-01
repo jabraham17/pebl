@@ -6,6 +6,7 @@
 #include "parser/parser.h"
 
 #include <string.h>
+#include <wchar.h>
 
 void do_scope(struct Context* c);
 
@@ -23,9 +24,9 @@ int main(int argc, char** argv) {
     if(arg[0] != '-') {
       // if already have filename, warn
       if(filename) {
-        fprintf(
+        fwprintf(
             stderr,
-            "Warning: multiple files specifed, ignore '%s'\n",
+            L"Warning: multiple files specifed, ignore '%s'\n",
             filename);
       }
       filename = argv[i];
@@ -46,7 +47,7 @@ int main(int argc, char** argv) {
       } else if(strcmp(flag, "scope") == 0) {
         scope = val_to_set;
       } else {
-        fprintf(stderr, "Warning: unknown flag '%s'\n", arg);
+        fwprintf(stderr, L"Warning: unknown flag '%s'\n", arg);
       }
     }
 
@@ -54,9 +55,9 @@ int main(int argc, char** argv) {
   }
 
   if(filename == NULL) {
-    fprintf(
+    fwprintf(
         stderr,
-        "Error - usage: './parser <filename> (-no-print)? (-verify)? "
+        L"Error - usage: './parser <filename> (-no-print)? (-verify)? "
         "(-checks)?'\n");
     return 1;
   }

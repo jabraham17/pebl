@@ -43,29 +43,31 @@ struct AstNode* ast_get_child(struct AstNode* ast, int i) {
   return ast->children[i];
 }
 
-char* ast_to_string(struct AstNode* ast) {
+wchar_t* ast_to_string(struct AstNode* ast) {
   if(ast_is_type(ast, ast_Identifier)) {
-    return ast_Identifier_name(ast);
+    return L"TODO ident"; // ast_Identifier_name(ast);
   } else if(ast_is_type(ast, ast_Typename)) {
-    char* name = ast_Typename_name(ast);
-    int num_stars = ast_Typename_ptr_level(ast);
-    if(num_stars > 0) {
-      char* stars = malloc(sizeof(*stars) * (num_stars + 1));
-      for(int i = 0; i < num_stars; i++)
-        stars[i] = '*';
-      stars[num_stars] = '\0';
-      name = bsstrcat(name, stars);
-    }
-    return name;
+    // char* name = ast_Typename_name(ast);
+    // int num_stars = ast_Typename_ptr_level(ast);
+    // if(num_stars > 0) {
+    //   char* stars = malloc(sizeof(*stars) * (num_stars + 1));
+    //   for(int i = 0; i < num_stars; i++)
+    //     stars[i] = '*';
+    //   stars[num_stars] = '\0';
+    //   name = bsstrcat(name, stars);
+    // }
+    // return name;
+    return L"TODO ident";
   } else if(ast_is_type(ast, ast_Number)) {
-    int buf_len = 16;
-    char* buf = malloc(sizeof(*buf) * buf_len);
+    wchar_t* buf;
+    int buf_len = sizeof(*buf) * 16;
+    buf = malloc(buf_len);
     if(ast_Number_size(ast) == 1) {
-      snprintf(buf, buf_len, "%s", ast_Number_value(ast) ? "true" : "false");
-    } else if(ast_Number_size(ast) == 8) {
-      snprintf(buf, buf_len, "%c", ast_Number_value(ast));
+      swprintf(buf, buf_len, L"%s", ast_Number_value(ast) ? "true" : "false");
+    } else if(ast_Number_size(ast) == sizeof(wchar_t) * 8) {
+      swprintf(buf, buf_len, L"%lc", ast_Number_value(ast));
     } else if(ast_Number_size(ast) == 64) {
-      snprintf(buf, buf_len, "%d", ast_Number_value(ast));
+      swprintf(buf, buf_len, L"%d", ast_Number_value(ast));
     } else {
       UNIMPLEMENTED("unknown number size of %d\n", ast_Number_size(ast));
     }
@@ -73,28 +75,28 @@ char* ast_to_string(struct AstNode* ast) {
   } else if(ast_is_type(ast, ast_Expr)) {
     if(ast_Expr_is_plain(ast)) return ast_to_string(ast_Expr_lhs(ast));
     else if(ast_Expr_is_binop(ast)) {
-      char* lhs = ast_to_string(ast_Expr_lhs(ast));
-      char* op = OperatorType_to_string(ast_Expr_op(ast));
-      char* rhs = ast_to_string(ast_Expr_rhs(ast));
-      return bsstrcat(bsstrcat(lhs, op), rhs);
+      wchar_t* lhs = ast_to_string(ast_Expr_lhs(ast));
+      wchar_t* op = OperatorType_to_string(ast_Expr_op(ast));
+      wchar_t* rhs = ast_to_string(ast_Expr_rhs(ast));
+      return peblwstrcat(peblwstrcat(lhs, op), rhs);
     } else {
       ASSERT(ast_Expr_is_uop(ast));
-      char* op = OperatorType_to_string(ast_Expr_op(ast));
-      char* operand = ast_to_string(ast_Expr_lhs(ast));
-      return bsstrcat(op, operand);
+      wchar_t* op = OperatorType_to_string(ast_Expr_op(ast));
+      wchar_t* operand = ast_to_string(ast_Expr_lhs(ast));
+      return peblwstrcat(op, operand);
     }
   } else if(ast_is_type(ast, ast_Call)) {
-    char* str = ast_Identifier_name(ast_Call_name(ast));
-    str = bsstrcat(str, "(");
-    char* sep = "";
+    wchar_t* str = L"TODO ident"; // ast_Identifier_name(ast_Call_name(ast));
+    str = peblwstrcat(str, L"(");
+    wchar_t* sep = L"";
     ast_foreach(ast_Call_args(ast), arg) {
-      str = bsstrcat(str, bsstrcat(sep, ast_to_string(arg)));
-      sep = ",";
+      str = peblwstrcat(str, peblwstrcat(sep, ast_to_string(arg)));
+      sep = L",";
     }
-    str = bsstrcat(str, ")");
+    str = peblwstrcat(str, L")");
     return str;
   }
-  return "UNIMPLEMENTED ast_to_str";
+  return L"UNIMPLEMENTED ast_to_str";
 }
 
 static void ast_type_to_string(char* buf, enum AstType at) {
@@ -116,43 +118,43 @@ static void ast_type_to_string(char* buf, enum AstType at) {
   else if(at == ast_String) bsstrcpy(buf, "String");
 }
 
-char* OperatorType_to_string(enum OperatorType op) {
-  if(op == op_PLUS) return "+";
-  else if(op == op_MINUS) return "-";
-  else if(op == op_MULT) return "*";
-  else if(op == op_DIVIDE) return "/";
-  else if(op == op_AND) return "&&";
-  else if(op == op_OR) return "||";
-  else if(op == op_LT) return "<";
-  else if(op == op_GT) return ">";
-  else if(op == op_LTEQ) return "<=";
-  else if(op == op_GTEQ) return ">=";
-  else if(op == op_EQ) return "==";
-  else if(op == op_NEQ) return "!=";
-  else if(op == op_NOT) return "!";
-  else if(op == op_CAST) return ":";
-  else if(op == op_TAKE_ADDRESS) return "&";
-  else if(op == op_PTR_DEREFERENCE) return "*";
+wchar_t* OperatorType_to_string(enum OperatorType op) {
+  if(op == op_PLUS) return L"+";
+  else if(op == op_MINUS) return L"-";
+  else if(op == op_MULT) return L"*";
+  else if(op == op_DIVIDE) return L"/";
+  else if(op == op_AND) return L"&&";
+  else if(op == op_OR) return L"||";
+  else if(op == op_LT) return L"<";
+  else if(op == op_GT) return L">";
+  else if(op == op_LTEQ) return L"<=";
+  else if(op == op_GTEQ) return L">=";
+  else if(op == op_EQ) return L"==";
+  else if(op == op_NEQ) return L"!=";
+  else if(op == op_NOT) return L"!";
+  else if(op == op_CAST) return L":";
+  else if(op == op_TAKE_ADDRESS) return L"&";
+  else if(op == op_PTR_DEREFERENCE) return L"*";
   UNIMPLEMENTED("unknown op type\n");
 }
 
-char* OperatorType_name(enum OperatorType op) {
-  if(op == op_PLUS) return "PLUS";
-  else if(op == op_MINUS) return "MINUS";
-  else if(op == op_MULT) return "MULT";
-  else if(op == op_DIVIDE) return "DIVIDE";
-  else if(op == op_AND) return "AND";
-  else if(op == op_OR) return "OR";
-  else if(op == op_LT) return "LT";
-  else if(op == op_GT) return "GT";
-  else if(op == op_LTEQ) return "LTEQ";
-  else if(op == op_GTEQ) return "GTEQ";
-  else if(op == op_EQ) return "EQ";
-  else if(op == op_NEQ) return "NEQ";
-  else if(op == op_NOT) return "NOT";
-  else if(op == op_CAST) return "CAST";
-  else if(op == op_TAKE_ADDRESS) return "TAKE_ADDRESS";
-  else if(op == op_PTR_DEREFERENCE) return "PTR_DEREFERENCE";
+wchar_t* OperatorType_name(enum OperatorType op) {
+  if(op == op_PLUS) return L"PLUS";
+  else if(op == op_MINUS) return L"MINUS";
+  else if(op == op_MULT) return L"MULT";
+  else if(op == op_DIVIDE) return L"DIVIDE";
+  else if(op == op_AND) return L"AND";
+  else if(op == op_OR) return L"OR";
+  else if(op == op_LT) return L"LT";
+  else if(op == op_GT) return L"GT";
+  else if(op == op_LTEQ) return L"LTEQ";
+  else if(op == op_GTEQ) return L"GTEQ";
+  else if(op == op_EQ) return L"EQ";
+  else if(op == op_NEQ) return L"NEQ";
+  else if(op == op_NOT) return L"NOT";
+  else if(op == op_CAST) return L"CAST";
+  else if(op == op_TAKE_ADDRESS) return L"TAKE_ADDRESS";
+  else if(op == op_PTR_DEREFERENCE) return L"PTR_DEREFERENCE";
   UNIMPLEMENTED("unknown op type\n");
 }
 static void
@@ -163,33 +165,33 @@ ast_dump_helper(struct Context* context, struct AstNode* root, int indent) {
 #define PRINT_INDENT                                                           \
   do {                                                                         \
     for(int i = 0; i < indent; i++)                                            \
-      printf(" ");                                                             \
+      wprintf(L" ");                                                           \
   } while(0)
 
     char typestr[32];
     ast_type_to_string(typestr, ast_type(ast));
 
     PRINT_INDENT;
-    printf("%s:\n", typestr);
+    wprintf(L"%s:\n", typestr);
     if(ast_is_type(ast, ast_Identifier)) {
       PRINT_INDENT;
-      printf(" name='%s'\n", ast_Identifier_name(ast));
+      wprintf(L" name='%s'\n", ast_Identifier_name(ast));
     } else if(ast_is_type(ast, ast_Typename)) {
       PRINT_INDENT;
-      printf(" name='");
-      printf("%s", ast_Typename_name(ast));
+      wprintf(L" name='");
+      wprintf(L"%s", ast_Typename_name(ast));
       for(int i = 0; i < ast_Typename_ptr_level(ast); i++)
-        printf("*");
-      printf("'\n");
+        wprintf(L"*");
+      wprintf(L"'\n");
     } else if(ast_is_type(ast, ast_Number)) {
       PRINT_INDENT;
-      printf(" value=%d\n", ast_Number_value(ast));
+      wprintf(L" value=%d\n", ast_Number_value(ast));
     } else if(ast_is_type(ast, ast_String)) {
       PRINT_INDENT;
-      printf(" value='%s'\n", ast_String_value(ast));
+      wprintf(L" value='%ls'\n", ast_String_value(ast));
     } else if(ast_is_type(ast, ast_Expr) && ast_Expr_op(ast) != op_NONE) {
       PRINT_INDENT;
-      printf(" op='%s'\n", OperatorType_name(ast_Expr_op(ast)));
+      wprintf(L" op='%ls'\n", OperatorType_name(ast_Expr_op(ast)));
     }
     ast_foreach_child(ast, c) { ast_dump_helper(context, c, indent + 2); }
   }
@@ -646,14 +648,14 @@ int ast_verify_Number(struct AstNode* ast) {
 int ast_Number_value(struct AstNode* ast) { return ast->int_value; }
 int ast_Number_size(struct AstNode* ast) { return ast->int_value2; }
 
-struct AstNode* ast_build_String(char* value) {
+struct AstNode* ast_build_String(wchar_t* value) {
   struct AstNode* ast = ast_allocate(ast_String);
-  int len = strlen(value) + 1;
-  ast->str_value = malloc(sizeof(*ast->str_value) * len);
-  bsstrcpy(ast->str_value, value);
+  int len = wcslen(value) + 1;
+  ast->wstr_value = malloc(sizeof(*ast->wstr_value) * len);
+  peblwstrcpy(ast->wstr_value, value);
   return ast;
 }
 int ast_verify_String(struct AstNode* ast) {
   return ast_is_type(ast, ast_String);
 }
-char* ast_String_value(struct AstNode* ast) { return ast->str_value; }
+wchar_t* ast_String_value(struct AstNode* ast) { return ast->wstr_value; }

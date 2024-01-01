@@ -376,8 +376,8 @@ struct ScopeResult* scope_lookup(struct Context* ctx, struct AstNode* ast) {
   BUILTIN(int64, 64)                                                           \
   BUILTIN(int8, 8)                                                             \
   BUILTIN(bool, 1)                                                             \
+  BUILTIN(char, (sizeof(wchar_t) * 8))                                         \
   ALIAS(int, int64)                                                            \
-  ALIAS(char, int8)                                                            \
   PTR_ALIAS(string, char)
 
 void install_builtin_types(struct Context* ctx, struct ScopeResult* scope) {
@@ -496,7 +496,7 @@ static int typesMatch(
 
   // type is any pointer
   if(typename[0] == '*' && typename[1] == '\0') {
-    return Type_is_pointer(Type_get_base_type(type));
+    return Type_is_pointer(type);
   }
 
   struct Type* t = scope_get_Type_from_name(ctx, scope, typename, 1);
@@ -546,10 +546,35 @@ static struct Type* determine_result_type_binop(
     }
   }
 
+  // compairson ops alsways result in a bool
+  // can either be the same the integral type OR an integer and a pointer
+  if(op == op_LT || op == op_GT || op == op_LTEQ || op == op_GTEQ ||
+     op == op_EQ || op == op_NEQ) {
+    if(Type_eq(lhsType, rhsType) && Type_is_integer(lhsType)) {
+      return scope_get_Type_from_name(ctx, scope, "bool", 1);
+    }
+    if(Type_is_integer(lhsType) && Type_is_pointer(rhsType)) {
+      return scope_get_Type_from_name(ctx, scope, "bool", 1);
+    }
+
+    if(Type_is_pointer(lhsType) && Type_is_integer(rhsType)) {
+      return scope_get_Type_from_name(ctx, scope, "bool", 1);
+    }
+  }
+
+  // arithemtic ops require the samr type on each side and result in the lhsType
+  // they must also be integral types
+  if(op == op_PLUS || op == op_MINUS || op == op_MULT || op == op_DIVIDE) {
+    // they are equal, omly need to check lhsType
+    if(Type_eq(lhsType, rhsType) && Type_is_integer(lhsType)) {
+      return lhsType;
+    }
+  }
+
   ERROR_ON_AST(
       ctx,
       expr,
-      "could not determine type of '%s'\n",
+      "could not determine type of '%ls'\n",
       ast_to_string(expr));
 }
 
@@ -573,7 +598,7 @@ static struct Type* determine_result_type_uop(
   ERROR_ON_AST(
       ctx,
       expr,
-      "could not determine type of '%s'\n",
+      "could not determine type of '%ls'\n",
       ast_to_string(expr));
 }
 
@@ -605,7 +630,7 @@ static struct Type* scope_get_Type_from_binop(
   ERROR_ON_AST(
       ctx,
       expr,
-      "could not determine type of '%s'\n",
+      "could not determine type of '%ls'\n",
       ast_to_string(expr));
 }
 static struct Type* scope_get_Type_from_uop(
@@ -628,7 +653,7 @@ static struct Type* scope_get_Type_from_uop(
   ERROR_ON_AST(
       ctx,
       expr,
-      "could not determine type of '%s'\n",
+      "could not determine type of '%ls'\n",
       ast_to_string(expr));
 }
 
@@ -686,6 +711,10 @@ struct Type* scope_get_Type_from_ast(
     if(sym && sym->sst == sst_Function) {
       return sym->ss_function->rettype;
     } else {
+      // TODO: MAJOR HACK, add scoping for builtins
+      if(strcmp(name, "sizeof") == 0) {
+        return Type_int_type(ctx, 64);
+      }
       ERROR_ON_AST(ctx, ast, "could not find function named '%s'\n", name);
     }
   } else if(ast_is_type(ast, ast_FieldAccess)) {

@@ -269,20 +269,49 @@ struct cg_value* build_const_cast(
   return build_cast_internal(ctx, scope, valueType, value, newType, 1);
 }
 
+struct cg_value* get_wide_string_literal(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    wchar_t* str) {
+  int len = wcslen(str) + 1;
+
+  struct Type* charType = scope_get_Type_from_name(ctx, scope, "char", 1);
+
+  LLVMTypeRef charTypeLLVM =
+      LLVMIntTypeInContext(ctx->codegen->llvmContext, Type_get_size(charType));
+  LLVMTypeRef strType = LLVMArrayType2(charTypeLLVM, len);
+  LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
+  LLVMValueRef* vals = malloc(sizeof(*vals) * len);
+  for(int i = 0; i < len; i++) {
+    vals[i] = LLVMConstInt(charTypeLLVM, str[i], 0);
+  }
+  LLVMSetInitializer(strVal, LLVMConstArray2(charTypeLLVM, vals, len));
+  LLVMSetGlobalConstant(strVal, 1);
+  LLVMSetLinkage(strVal, LLVMPrivateLinkage);
+  LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);
+
+  return add_temp_value(
+      ctx,
+      strVal,
+      LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0),
+      scope_get_Type_from_name(ctx, scope, "string", 1));
+}
+
 struct cg_value*
 get_string_literal(struct Context* ctx, struct ScopeResult* scope, char* str) {
   int len = strlen(str) + 1;
 
-  LLVMTypeRef strType =
-      LLVMArrayType2(LLVMInt8TypeInContext(ctx->codegen->llvmContext), len);
+  struct Type* charType = scope_get_Type_from_name(ctx, scope, "char", 1);
+
+  LLVMTypeRef charTypeLLVM =
+      LLVMIntTypeInContext(ctx->codegen->llvmContext, Type_get_size(charType));
+  LLVMTypeRef strType = LLVMArrayType2(charTypeLLVM, len);
   LLVMValueRef strVal = LLVMAddGlobal(ctx->codegen->module, strType, "");
-  LLVMSetInitializer(
-      strVal,
-      LLVMConstStringInContext(
-          ctx->codegen->llvmContext,
-          str,
-          len,
-          /*dont null term*/ 1));
+  LLVMValueRef* vals = malloc(sizeof(*vals) * len);
+  for(int i = 0; i < len; i++) {
+    vals[i] = LLVMConstInt(charTypeLLVM, str[i], 0);
+  }
+  LLVMSetInitializer(strVal, LLVMConstArray2(charTypeLLVM, vals, len));
   LLVMSetGlobalConstant(strVal, 1);
   LLVMSetLinkage(strVal, LLVMPrivateLinkage);
   LLVMSetUnnamedAddress(strVal, LLVMGlobalUnnamedAddr);

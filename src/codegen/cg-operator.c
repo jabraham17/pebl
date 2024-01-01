@@ -18,7 +18,7 @@ static struct cg_value* codegenOperator_sintBOp(
   struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
   ASSERT(
       Type_is_signed(lhs->type) && Type_is_signed(rhs->type) &&
-      Type_is_signed(resType));
+      Type_is_signed(resType) && Type_eq(lhs->type, rhs->type));
 
   LLVMValueRef lhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
@@ -392,28 +392,12 @@ static int typesMatch(
 
   // type is any pointer
   if(typename[0] == '*' && typename[1] == '\0') {
-    return Type_is_pointer(Type_get_base_type(type));
+    return Type_is_pointer(type);
   }
 
   struct Type* t = scope_get_Type_from_name(ctx, scope, typename, 1);
 
   return Type_eq(type, t);
-}
-
-// convert the types specified in .def into a Type
-static struct Type* get_type_from_def_type(
-    struct Context* ctx,
-    struct ScopeResult* scope,
-    char* type) {
-  // any type, return NULL
-  if(type == NULL) return NULL;
-  if(type[0] == '\0') return NULL;
-
-  // type is void*
-  if(type[0] == '*' && type[1] == '\0') {
-    return Type_get_ptr_type(scope_get_Type_from_name(ctx, scope, "void", 1));
-  }
-  return scope_get_Type_from_name(ctx, scope, type, 1);
 }
 
 struct cg_value* codegenBinaryOperator(
@@ -425,17 +409,13 @@ struct cg_value* codegenBinaryOperator(
   struct AstNode* rhs = ast_Expr_rhs(expr);
   struct Type* lhsAstType = scope_get_Type_from_ast(ctx, scope, lhs, 1);
   struct Type* rhsAstType = scope_get_Type_from_ast(ctx, scope, rhs, 1);
+  struct Type* resAstType = scope_get_Type_from_ast(ctx, scope, expr, 1);
 
 #define BINARY_EXPR(opType, lhsType, rhsType, resType, funcName)               \
   if(op == op_##opType && typesMatch(ctx, scope, lhsAstType, lhsType) &&       \
-     typesMatch(ctx, scope, rhsAstType, rhsType)) {                            \
-    return codegenOperator_##funcName(                                         \
-        ctx,                                                                   \
-        scope,                                                                 \
-        op,                                                                    \
-        lhs,                                                                   \
-        rhs,                                                                   \
-        get_type_from_def_type(ctx, scope, resType));                          \
+     typesMatch(ctx, scope, rhsAstType, rhsType) &&                            \
+     typesMatch(ctx, scope, resAstType, resType)) {                            \
+    return codegenOperator_##funcName(ctx, scope, op, lhs, rhs, resAstType);   \
   }
 #include "definitions/expression-types.def"
 
@@ -449,16 +429,13 @@ struct cg_value* codegenUnaryOperator(
   enum OperatorType op = ast_Expr_op(expr);
   struct AstNode* operand = ast_Expr_lhs(expr);
   struct Type* operandAstType = scope_get_Type_from_ast(ctx, scope, operand, 1);
+  struct Type* resAstType = scope_get_Type_from_ast(ctx, scope, expr, 1);
 
 #define UNARY_EXPR(opType, operandType, resType, funcName)                     \
   if(op == op_##opType &&                                                      \
-     typesMatch(ctx, scope, operandAstType, operandType)) {                    \
-    return codegenOperator_##funcName(                                         \
-        ctx,                                                                   \
-        scope,                                                                 \
-        op,                                                                    \
-        operand,                                                               \
-        get_type_from_def_type(ctx, scope, resType));                          \
+     typesMatch(ctx, scope, operandAstType, operandType) &&                    \
+     typesMatch(ctx, scope, resAstType, resType)) {                            \
+    return codegenOperator_##funcName(ctx, scope, op, operand, resAstType);    \
   }
 #include "definitions/expression-types.def"
 

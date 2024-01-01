@@ -17,80 +17,9 @@
 #define Int64 "int64"
 #define Int8 "int8"
 #define Bool "bool"
+#define Char "char"
 #define Ptr "*"
 #define Any ""
-
-
-
-//
-// Int Math
-//
-BINARY_EXPR(PLUS, Int64, Int64, Int64, sintBOp)
-BINARY_EXPR(MINUS, Int64, Int64, Int64, sintBOp)
-BINARY_EXPR(MULT, Int64, Int64, Int64, sintBOp)
-BINARY_EXPR(DIVIDE, Int64, Int64, Int64, sintBOp)
-
-BINARY_EXPR(PLUS, Int8, Int8, Int8, sintBOp)
-BINARY_EXPR(MINUS, Int8, Int8, Int8, sintBOp)
-BINARY_EXPR(MULT, Int8, Int8, Int8, sintBOp)
-BINARY_EXPR(DIVIDE, Int8, Int8, Int8, sintBOp)
-
-//
-// boolean logic
-//
-BINARY_EXPR(AND, Any, Any, Bool, booleanAnd)
-BINARY_EXPR(OR, Any, Any, Bool, booleanOr)
-
-BINARY_EXPR(EQ, Bool, Bool, Bool, compare)
-BINARY_EXPR(NEQ, Bool, Bool, Bool, compare)
-UNARY_EXPR(NOT, Bool, Bool, negate)
-
-//
-// Int Comparison
-//
-BINARY_EXPR(LT, Int64, Int64, Bool, compare)
-BINARY_EXPR(GT, Int64, Int64, Bool, compare)
-BINARY_EXPR(LTEQ, Int64, Int64, Bool, compare)
-BINARY_EXPR(GTEQ, Int64, Int64, Bool, compare)
-BINARY_EXPR(EQ, Int64, Int64, Bool, compare)
-BINARY_EXPR(NEQ, Int64, Int64, Bool, compare)
-UNARY_EXPR(NOT, Int64, Bool, negate)
-
-BINARY_EXPR(LT, Int8, Int8, Bool, compare)
-BINARY_EXPR(GT, Int8, Int8, Bool, compare)
-BINARY_EXPR(LTEQ, Int8, Int8, Bool, compare)
-BINARY_EXPR(GTEQ, Int8, Int8, Bool, compare)
-BINARY_EXPR(EQ, Int8, Int8, Bool, compare)
-BINARY_EXPR(NEQ, Int8, Int8, Bool, compare)
-UNARY_EXPR(NOT, Int8, Bool, negate)
-
-//
-// Ptr Comparison
-//
-BINARY_EXPR(LT, Ptr, Int64, Bool, compare)
-BINARY_EXPR(GT, Ptr, Int64, Bool, compare)
-BINARY_EXPR(LTEQ, Ptr, Int64, Bool, compare)
-BINARY_EXPR(GTEQ, Ptr, Int64, Bool, compare)
-BINARY_EXPR(EQ, Ptr, Int64, Bool, compare)
-BINARY_EXPR(NEQ, Ptr, Int64, Bool, compare)
-
-BINARY_EXPR(LT, Int64, Ptr, Bool, compare)
-BINARY_EXPR(GT, Int64, Ptr, Bool, compare)
-BINARY_EXPR(LTEQ, Int64, Ptr, Bool, compare)
-BINARY_EXPR(GTEQ, Int64, Ptr, Bool, compare)
-BINARY_EXPR(EQ, Int64, Ptr, Bool, compare)
-BINARY_EXPR(NEQ, Int64, Ptr, Bool, compare)
-
-BINARY_EXPR(LT, Ptr, Ptr, Bool, compare)
-BINARY_EXPR(GT, Ptr, Ptr, Bool, compare)
-BINARY_EXPR(LTEQ, Ptr, Ptr, Bool, compare)
-BINARY_EXPR(GTEQ, Ptr, Ptr, Bool, compare)
-BINARY_EXPR(EQ, Ptr, Ptr, Bool, compare)
-BINARY_EXPR(NEQ, Ptr, Ptr, Bool, compare)
-
-UNARY_EXPR(NOT, Ptr, Bool, negate)
-
-BINARY_EXPR(CAST, Any, Any, Any, cast)
 
 //
 // Address computation
@@ -101,6 +30,38 @@ BINARY_EXPR(PLUS, Int64, Ptr, Any, addrOffset)
 BINARY_EXPR(PLUS, Ptr, Int64, Any, addrOffset)
 BINARY_EXPR(MINUS, Int64, Ptr, Any, addrOffset)
 BINARY_EXPR(MINUS, Ptr, Int64, Any, addrOffset)
+
+//
+// Int Math
+//
+BINARY_EXPR(PLUS, Any, Any, Any, sintBOp)
+BINARY_EXPR(MINUS, Any, Any, Any, sintBOp)
+BINARY_EXPR(MULT, Any, Any, Any, sintBOp)
+BINARY_EXPR(DIVIDE, Any, Any, Any, sintBOp)
+
+//
+// boolean logic
+//
+BINARY_EXPR(AND, Any, Any, Bool, booleanAnd)
+BINARY_EXPR(OR, Any, Any, Bool, booleanOr)
+UNARY_EXPR(NOT, Any, Bool, negate)
+
+//
+// Int Comparison
+//
+BINARY_EXPR(LT, Any, Any, Bool, compare)
+BINARY_EXPR(GT, Any, Any, Bool, compare)
+BINARY_EXPR(LTEQ, Any, Any, Bool, compare)
+BINARY_EXPR(GTEQ, Any, Any, Bool, compare)
+BINARY_EXPR(EQ, Any, Any, Bool, compare)
+BINARY_EXPR(NEQ, Any, Any, Bool, compare)
+
+//
+// Casting
+//
+BINARY_EXPR(CAST, Any, Any, Any, cast)
+
+// TODO: add ptr difference
 
 //
 // Pointers
@@ -114,6 +75,7 @@ UNARY_EXPR(PTR_DEREFERENCE, Any, Any, getValueAtAddress)
 #undef Int64
 #undef Int8
 #undef Bool
+#undef Char
 #undef Ptr
 #undef Any
 

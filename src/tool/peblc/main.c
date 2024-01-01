@@ -23,9 +23,9 @@ int main(int argc, char** argv) {
     if(arg[0] != '-') {
       // if already have filename, warn
       if(filename) {
-        fprintf(
+        fwprintf(
             stderr,
-            "Warning: multiple files specifed, ignore '%s'\n",
+            L"Warning: multiple files specifed, ignore '%s'\n",
             filename);
       }
       filename = arg;
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
         i++;
         outfile = argv[i];
       } else {
-        fprintf(stderr, "Warning: unknown flag '%s'\n", arg);
+        fwprintf(stderr, L"Warning: unknown flag '%s'\n", arg);
       }
     }
 
@@ -54,9 +54,9 @@ int main(int argc, char** argv) {
   }
 
   if(filename == NULL) {
-    fprintf(
+    fwprintf(
         stderr,
-        "Error - usage: './peblc <filename> (-output FILENAME)? (-checks?) "
+        L"Error - usage: './peblc <filename> (-output FILENAME)? (-checks?) "
         "-(verify)?'\n");
     return 1;
   }

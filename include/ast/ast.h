@@ -25,8 +25,8 @@ enum OperatorType {
   op_PTR_DEREFERENCE,
 
 };
-char* OperatorType_to_string(enum OperatorType op);
-char* OperatorType_name(enum OperatorType op);
+wchar_t* OperatorType_to_string(enum OperatorType op);
+wchar_t* OperatorType_name(enum OperatorType op);
 enum AstType {
   ast_Identifier,
   ast_Typename,
@@ -54,6 +54,7 @@ struct AstNode {
   int int_value;
   int int_value2;
   char* str_value;
+  wchar_t* wstr_value;
 };
 
 struct AstNode* ast_allocate(enum AstType at);
@@ -63,7 +64,7 @@ enum AstType ast_type(struct AstNode* ast);
 int ast_is_type(struct AstNode* ast, enum AstType at);
 int ast_num_children(struct AstNode* ast);
 struct AstNode* ast_get_child(struct AstNode* ast, int);
-char* ast_to_string(struct AstNode* ast);
+wchar_t* ast_to_string(struct AstNode* ast);
 
 void dump_ast(struct Context* context);
 void verify_ast(struct Context* context);
@@ -219,8 +220,8 @@ int ast_Number_value(struct AstNode* ast);
 int ast_Number_size(struct AstNode* ast);
 
 /* String */
-struct AstNode* ast_build_String(char* value);
+struct AstNode* ast_build_String(wchar_t* value);
 int ast_verify_String(struct AstNode*);
-char* ast_String_value(struct AstNode* ast);
+wchar_t* ast_String_value(struct AstNode* ast);
 
 #endif

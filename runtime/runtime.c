@@ -1,20 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <wchar.h>
 
 void* c_allocate(int64_t n);
 
-int8_t* intToString(int64_t i) {
-  char* buf = c_allocate(16);
-  sprintf(buf, "%ld", i);
-  return  (int8_t*)buf;
+wchar_t* intToString(int64_t i) {
+  wchar_t* buf;
+  int buf_size = sizeof(*buf)*16;
+  buf = c_allocate(buf_size);
+  swprintf(buf, buf_size, L"%ld", i);
+  return  buf;
 }
-int64_t stringToInt(int8_t* s) {
-  return atoi((char*)s);
+int64_t stringToInt(wchar_t* s) {
+  wchar_t* end;
+  return (int64_t)wcstoll(s, &end, 10);
 }
-int8_t* ptrToString(void* p) {
-  char* buf = c_allocate(16);
-  sprintf(buf, "%p", p);
-  return (int8_t*)buf;
+wchar_t* ptrToString(void* p) {
+  wchar_t* buf;
+  int buf_size = sizeof(*buf)*16;
+  buf = c_allocate(buf_size);
+  swprintf(buf, buf_size, L"%p", p);
+  return buf;
 }
 

@@ -6,15 +6,15 @@
 
 void print_indent(int indent) {
   while(indent--)
-    printf(" ");
+    wprintf(L" ");
 }
 
 void print_scope(char* name, struct ScopeResult* sr, int indent) {
   print_indent(indent);
-  printf("scope for %s\n", name);
+  wprintf(L"scope for %s\n", name);
   LL_FOREACH(sr->symbols, sym) {
     print_indent(indent + 2);
-    printf("sym '%s'\n", ScopeSymbol_name(sym));
+    wprintf(L"sym '%s'\n", ScopeSymbol_name(sym));
   }
 }
 

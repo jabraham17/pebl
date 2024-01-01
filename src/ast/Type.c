@@ -22,7 +22,8 @@ static struct Type* Type_allocate(char* name) {
 int Type_ptr_size() { return 64; }
 struct Type* Type_int_type(struct Context* ctx, int size) {
   char* name;
-  if(size == 8) name = "int8";
+  if(size == sizeof(wchar_t) * 8) name = "char";
+  else if(size == 8) name = "int8";
   else if(size == 64) name = "int64";
   else if(size == 1) name = "bool";
   else UNIMPLEMENTED("unknown number size '%d'\n", size);
@@ -114,7 +115,8 @@ int Type_is_integer(struct Type* t) {
   struct Type* base_type = Type_get_base_type(t);
   if(base_type->kind == tk_BUILTIN) {
     return strcmp(base_type->name, "int64") == 0 ||
-           strcmp(base_type->name, "int8") == 0;
+           strcmp(base_type->name, "int8") == 0 ||
+           strcmp(base_type->name, "char") == 0;
   }
   return 0;
 }
