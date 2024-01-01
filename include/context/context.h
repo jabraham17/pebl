@@ -5,6 +5,7 @@
 #include "ast/location.h"
 
 #include <stdio.h>
+#include <wchar.h>
 
 struct lexer_state;
 struct AstNode;
@@ -31,23 +32,32 @@ struct Context {
 struct Context* Context_allocate();
 void Context_init(struct Context* context, char* filename);
 
+void BREAKPOINT();
+
+#define FATAL_EXIT()                                                           \
+  do {                                                                         \
+    BREAKPOINT();                                                              \
+    exit(1);                                                                   \
+  } while(0)
+
 #define WARNING_ON_AST(context, ast, format, ...)                              \
   do {                                                                         \
     struct Location* loc = Context_get_location(context, ast);                 \
     if(loc) {                                                                  \
-      fprintf(                                                                 \
+      fwprintf(                                                                \
           stderr,                                                              \
-          "%s:%d: warning: " format,                                           \
+          L"%s:%d: warning: " format,                                          \
           context->filename,                                                   \
           loc->line_start,                                                     \
           ##__VA_ARGS__);                                                      \
     } else {                                                                   \
-      fprintf(                                                                 \
+      fwprintf(                                                                \
           stderr,                                                              \
-          "%s: warning: " format,                                              \
+          L"%s: warning: " format,                                             \
           context->filename,                                                   \
           ##__VA_ARGS__);                                                      \
     }                                                                          \
+    BREAKPOINT();                                                              \
   } while(0)
 
 #define WARNING(context, format, ...)                                          \
@@ -55,12 +65,10 @@ void Context_init(struct Context* context, char* filename);
     WARNING_ON_AST(context, NULL, format, ##__VA_ARGS__);                      \
   } while(0)
 
-#define FATAL_EXIT() exit(1)
-
 #define ASSERT_MSG(cond, format, ...)                                          \
   do {                                                                         \
     if(!(cond)) {                                                              \
-      fprintf(stderr, "Assert failed: " format, ##__VA_ARGS__);                \
+      fwprintf(stderr, L"Assert failed: " format, ##__VA_ARGS__);              \
       FATAL_EXIT();                                                            \
     }                                                                          \
   } while(0)
@@ -68,15 +76,15 @@ void Context_init(struct Context* context, char* filename);
 
 #define UNIMPLEMENTED(format, ...)                                             \
   do {                                                                         \
-    fprintf(stderr, "Unimplemented: " format, ##__VA_ARGS__);                  \
+    fwprintf(stderr, L"Unimplemented: " format, ##__VA_ARGS__);                \
     FATAL_EXIT();                                                              \
   } while(0)
 
 #define ERROR_ON_LINE(context, lineno, format, ...)                            \
   do {                                                                         \
-    fprintf(                                                                   \
+    fwprintf(                                                                  \
         stderr,                                                                \
-        "%s:%d: error: " format,                                               \
+        L"%s:%d: error: " format,                                              \
         context->filename,                                                     \
         lineno,                                                                \
         ##__VA_ARGS__);                                                        \
@@ -89,7 +97,11 @@ void Context_init(struct Context* context, char* filename);
     if(loc) {                                                                  \
       ERROR_ON_LINE(context, loc->line_start, format, ##__VA_ARGS__);          \
     } else {                                                                   \
-      fprintf(stderr, "%s: error: " format, context->filename, ##__VA_ARGS__); \
+      fwprintf(                                                                \
+          stderr,                                                              \
+          L"%s: error: " format,                                               \
+          context->filename,                                                   \
+          ##__VA_ARGS__);                                                      \
     }                                                                          \
     FATAL_EXIT();                                                              \
   } while(0)
