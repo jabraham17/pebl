@@ -1,0 +1,5 @@
+func print(s: string): void;
+
+func main(args: string*, nargs: int): int {
+  print("hello😂, world🙈\n");
+}
