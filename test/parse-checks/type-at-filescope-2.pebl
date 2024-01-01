@@ -1,7 +1,7 @@
 func foo(): void {
-
+  type t2;
 }
 
 func bar(): void {
-  type t = int;
+  type t = int*;
 }

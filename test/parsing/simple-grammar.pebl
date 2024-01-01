@@ -1,9 +1,0 @@
-func simple(a: int): int {
-  let b: int = a + 1;
-  return b;
-}
-type t = {x: int; y: int;}
-let g: t = 0;
-g.x = 1;
-g.y = 2;
-

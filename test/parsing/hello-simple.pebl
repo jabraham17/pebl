@@ -1,4 +1,0 @@
-extern func print(s: int8*): void;
-let msg: int8* = "hello, world!";
-let _: void = print(msg);
-type t = {x: int64;}

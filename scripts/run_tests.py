@@ -1,4 +1,5 @@
 import glob
+import io
 import json
 import os
 import re
@@ -24,6 +25,13 @@ def error(*args: Any, **kwargs: Any):
     print("Warning: ", *args, **kwargs)
     exit(1)
 
+
+def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str, print_commands:bool=False) -> sp.CompletedProcess:
+    if print_commands:
+        print("  " + " ".join(cmd + [f"&>{outfilename}"]))
+    cp = sp.run(cmd, stdout=outfile, stderr=outfile)
+    outfile.flush()
+    return cp
 
 def static_vars(**kwargs: Any):
     def wrapper(func: Callable[[Any], Any]):
@@ -177,23 +185,15 @@ class TestSuite:
         if self.print_commands:
             print(f"Running test {idx} for '{file}' from '{self.path}'")
 
-        print(os.getcwd())
-
         outfilename = f"{basename}.{idx}.tmp.out"
         if os.path.exists(outfilename):
             os.remove(outfilename)
         with open(outfilename, "a") as outfile:
             if comp_cmd:
-                if self.print_commands:
-                    print("  " + " ".join(comp_cmd + [f"&>{outfilename}"]))
-                cp = sp.run(comp_cmd, stdout=outfile, stderr=outfile)
-                outfile.flush()
+                cp = process_wrapper(comp_cmd, outfile, outfilename, print_commands=self.print_commands)
 
             if exec_cmd:
-                if self.print_commands:
-                    print("  " + " ".join(exec_cmd + [f"&>{outfilename}"]))
-                cp = sp.run(exec_cmd, stdout=outfile, stderr=outfile)
-                outfile.flush()
+                cp = process_wrapper(exec_cmd, outfile, outfilename, print_commands=self.print_commands)
 
 
         outfile_lines = readlines(outfilename)
@@ -239,15 +239,25 @@ def main(raw_args: List[str]) -> int:
     a.add_argument("paths", nargs="*")
     a.add_argument("-v", "--verbose", action="store_true", default=False)
     a.add_argument("-p", "--print-commands", action="store_true", default=False)
+    a.add_argument("-D", metavar="KEY=VALUE", dest="variables", action="append", type=str)
     args = a.parse_args(raw_args)
 
     extra_variables = {
         "ROOT": os.path.dirname(os.path.abspath(__file__)),
-        "BIN_DIR": "${ROOT}/build/bin",
+        "INSTALL_DIR": "${ROOT}/build",
+        "BIN_DIR": "${INSTALL_DIR}/bin",
+        "LIB_DIR": "${INSTALL_DIR}/lib",
+        "COMPILER_LIB_DIR": "${INSTALL_DIR}/lib/compiler",
         "EXT": ""
     }
     if sys.platform == "win32":
         extra_variables["EXT"] = ".exe"
+
+    # set users vars
+    for var in args.variables:
+        k,_,v = var.partition('=')
+        extra_variables[k] = v
+
 
     files = []
     for p in args.paths:

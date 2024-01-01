@@ -2,20 +2,22 @@ let a: int = 10;
 func foo(): int* {
   return &a;
 }
-extern func print(s: string): void;
+func print(s: string): void;
 
 
 # comment
 type p = {a:int; b:int;}
-let b: int* = 0;
-let a: string = "mystring";
-let c: p = 0;
-p.a = 10;
-let cp: p* = &p;
-let cc: p = *cp;
-cc.b = 11;
+func bar(): void {
+  let b: int* = 0;
+  let a: string = "mystring";
+  let c: p = 0;
+  p.a = 10;
+  let cp: p* = &p;
+  let cc: p = *cp;
+  cc.b = 11;
+}
 
-func main(argc: int, argv: char**): void {
+func main(args: string*, nargs: int): int {
   if a < 1 {
   }
   while b < 10 {
@@ -23,11 +25,11 @@ func main(argc: int, argv: char**): void {
 
     if b > 6 {
       let s: string = "";
-      let _: void = print(s);
+      let _: void = print((s));
       break;
     }
     else {
-      b = b - 1;
+      b = (b - 1);
     }
   }
   let c: int = foo();

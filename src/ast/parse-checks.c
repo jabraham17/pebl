@@ -25,8 +25,7 @@ static void check_allowed_at_file_scope_helper(
         ERROR_ON_AST(
             context,
             a,
-            "type declarations '%s' can only be declared at file scope\n",
-            ast_Identifier_name(ast_Type_name(a)));
+            "type declarations can only be declared at file scope\n");
       }
     } else {
       if(!ast_is_type(a, ast_Function) && !ast_is_type(a, ast_Type) &&

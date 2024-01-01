@@ -1,1 +1,1 @@
-line 10: error: type 't' can only be declared at file scope
+type-at-filescope-3.pebl:10: error: type declarations can only be declared at file scope

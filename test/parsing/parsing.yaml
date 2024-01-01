@@ -1,15 +1,9 @@
 variables:
   PARSER: ${BIN_DIR}/parser${EXT}
-  PARSE_CMD: ${PARSER} ${FILE} -no-checks
+  PARSE_CMD: ${PARSER} ${FILE}
   # VALGRIND: valgrind
 tests:
 - file: hello.pebl
-  configs:
-  - compile-cmd: ${PARSE_CMD} -print
-- file: hello-simple.pebl
-  configs:
-  - compile-cmd: ${PARSE_CMD} -print
-- file: simple-grammar.pebl
   configs:
   - compile-cmd: ${PARSE_CMD} -print
 - file: complex-grammar.pebl

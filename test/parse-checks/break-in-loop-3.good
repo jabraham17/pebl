@@ -1,1 +1,1 @@
-line 4: error: 'break' must be used in a loop
+break-in-loop-3.pebl:4: error: 'break' must be used in a loop

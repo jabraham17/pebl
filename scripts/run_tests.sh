@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 
-python3 run_tests.py $@
+DIR=`dirname $0`
+ROOTDIR=$(cd $DIR/..; pwd)
+set -x
+python3 $DIR/run_tests.py -D ROOT=$ROOTDIR $@

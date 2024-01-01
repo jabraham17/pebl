@@ -1,48 +1,43 @@
-Function:
-  Identifier:
-   name='print'
-  Variable:
+Block:
+  Function:
     Identifier:
-     name='s'
-    Typename:
-     name='int8*'
-  Typename:
-   name='void'
-Function:
-  Identifier:
-   name='main'
-  Variable:
-    Identifier:
-     name='argc'
-    Typename:
-     name='int'
-  Variable:
-    Identifier:
-     name='argv'
-    Typename:
-     name='int8**'
-  Typename:
-   name='int'
-  Variable:
-    Identifier:
-     name='msg'
-    Typename:
-     name='int8*'
-    Expr:
-      String:
-       value='hello, world!'
-  Variable:
-    Identifier:
-     name='_'
+     name='print'
+    Variable:
+      Identifier:
+       name='s'
+      Typename:
+       name='string'
     Typename:
      name='void'
-    Expr:
+  Function:
+    Identifier:
+     name='main'
+    Variable:
+      Identifier:
+       name='args'
+      Typename:
+       name='string*'
+    Variable:
+      Identifier:
+       name='nargs'
+      Typename:
+       name='int'
+    Typename:
+     name='int'
+    Block:
+      Variable:
+        Identifier:
+         name='msg'
+        Expr:
+          String:
+           value='hello, world!'
       Call:
         Identifier:
          name='print'
-        Identifier:
-         name='msg'
-  Return:
-    Expr:
-      Number:
-       value=0
+        Expr:
+          Identifier:
+           name='msg'
+      Return:
+        Expr:
+          Number:
+           value=0

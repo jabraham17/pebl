@@ -1,184 +1,203 @@
-Variable:
-  Identifier:
-   name='a'
-  Typename:
-   name='int'
-  Expr:
-    Number:
-     value=10
-Function:
-  Identifier:
-   name='foo'
-  Typename:
-   name='int*'
-  Return:
-    Expr:
-     op='TAKE_ADDRESS'
-      Identifier:
-       name='a'
-Function:
-  Identifier:
-   name='print'
-  Variable:
-    Identifier:
-     name='s'
-    Typename:
-     name='string'
-  Typename:
-   name='void'
-Type:
-  Typename:
-   name='p'
+Block:
   Variable:
     Identifier:
      name='a'
     Typename:
      name='int'
-  Variable:
-    Identifier:
-     name='b'
-    Typename:
-     name='int'
-Variable:
-  Identifier:
-   name='b'
-  Typename:
-   name='int*'
-  Expr:
-    Number:
-     value=0
-Variable:
-  Identifier:
-   name='a'
-  Typename:
-   name='string'
-  Expr:
-    String:
-     value='mystring'
-Variable:
-  Identifier:
-   name='c'
-  Typename:
-   name='p'
-  Expr:
-    Number:
-     value=0
-Assignment:
-  FieldAccess:
-    Identifier:
-     name='p'
-    Identifier:
-     name='a'
-  Expr:
-    Number:
-     value=10
-Variable:
-  Identifier:
-   name='cp'
-  Typename:
-   name='p*'
-  Expr:
-   op='TAKE_ADDRESS'
-    Identifier:
-     name='p'
-Variable:
-  Identifier:
-   name='cc'
-  Typename:
-   name='p'
-  Expr:
-   op='PTR_DEREFERENCE'
-    Identifier:
-     name='cp'
-Assignment:
-  FieldAccess:
-    Identifier:
-     name='cc'
-    Identifier:
-     name='b'
-  Expr:
-    Number:
-     value=11
-Function:
-  Identifier:
-   name='main'
-  Variable:
-    Identifier:
-     name='argc'
-    Typename:
-     name='int'
-  Variable:
-    Identifier:
-     name='argv'
-    Typename:
-     name='char**'
-  Typename:
-   name='void'
-  Conditional:
     Expr:
-     op='LT'
-      Identifier:
-       name='a'
-      Number:
-       value=1
-  While:
-    Expr:
-     op='LT'
-      Identifier:
-       name='b'
       Number:
        value=10
-    Assignment:
+  Function:
+    Identifier:
+     name='foo'
+    Typename:
+     name='int*'
+    Block:
+      Return:
+        Expr:
+         op='TAKE_ADDRESS'
+          Identifier:
+           name='a'
+  Function:
+    Identifier:
+     name='print'
+    Variable:
+      Identifier:
+       name='s'
+      Typename:
+       name='string'
+    Typename:
+     name='void'
+  Type:
+    Identifier:
+     name='p'
+    Variable:
+      Identifier:
+       name='a'
+      Typename:
+       name='int'
+    Variable:
       Identifier:
        name='b'
-      Expr:
-       op='PLUS'
-        Identifier:
-         name='b'
-        Number:
-         value=1
-    Conditional:
-      Expr:
-       op='GT'
-        Identifier:
-         name='b'
-        Number:
-         value=6
+      Typename:
+       name='int'
+  Function:
+    Identifier:
+     name='bar'
+    Typename:
+     name='void'
+    Block:
       Variable:
         Identifier:
-         name='s'
+         name='b'
+        Typename:
+         name='int*'
+        Expr:
+          Number:
+           value=0
+      Variable:
+        Identifier:
+         name='a'
         Typename:
          name='string'
         Expr:
           String:
-           value=''
+           value='mystring'
       Variable:
         Identifier:
-         name='_'
+         name='c'
         Typename:
-         name='void'
+         name='p'
         Expr:
-          Call:
-            Identifier:
-             name='print'
-            Identifier:
-             name='s'
-      Break:
+          Number:
+           value=0
       Assignment:
-        Identifier:
-         name='b'
+        FieldAccess:
+          Identifier:
+           name='p'
+          Identifier:
+           name='a'
         Expr:
-         op='MINUS'
+          Number:
+           value=10
+      Variable:
+        Identifier:
+         name='cp'
+        Typename:
+         name='p*'
+        Expr:
+         op='TAKE_ADDRESS'
+          Identifier:
+           name='p'
+      Variable:
+        Identifier:
+         name='cc'
+        Typename:
+         name='p'
+        Expr:
+         op='PTR_DEREFERENCE'
+          Identifier:
+           name='cp'
+      Assignment:
+        FieldAccess:
+          Identifier:
+           name='cc'
+          Identifier:
+           name='b'
+        Expr:
+          Number:
+           value=11
+  Function:
+    Identifier:
+     name='main'
+    Variable:
+      Identifier:
+       name='args'
+      Typename:
+       name='string*'
+    Variable:
+      Identifier:
+       name='nargs'
+      Typename:
+       name='int'
+    Typename:
+     name='int'
+    Block:
+      Conditional:
+        Expr:
+         op='LT'
+          Identifier:
+           name='a'
+          Number:
+           value=1
+        Block:
+        Block:
+      While:
+        Expr:
+         op='LT'
           Identifier:
            name='b'
           Number:
-           value=1
-  Variable:
-    Identifier:
-     name='c'
-    Typename:
-     name='int'
-    Expr:
-      Call:
+           value=10
+        Block:
+          Assignment:
+            Identifier:
+             name='b'
+            Expr:
+             op='PLUS'
+              Identifier:
+               name='b'
+              Number:
+               value=1
+          Conditional:
+            Expr:
+             op='GT'
+              Identifier:
+               name='b'
+              Number:
+               value=6
+            Block:
+              Variable:
+                Identifier:
+                 name='s'
+                Typename:
+                 name='string'
+                Expr:
+                  String:
+                   value=''
+              Variable:
+                Identifier:
+                 name='_'
+                Typename:
+                 name='void'
+                Expr:
+                  Call:
+                    Identifier:
+                     name='print'
+                    Expr:
+                      Expr:
+                        Expr:
+                          Identifier:
+                           name='s'
+              Break:
+            Block:
+              Assignment:
+                Identifier:
+                 name='b'
+                Expr:
+                  Expr:
+                    Expr:
+                     op='MINUS'
+                      Identifier:
+                       name='b'
+                      Number:
+                       value=1
+      Variable:
         Identifier:
-         name='foo'
+         name='c'
+        Typename:
+         name='int'
+        Expr:
+          Call:
+            Identifier:
+             name='foo'

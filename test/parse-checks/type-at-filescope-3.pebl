@@ -3,10 +3,10 @@ func foo(): void {
 }
 
 func bar(): void {
-  if 1 {
+  # if 1 {
   
-  }
-  else {
-    type t = int;
-  }
+  # }
+  # else {
+    type t = {x:int;}
+  # }
 }

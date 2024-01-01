@@ -52,6 +52,11 @@ tests:
 - file: type-at-filescope-2.pebl
   configs:
   - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
 - file: type-at-filescope-3.pebl
   configs:
   - compile-cmd: ${PARSE_CMD}
+- file: globals.pebl
+  configs:
+  - compile-cmd: ${PARSE_CMD}
+    good-file: ${NO_ERROR}
