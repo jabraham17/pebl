@@ -688,6 +688,36 @@ struct Type* scope_get_Type_from_ast(
     } else {
       ERROR_ON_AST(ctx, ast, "could not find function named '%s'\n", name);
     }
+  } else if(ast_is_type(ast, ast_FieldAccess)) {
+
+    struct Type* objectType = scope_get_Type_from_ast(
+        ctx,
+        sr,
+        ast_FieldAccess_object(ast),
+        search_parent);
+    struct Type* objectPtrType = NULL;
+    if(Type_is_pointer(objectType)) {
+      objectPtrType = objectType;
+      objectType = Type_get_pointee_type(objectPtrType);
+    }
+    // check types
+    if(objectPtrType && !Type_is_pointer(objectPtrType)) {
+      ERROR_ON_AST(
+          ctx,
+          ast,
+          "invalid field access - cannot use '->' on a non-pointer\n");
+    }
+    if(objectType && !Type_is_typedef(objectType)) {
+      ERROR_ON_AST(
+          ctx,
+          ast,
+          "invalid field access - base is not a struct-like type\n");
+    }
+    // get the field type
+    struct TypeField* fieldType = Type_get_TypeField(
+        objectType,
+        ast_Identifier_name(ast_FieldAccess_field(ast)));
+    return fieldType->type;
   } else {
     UNIMPLEMENTED("getting type from ast\n");
   }
