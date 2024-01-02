@@ -17,14 +17,13 @@ func printArgs(i:int, args: string*, nargs: int): void {
     print(arg);
     println("");
 
-    let offset = 1;
-    printArgs(i+1, args+offset, nargs);
+    printArgs(i+1, args+1, nargs);
   }
 }
 
 func main(args: string*, nargs: int): int {
 
-  printArgs(0, args, nargs);
+  printArgs(1, args+1, nargs);
 
   return 0;
 }
