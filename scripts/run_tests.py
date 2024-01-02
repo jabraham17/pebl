@@ -12,6 +12,7 @@ import shlex
 import argparse as ap
 import difflib
 import re
+from concurrent.futures import Future, Executor, ProcessPoolExecutor
 
 # result, test file, reason
 Result = Tuple[bool, str, str]
@@ -26,6 +27,10 @@ def error(*args: Any, **kwargs: Any):
     kwargs["file"] = sys.stderr
     print("Warning: ", *args, **kwargs)
     exit(1)
+
+
+def command_to_string(cmd: List[str], outfilename: Optional[str] = None) -> str:
+    return " ".join(cmd + [f"&>{outfilename}"])
 
 
 def process_wrapper(
@@ -44,7 +49,7 @@ def process_wrapper(
             real_cmd.append(c)
 
     if print_commands:
-        print("  " + " ".join(cmd + [f"&>{outfilename}"]))
+        print("  " + command_to_string(cmd, outfilename=outfilename))
     try:
         if infile:
             with open(infile, "r") as f:
@@ -200,22 +205,14 @@ class TestSuite:
         if not os.path.exists(file):
             warn(f"'{file}' does not exist")
 
-        temp_file = gen_temp_name()
+        extra_args = {"FILE": file}
 
-        def clean_up_temp_file():
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-
-        extra_args = {"FILE": file, "TEMP_FILE": temp_file}
-
-        comp_cmd = test_config.get("compile-cmd", None)
-        if comp_cmd:
-            comp_cmd = self._replace_variables(comp_cmd, extra_args)
-            comp_cmd = argsplit(comp_cmd)
-        exec_cmd = test_config.get("exec-cmd", None)
-        if exec_cmd:
-            exec_cmd = self._replace_variables(exec_cmd, extra_args)
-            exec_cmd = argsplit(exec_cmd)
+        raw_cmds = test_config.get("cmds", [])
+        cmds = []
+        for c in raw_cmds:
+            c = self._replace_variables(c, extra_args)
+            c = argsplit(c)
+            cmds.append(c)
         good_file = test_config.get("good-file", None)
         if good_file:
             good_file = self._replace_variables(good_file, extra_args)
@@ -226,8 +223,7 @@ class TestSuite:
         if not os.path.exists(good_file):
             warn(f"'{good_file}' does not exist")
 
-        if not comp_cmd and not exec_cmd:
-            clean_up_temp_file()
+        if len(cmds) == 0:
             return (False, file, "nothing to do")
 
         if self.print_commands:
@@ -237,15 +233,16 @@ class TestSuite:
         if os.path.exists(outfilename):
             os.remove(outfilename)
         with open(outfilename, "a") as outfile:
-            if comp_cmd:
+            for c in cmds:
                 cp = process_wrapper(
-                    comp_cmd, outfile, outfilename, print_commands=self.print_commands
+                    c, outfile, outfilename, print_commands=self.print_commands
                 )
-
-            if exec_cmd:
-                cp = process_wrapper(
-                    exec_cmd, outfile, outfilename, print_commands=self.print_commands
-                )
+                if cp is None or cp.returncode != 0:
+                    return (
+                        False,
+                        file,
+                        f"failed to run '{command_to_string(c, outfilename=outfilename)}'",
+                    )
 
         outfile_lines = readlines(outfilename)
         goodfile_lines = readlines(good_file)
@@ -255,7 +252,6 @@ class TestSuite:
             )
         )
         if len(diffres) != 0:
-            clean_up_temp_file()
             if len(diffres) > 500:
                 res = diffres[:500] + ["diff truncated - too long\n"]
             else:
@@ -264,7 +260,6 @@ class TestSuite:
 
         # if we reach this point, its a presumed success
         os.remove(outfilename)
-        clean_up_temp_file()
 
         return (True, file, "")
 
@@ -281,15 +276,19 @@ class TestSuite:
         d = os.path.dirname(os.path.abspath(self.path))
         os.chdir(d)
 
+        futures: List[Future] = []
         results: List[Result] = []
         tests = self.config.get("tests", [])
-        for t in tests:
-            file = t.get("file", None)
-            configs = t.get("configs", [])
-            if file:
-                results.extend(self._run_test_file(file, configs))
-            else:
-                warn("missing 'file' in test config")
+        with ProcessPoolExecutor(max_workers=4) as pool:
+            for t in tests:
+                file = t.get("file", None)
+                configs = t.get("configs", [])
+                if file:
+                    futures.append(pool.submit(self._run_test_file, file, configs))
+                else:
+                    warn("missing 'file' in test config")
+            for f in futures:
+                results.extend(f.result())
 
         os.chdir(pwd)
 
