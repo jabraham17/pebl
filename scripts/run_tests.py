@@ -3,7 +3,6 @@ import io
 import json
 import os
 import re
-import shutil
 import sys
 from typing import Any, Callable, Dict, List, Optional, Tuple
 import random
@@ -12,6 +11,7 @@ import subprocess as sp
 import shlex
 import argparse as ap
 import difflib
+import re
 
 Result = Tuple[bool, str]
 
@@ -28,10 +28,22 @@ def error(*args: Any, **kwargs: Any):
 
 
 def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str, print_commands:bool=False) -> Optional[sp.CompletedProcess]:
+    infile = None
+    real_cmd = []
+    for c in cmd:
+        if m := re.match("^<(.*)$", c):
+            infile = m[1]
+        else:
+            real_cmd.append(c)
+
     if print_commands:
         print("  " + " ".join(cmd + [f"&>{outfilename}"]))
     try:
-        cp = sp.run(cmd, stdout=outfile, stderr=outfile)
+        if infile:
+            with open(infile, "r") as f:
+                cp = sp.run(real_cmd, stdout=outfile, stderr=outfile, stdin=f)
+        else:
+            cp = sp.run(real_cmd, stdout=outfile, stderr=outfile)
         outfile.flush()
         return cp
     except OSError as err:
@@ -111,7 +123,12 @@ def argsplit(args: str) -> List[str]:
     if sys.platform == "win32":
         return [args]
     else:
-        return shlex.split(args)
+        l = shlex.split(args)
+        # reform '<', 'foo' into '<foo'
+        if "<" in l:
+            idx = l.index("<")
+            l[idx] = f"<{l.pop(idx+1)}"
+        return l
 
 class TestSuite:
     def __init__(
