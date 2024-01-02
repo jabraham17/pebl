@@ -8,7 +8,7 @@ find src include -name '*.c' -o -name '*.h' | xargs \
 find CMakeLists.txt src cmake -name CMakeLists.txt -o -name '*.cmake*' | xargs \
   cmake-format -i --command-case=lower --keyword-case=upper --enable-sort=true --autosort=true &
 
-find src -name '*.py' | xargs \
+find src scripts -name '*.py' | xargs \
   python3 -m black -q &
 
 wait
