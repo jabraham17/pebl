@@ -238,7 +238,11 @@ class TestSuite:
         diffres = list(difflib.context_diff(outfile_lines, goodfile_lines, fromfile=outfilename, tofile=good_file))
         if len(diffres) != 0:
             clean_up_temp_file()
-            return (False, file, f"failed to match good file - '{' '.join(diffres)}'")
+            if len(diffres) > 500:
+                res = diffres[:500] + ["diff truncated - too long\n"]
+            else:
+                res = diffres
+            return (False, file, f"failed to match good file - '{' '.join(res)}'")
 
         # if we reach this point, its a presumed success
         os.remove(outfilename)
