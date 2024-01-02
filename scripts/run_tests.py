@@ -13,7 +13,8 @@ import argparse as ap
 import difflib
 import re
 
-Result = Tuple[bool, str]
+# result, test file, reason
+Result = Tuple[bool, str, str]
 
 
 def warn(*args: Any, **kwargs: Any):
@@ -216,7 +217,7 @@ class TestSuite:
 
         if not comp_cmd and not exec_cmd:
             clean_up_temp_file()
-            return (False, "nothing to do")
+            return (False, file, "nothing to do")
 
         if self.print_commands:
             print(f"Running test {idx} for '{file}' from '{self.path}'")
@@ -237,14 +238,14 @@ class TestSuite:
         diffres = list(difflib.context_diff(outfile_lines, goodfile_lines, fromfile=outfilename, tofile=good_file))
         if len(diffres) != 0:
             clean_up_temp_file()
-            return (False, f"failed to match good file - '{' '.join(diffres)}'")
+            return (False, file, f"failed to match good file - '{' '.join(diffres)}'")
 
         # if we reach this point, its a presumed success
         os.remove(outfilename)
         clean_up_temp_file()
 
 
-        return (True, "")
+        return (True, file, "")
 
     def _run_test_file(self, file: str, test_configs: List[Dict]) -> List[Result]:
         results = []
@@ -277,7 +278,7 @@ class TestSuite:
 def main(raw_args: List[str]) -> int:
     a = ap.ArgumentParser()
     a.add_argument("paths", nargs="*")
-    a.add_argument("-v", "--verbose", action="store_true", default=False)
+    a.add_argument("-v", "--verbose", action="count", default=0)
     a.add_argument("-p", "--print-commands", action="store_true", default=False)
     a.add_argument("-D", metavar="KEY=VALUE", dest="variables", action="append", type=str)
     args = a.parse_args(raw_args)
@@ -327,11 +328,13 @@ def main(raw_args: List[str]) -> int:
         header = f"Ran test from '{f}', {n_passed}/{n_tests} tests passed"
         print("=" * width)
         print(f"| {header}{' '*(width-len(header)-4)} |")
+        for r in results:
+            if not r[0]:
+                text = f"{r[1]} failed"
+                if args.verbose:
+                    text += f": {r[2]}"
+                print(f"| {text}{' '*(width-len(text)-4)}")
         print("=" * width)
-        if args.verbose:
-            for r in results:
-                if not r[0]:
-                    print(f"Failed: {r[1]}")
 
     print(f"{tot_passed}/{tot_tests} tests passed")
     if tot_passed == tot_tests:
