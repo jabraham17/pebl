@@ -3,6 +3,7 @@ import io
 import json
 import os
 import re
+import shutil
 import sys
 from typing import Any, Callable, Dict, List, Tuple
 import random
@@ -153,13 +154,20 @@ class TestSuite:
         return s
 
     def _run_single_test(self, idx: int, file: str, test_config: Dict) -> Result:
-        extra_args = {"FILE": file}
         basename, ext = os.path.splitext(file)
+        basename = os.path.basename(basename)
         ext = ext[1:] if ext.startswith(".") else ext
         if ext != "pebl":
             warn(f"'{file}' does not have extension 'pebl'")
         if not os.path.exists(file):
             warn(f"'{file}' does not exist")
+
+
+        temp_file = gen_temp_name()
+        def clean_up_temp_file():
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+        extra_args = {"FILE": file, "TEMP_FILE": temp_file}
 
         comp_cmd = test_config.get("compile-cmd", None)
         if comp_cmd:
@@ -180,6 +188,7 @@ class TestSuite:
             warn(f"'{good_file}' does not exist")
 
         if not comp_cmd and not exec_cmd:
+            clean_up_temp_file()
             return (False, "nothing to do")
 
         if self.print_commands:
@@ -191,7 +200,7 @@ class TestSuite:
         with open(outfilename, "a") as outfile:
             if comp_cmd:
                 cp = process_wrapper(comp_cmd, outfile, outfilename, print_commands=self.print_commands)
-
+            
             if exec_cmd:
                 cp = process_wrapper(exec_cmd, outfile, outfilename, print_commands=self.print_commands)
 
@@ -200,17 +209,21 @@ class TestSuite:
         goodfile_lines = readlines(good_file)
         diffres = list(difflib.context_diff(outfile_lines, goodfile_lines, fromfile=outfilename, tofile=good_file))
         if len(diffres) != 0:
+            clean_up_temp_file()
             return (False, f"failed to match good file - '{' '.join(diffres)}'")
 
         # if we reach this point, its a presumed success
         os.remove(outfilename)
+        clean_up_temp_file()
+
 
         return (True, "")
 
     def _run_test_file(self, file: str, test_configs: List[Dict]) -> List[Result]:
         results = []
+        f = self._replace_variables(file)
         for idx, config in enumerate(test_configs):
-            results.append(self._run_single_test(idx, file, config))
+            results.append(self._run_single_test(idx, f, config))
         return results
 
     def run_tests(self) -> List[Result]:
