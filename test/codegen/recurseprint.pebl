@@ -1,6 +1,9 @@
 
 extern func print(s: string): void;
-extern func println(s: string): void;
+func println(s: string): void {
+  print(s);
+  print("\n");
+}
 
 extern func intToString(i:int):string;
 extern func stringToInt(i:string):int;
