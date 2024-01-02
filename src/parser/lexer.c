@@ -273,7 +273,9 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   wchar_t c1;
   int pos1 = get_char_pos(context, &c1);
 
-  if(c1 == EOF) { return eof_token(context); }
+  if(c1 == EOF) {
+    return eof_token(context);
+  }
 
   switch(c1) {
     case L'(': return build_simple_token(context, tt_LPAREN, c1);
@@ -398,7 +400,7 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   else if(is_valid_id(tokenLexeme)) t->tt = tt_ID;
   else if(is_valid_num(tokenLexeme)) t->tt = tt_NUMBER;
   else {
-    if (wcslen(tokenLexeme) == 0 && peek_char(context) == EOF) t->tt = tt_EOF;
+    if(wcslen(tokenLexeme) == 0 && peek_char(context) == EOF) t->tt = tt_EOF;
   }
 
   return t;
@@ -446,5 +448,5 @@ wchar_t* tokentype_to_string(enum lexer_tokentype tt) {
   else if(tt == tt_WHILE) return L"WHILE";
   else if(tt == tt_RETURN) return L"RETURN";
   else if(tt == tt_BREAK) return L"BREAK";
-  UNIMPLEMENTED("unknown token type %d\n",tt);
+  UNIMPLEMENTED("unknown token type %d\n", tt);
 }

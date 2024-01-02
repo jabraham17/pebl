@@ -647,8 +647,12 @@ int ast_verify_Number(struct AstNode* ast) {
   return ast_is_type(ast, ast_Number);
 }
 
-int64_t ast_Number_value(struct AstNode* ast) { return ((struct AstNode_Number*)ast->node_information)->value; }
-int ast_Number_size(struct AstNode* ast) { return ((struct AstNode_Number*)ast->node_information)->size; }
+int64_t ast_Number_value(struct AstNode* ast) {
+  return ((struct AstNode_Number*)ast->node_information)->value;
+}
+int ast_Number_size(struct AstNode* ast) {
+  return ((struct AstNode_Number*)ast->node_information)->size;
+}
 
 struct AstNode* ast_build_String(wchar_t* value) {
   struct AstNode* ast = ast_allocate(ast_String);
