@@ -7,9 +7,12 @@ option(PEBL_SHARED_MODE "" ON)
 
 if(PEBL_SHARED_MODE)
   message(STATUS "Building shared")
-  # shared libs
+ 
+  set(CMAKE_SKIP_BUILD_RPATH FALSE)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/compiler")
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
   set(BUILD_SHARED_LIBS ON)
 else()
   message(STATUS "Building static")
