@@ -636,17 +636,19 @@ int ast_Call_num_args(struct AstNode* ast) {
   return n;
 }
 
-struct AstNode* ast_build_Number(int value, int size) {
+struct AstNode* ast_build_Number(int64_t value, int size) {
   struct AstNode* ast = ast_allocate(ast_Number);
-  ast->int_value = value;
-  ast->int_value2 = size;
+  ast->node_information = malloc(sizeof(*ast->node_information));
+  ((struct AstNode_Number*)ast->node_information)->value = value;
+  ((struct AstNode_Number*)ast->node_information)->size = size;
   return ast;
 }
 int ast_verify_Number(struct AstNode* ast) {
   return ast_is_type(ast, ast_Number);
 }
-int ast_Number_value(struct AstNode* ast) { return ast->int_value; }
-int ast_Number_size(struct AstNode* ast) { return ast->int_value2; }
+
+int64_t ast_Number_value(struct AstNode* ast) { return ((struct AstNode_Number*)ast->node_information)->value; }
+int ast_Number_size(struct AstNode* ast) { return ((struct AstNode_Number*)ast->node_information)->size; }
 
 struct AstNode* ast_build_String(wchar_t* value) {
   struct AstNode* ast = ast_allocate(ast_String);

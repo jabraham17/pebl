@@ -355,7 +355,7 @@ static struct AstNode* parse_literal(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(LT_type(t) == tt_NUMBER) {
     t = expect(context, tt_NUMBER);
-    struct AstNode* num_node = ast_build_Number(wcs_to_int(LT_lexeme(t)), 64);
+    struct AstNode* num_node = ast_build_Number((int64_t)wcs_to_int(LT_lexeme(t)), 64);
     add_location_for_token(context, num_node, t);
     return num_node;
   } else if(LT_type(t) == tt_STRING_LITERAL) {
@@ -366,7 +366,7 @@ static struct AstNode* parse_literal(struct Context* context) {
   } else if(LT_type(t) == tt_CHAR_LITERAL) {
     t = expect(context, tt_CHAR_LITERAL);
     struct AstNode* char_node =
-        ast_build_Number((int)LT_lexeme(t)[0], sizeof(wchar_t) * 8);
+        ast_build_Number((int64_t)LT_lexeme(t)[0], sizeof(wchar_t) * 8);
     add_location_for_token(context, char_node, t);
     return char_node;
   } else if(LT_type(t) == tt_TRUE) {
