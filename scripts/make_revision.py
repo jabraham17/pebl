@@ -5,29 +5,37 @@ import shutil
 import os
 import tarfile
 
+
 def check_output(cmd):
     print(" ".join(cmd))
     return sp.check_output(cmd).decode("utf-8").strip().splitlines()
+
 
 def check_call(cmd):
     print(" ".join(cmd))
     return sp.check_call(cmd)
 
+
 def get_tags():
     output = check_output(["git", "tag", "--list"])
     return output
 
+
 def get_last_tag_num():
     output = get_tags()
-    nums = [0,]
+    nums = [
+        0,
+    ]
     for l in output:
-        if m:= re.match(r"^v(\d+)$", l):
+        if m := re.match(r"^v(\d+)$", l):
             nums.append(int(m[1]))
-    last= max(nums)
+    last = max(nums)
     return last
+
 
 def get_last_tag():
     return f"v{get_last_tag_num()}"
+
 
 def get_next_tag():
     return f"v{get_last_tag_num()+1}"
@@ -41,14 +49,31 @@ def build_compiler(build_dir, old_install_dir, new_install_dir):
         shutil.rmtree(build_dir)
     os.mkdir(build_dir)
 
-    check_call(["cmake", "-S", ".", "-B", build_dir,"-G", "Ninja", f"-DCMAKE_INSTALL_PREFIX={new_install_dir}", "-DCMAKE_BUILD_TYPE=Release", "-DPEBL_SHARED_MODE=off"])
-    check_call(["cmake", "--build", build_dir, "--target", "install", "--config", "Release"])
+    check_call(
+        [
+            "cmake",
+            "-S",
+            ".",
+            "-B",
+            build_dir,
+            "-G",
+            "Ninja",
+            f"-DCMAKE_INSTALL_PREFIX={new_install_dir}",
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DPEBL_SHARED_MODE=off",
+        ]
+    )
+    check_call(
+        ["cmake", "--build", build_dir, "--target", "install", "--config", "Release"]
+    )
 
     shutil.rmtree(build_dir)
+
 
 def package_compiler(name, source_dir):
     with tarfile.open(name, "w:gz") as tar:
         tar.add(source_dir, arcname=f"{os.path.basename(source_dir)}")
+
 
 def commit_compiler(*files):
     check_call(["git", "add", *files])
@@ -66,7 +91,14 @@ new_install_dir = os.path.join(binaries_dir, "pebl-new")
 build_compiler(build_dir, old_install_dir, new_install_dir)
 
 # TODO: TEST NEW COMPILER
-check_call(["./scripts/run_tests.sh", "test", "-D", f"INSTALL_DIR={os.path.join(os.getcwd(), new_install_dir)}"])
+check_call(
+    [
+        "./scripts/run_tests.sh",
+        "test",
+        "-D",
+        f"INSTALL_DIR={os.path.join(os.getcwd(), new_install_dir)}",
+    ]
+)
 
 # remove the old and copy in the new
 if os.path.exists(old_install_dir):
