@@ -5,7 +5,7 @@
 
 void print_token(struct lexer_token* t) {
   wprintf(
-      L"{%ls, lexeme='%s'}\n",
+      L"{%ls, lexeme='%ls'}\n",
       tokentype_to_string(LT_type(t)),
       LT_lexeme(t));
 }

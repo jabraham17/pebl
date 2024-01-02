@@ -272,6 +272,9 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   // handle all single char tokens
   wchar_t c1;
   int pos1 = get_char_pos(context, &c1);
+
+  if(c1 == EOF) { return eof_token(context); }
+
   switch(c1) {
     case L'(': return build_simple_token(context, tt_LPAREN, c1);
     case L')': return build_simple_token(context, tt_RPAREN, c1);
@@ -290,7 +293,6 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   if(c1 == L'"') {
     return handle_strings(context);
   }
-
   // handle char
   if(c1 == L'\'') {
     return handle_char_literal(context);
@@ -355,11 +357,15 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   // read until we run out of chars or a non alphanumeric/underscore is found
   while(1) {
     int pos = get_char_pos(context, &next);
-    if(!isalnum(next) && next != L'_') {
+    if(!iswalnum(next) && next != L'_') {
       seek_pos(context, pos);
       break;
     }
-    if(next == EOF) break;
+    if(next == EOF) {
+      // put the EOF back
+      seek_pos(context, pos);
+      break;
+    }
 
     if(nChars >= lexemeSize) {
       lexemeSize *= 2;
@@ -367,9 +373,6 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
     }
     t->lexeme[nChars] = next;
     nChars++;
-  }
-  if(next == EOF) {
-    return eof_token(context);
   }
   // allocate just a bit more if needed for NUL
   if(nChars >= lexemeSize) {
@@ -394,6 +397,9 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   // THESE MUST GO LAST
   else if(is_valid_id(tokenLexeme)) t->tt = tt_ID;
   else if(is_valid_num(tokenLexeme)) t->tt = tt_NUMBER;
+  else {
+    if (wcslen(tokenLexeme) == 0 && peek_char(context) == EOF) t->tt = tt_EOF;
+  }
 
   return t;
 }
@@ -413,6 +419,8 @@ wchar_t* tokentype_to_string(enum lexer_tokentype tt) {
   else if(tt == tt_RCURLY) return L"RCURLY";
   else if(tt == tt_COMMA) return L"COMMA";
   else if(tt == tt_COLON) return L"COLON";
+  else if(tt == tt_DOT) return L"DOT";
+  else if(tt == tt_ARROW) return L"ARROW";
   else if(tt == tt_SEMICOLON) return L"SEMICOLON";
   else if(tt == tt_FUNC) return L"FUNC";
   else if(tt == tt_EXTERN) return L"EXTERN";
@@ -438,5 +446,5 @@ wchar_t* tokentype_to_string(enum lexer_tokentype tt) {
   else if(tt == tt_WHILE) return L"WHILE";
   else if(tt == tt_RETURN) return L"RETURN";
   else if(tt == tt_BREAK) return L"BREAK";
-  UNIMPLEMENTED("unknown token type");
+  UNIMPLEMENTED("unknown token type %d\n",tt);
 }
