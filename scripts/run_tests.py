@@ -114,8 +114,11 @@ def is_config_filename(filename: str) -> bool:
 
 
 def readlines(filename: str) -> List[str]:
-    with open(filename, "r") as fp:
-        return fp.readlines()
+    try:
+        with open(filename, "r") as fp:
+            return fp.readlines()
+    except FileNotFoundError as err:
+        warn(str(err))
     return []
 
 
