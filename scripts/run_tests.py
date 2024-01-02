@@ -5,7 +5,7 @@ import os
 import re
 import shutil
 import sys
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 import random
 import string
 import subprocess as sp
@@ -27,12 +27,19 @@ def error(*args: Any, **kwargs: Any):
     exit(1)
 
 
-def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str, print_commands:bool=False) -> sp.CompletedProcess:
+def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str, print_commands:bool=False) -> Optional[sp.CompletedProcess]:
     if print_commands:
         print("  " + " ".join(cmd + [f"&>{outfilename}"]))
-    cp = sp.run(cmd, stdout=outfile, stderr=outfile)
-    outfile.flush()
-    return cp
+    try:
+        cp = sp.run(cmd, stdout=outfile, stderr=outfile)
+        outfile.flush()
+        return cp
+    except OSError as err:
+        # catch errors from sp
+        outfile.flush()
+        outfile.write(str(err) + "\n")
+        outfile.flush()
+        return None
 
 def static_vars(**kwargs: Any):
     def wrapper(func: Callable[[Any], Any]):
@@ -286,11 +293,15 @@ def main(raw_args: List[str]) -> int:
                 glob_path = os.path.join(f"{p}", "**", f"*.{k}")
                 files.extend(glob.glob(glob_path, recursive=True))
 
+    tot_tests = 0
+    tot_passed = 0
     for f in files:
         ts = TestSuite(f, extra_variables, print_commands=args.print_commands)
         results = ts.run_tests()
         n_tests = len(results)
+        tot_tests += n_tests
         n_passed = sum([1 for r in results if r[0]])
+        tot_passed += n_passed
 
         width = 80
         header = f"Ran test from '{f}', {n_passed}/{n_tests} tests passed"
@@ -302,7 +313,11 @@ def main(raw_args: List[str]) -> int:
                 if not r[0]:
                     print(f"Failed: {r[1]}")
 
-    return 1
+    print(f"{tot_passed}/{tot_tests} tests passed")
+    if tot_passed == tot_tests:
+        return 0
+    else:
+        return 1
 
 
 if __name__ == "__main__":
