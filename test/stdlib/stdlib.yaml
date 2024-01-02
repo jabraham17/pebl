@@ -1,13 +1,18 @@
 variables:
   COMPILER: ${BIN_DIR}/peblc${EXT}
-  COMP_CMD: ${COMPILER} ${FILE} -output ${TEMP_FILE}
+  COMP_CMD: ${COMPILER} ${FILE} -output ${FILE}.out
+  CLEAN_CMD: rm ${FILE}.out
 # check that stdlib compiles fine
 tests:
 - file: ${ROOT}/stdlib/io.pebl
   configs:
-  - compile-cmd: ${COMP_CMD}
+  - cmds:
+    - ${COMP_CMD}
+    - ${CLEAN_CMD}
     good-file: no-error.good
 - file: ${ROOT}/stdlib/memory.pebl
   configs:
-  - compile-cmd: ${COMP_CMD}
+  - cmds:
+    - ${COMP_CMD}
+    - ${CLEAN_CMD}
     good-file: no-error.good

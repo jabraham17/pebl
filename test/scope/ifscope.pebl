@@ -36,5 +36,5 @@ func main(args: string*, nargs: int): int {
     printme(intToString(a));
   }
 
-  return 1+2;
+  return 0;
 }

@@ -5,9 +5,12 @@ variables:
 tests:
 - file: hello.pebl
   configs:
-  - compile-cmd: ${PARSE_CMD} -print
+  - cmds:
+    - ${PARSE_CMD} -print
 - file: complex-grammar.pebl
   configs:
-  - compile-cmd: ${PARSE_CMD} -print
-  # - compile-cmd: ${VALGRIND} -q --track-origins=yes --leak-check=no -- ${PARSE_CMD}
+  - cmds:
+    - ${PARSE_CMD} -print
+  # - cmds:
+      # - ${VALGRIND} -q --track-origins=yes --leak-check=no -- ${PARSE_CMD}
     # good-file: complex-grammar-valgrind.good

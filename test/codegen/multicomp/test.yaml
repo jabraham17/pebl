@@ -1,9 +1,13 @@
 variables:
   COMPILER: ${BIN_DIR}/pebl
-  COMP_CMD: ${COMPILER} -o ${TEMP_FILE}${EXT}
-  EXEC_CMD: ./${TEMP_FILE}${EXT}
+  OUTFILE: ${FILE}.out${EXT}
+  COMP_CMD: ${COMPILER} -o ${OUTFILE}
+  EXEC_CMD: ./${OUTFILE}
+  CLEAN_CMD: rm ${OUTFILE}
 tests:
 - file: a.pebl
   configs:
-  - compile-cmd: ${COMP_CMD} ${FILE} b.pebl
-    exec-cmd: ${EXEC_CMD}
+  - cmds:
+    - ${COMP_CMD} ${FILE} b.pebl
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}

@@ -1,17 +1,27 @@
 variables:
   COMPILER: ${BIN_DIR}/pebl
-  COMP_CMD: ${COMPILER} -o ${TEMP_FILE}${EXT} ${FILE}
-  EXEC_CMD: ./${TEMP_FILE}${EXT}
+  OUTFILE: ${FILE}.out${EXT}
+  COMP_CMD: ${COMPILER} ${FILE} -o ${OUTFILE}
+  EXEC_CMD: ./${OUTFILE}
+  CLEAN_CMD: rm ${OUTFILE}
 tests:
 - file: ifscope.pebl
   configs:
-  - compile-cmd: ${COMP_CMD}
-    exec-cmd: ${EXEC_CMD} 19
-  - compile-cmd: ${COMP_CMD} --opt=full
-    exec-cmd: ${EXEC_CMD} 19
+  - cmds:
+    - ${COMP_CMD}
+    - ${EXEC_CMD} 19
+    - ${CLEAN_CMD}
+  - cmds:
+    - ${COMP_CMD} --opt=full
+    - ${EXEC_CMD} 19
+    - ${CLEAN_CMD}
 - file: elsescope.pebl
   configs:
-  - compile-cmd: ${COMP_CMD}
-    exec-cmd: ${EXEC_CMD}
-  - compile-cmd: ${COMP_CMD} --opt=full
-    exec-cmd: ${EXEC_CMD}
+  - cmds:
+    - ${COMP_CMD}
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
+  - cmds:
+    - ${COMP_CMD} --opt=full
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
