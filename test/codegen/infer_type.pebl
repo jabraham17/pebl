@@ -25,9 +25,10 @@ func main(args: string*, nargs: int): int {
   z = z+1;
   printInt("z=", z, "\n");
 
-  # let w = 1 + 1; # error for now
-  # let ww = foo(); # error for now
-
+  let w = 1 + 1;
+  printInt("w=", w, "\n");
+  let ww = foo();
+  printInt("ww=", ww, "\n");
 
   return 0;
 }

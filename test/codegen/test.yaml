@@ -15,3 +15,110 @@ tests:
     exec-cmd: ${EXEC_CMD} 1 2 3 4 5 6 7 8 9 10
   - compile-cmd: ${COMP_CMD} --opt=full
     exec-cmd: ${EXEC_CMD} 1 2 3 4 5 6 7 8 9 10
+- file: testStdio.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} < testFile.txt
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} <testFile.txt
+- file: simplestruct.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} 17 19
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} 17 19
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} 17 19 1
+    good-file: simplestruct2.good
+- file: call.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: hello-emoji.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: global.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: printargs.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} a b c
+    good-file: printargs1.good
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} a 'b c' d
+    good-file: printargs2.good
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} a 'b c' 🙈👌 🤣
+    good-file: printargs3.good
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} a c 'd 🙈x👌 y🤣'
+    good-file: printargs4.good
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} a b c
+    good-file: printargs1.good
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} a 'b c' d
+    good-file: printargs2.good
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} a 'b c' 🙈👌 🤣
+    good-file: printargs3.good
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} a c 'd 🙈x👌 y🤣'
+    good-file: printargs4.good
+- file: infer_type.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: linkedlist.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: linkedlist2.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: or.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: recurseprint.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: recursesum.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} 5 9 18 -2
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} 5 9 18 -2
+- file: shortcircuit_and.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: shortcircuit_or.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}

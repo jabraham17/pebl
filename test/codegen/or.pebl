@@ -3,8 +3,6 @@ extern func intToString(i:int):string;
 
 func main(args: string*, nargs: int): int {
   let next = ' ';
-  print(typeof(next));
-  print("\n");
   let i = 0;
   let buf_len = 16;
   let done = 0;

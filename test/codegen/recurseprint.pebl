@@ -14,7 +14,7 @@ func printArgs(i:int, args: string*, nargs: int): void {
     print(arg);
     println("");
 
-    let offset:void* = 8;
+    let offset = 1;
     printArgs(i+1, args+offset, nargs);
   }
 }

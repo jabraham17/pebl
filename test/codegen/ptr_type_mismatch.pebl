@@ -1,0 +1,7 @@
+func print(s: string): void;
+func main(args: string*, nargs: int): int {
+  let offset:string* = 1;
+  let arg1:string* = args+offset;
+  print(*arg1);
+  return 0;
+}

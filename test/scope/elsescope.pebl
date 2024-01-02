@@ -1,6 +1,9 @@
 
-extern func print(s: string): void;
-extern func println(s: string): void;
+func print(s: string): void;
+func println(s: string): void {
+  print(s);
+  print("\n");
+}
 
 extern func intToString(i:int):string;
 
@@ -37,10 +40,10 @@ func main(args: string*, nargs: int): int {
 
   foobar();
 
+  println("foo");
   foo();
+  println("bar");
   bar();
-
-
 
   return 0;
 }

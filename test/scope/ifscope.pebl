@@ -1,6 +1,9 @@
 
-extern func print(s: string): void;
-extern func println(s: string): void;
+func print(s: string): void;
+func println(s:string): void {
+  print(s);
+  print("\n");
+}
 
 extern func intToString(i:int):string;
 extern func stringToInt(i:string):int;
@@ -13,7 +16,7 @@ func printme(s:string):void {
 
 func main(args: string*, nargs: int): int {
   print("the first arg is '");
-  let offset:int* = 8;
+  let offset = 1;
   let arg1:string* = args+offset;
   print(*arg1);
   println("'");

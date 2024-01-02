@@ -1,0 +1,12 @@
+func print(s: string): void;
+
+func main(args: string*, nargs: int): int {
+  let i: int = 1;
+  while i < nargs {
+    let p = args + i;
+    print("arg='");
+    print(*p);
+    print("'\n");
+    i = i + 1;
+  }
+}

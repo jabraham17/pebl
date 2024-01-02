@@ -1,0 +1,17 @@
+variables:
+  COMPILER: ${BIN_DIR}/pebl
+  COMP_CMD: ${COMPILER} -o ${TEMP_FILE}${EXT} ${FILE}
+  EXEC_CMD: ./${TEMP_FILE}${EXT}
+tests:
+- file: ifscope.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} 17
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} 17
+- file: elsescope.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}

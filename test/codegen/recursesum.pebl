@@ -1,12 +1,15 @@
 extern func print(s: string): void;
-extern func println(s: string): void;
+func println(s: string): void {
+  print(s);
+  print("\n");
+}
 
 extern func intToString(i:int):string;
 extern func stringToInt(i:string):int;
 
 extern func ptrToString(p:void*):string;
 
-extern func allocate(n:int):void*;
+func allocate(n:int):void*;
 
 func printInt(prefix: string, i: int, suffix: string): void {
   print(prefix);

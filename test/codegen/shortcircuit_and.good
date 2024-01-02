@@ -1,0 +1,32 @@
+test 1
+a
+false
+test 2
+a
+false
+test 3
+a
+b
+false
+test 4
+a
+b
+true
+test 5
+a
+b
+false
+test 6
+a
+b
+false
+test 7
+a
+b
+c
+true
+test 8
+a
+b
+c
+true
