@@ -32,13 +32,51 @@ char* c_to_char_only(wchar_t* s) {
   }
   return only_chars;
 }
-wchar_t* c_to_wchar(char* s) {
-  int len = strlen(s);
-  wchar_t* wcs = c_allocate(sizeof(*wcs)*(len+1));
-  wcs[len] = '\0';
-  for (int i = 0; i < len; i++) {
-    wcs[i] = (wchar_t)s[i];
+
+// returns number of chars, sets number of bytes
+int c_mb_strlen(int* numBytes, char* s) {
+  mbstate_t state;
+  memset(&state, 0, sizeof(state));
+
+  int numBytes_ = 0;
+  int numChars_ = 0;
+  while (1) {
+    // count each char
+    int charLen = mbrlen(s+numBytes_, sizeof(wchar_t), &state);
+    if (charLen > 0) {
+      numBytes_ += charLen;
+      numChars_ += 1;
+    }
+    else {
+      break;
+    }
   }
+  if(numBytes) *numBytes = numBytes_;
+  return numChars_;
+}
+wchar_t* c_to_wchar(char* s) {
+  mbstate_t state;
+  memset(&state, 0, sizeof(state));
+
+  int numChars = c_mb_strlen(NULL, s);
+  wchar_t* wcs = c_allocate(sizeof(*wcs)*(numChars+1));
+  wcs[numChars] = '\0';
+
+  int wcs_offset = 0;
+  int s_offset = 0;
+  while(1) {
+    // convert each char
+    int bytesConsumed = mbrtowc(wcs+wcs_offset, s+s_offset, sizeof(wchar_t), &state);
+    if(bytesConsumed > 0) {
+      s_offset += bytesConsumed;
+      wcs_offset += 1;
+    }
+    else {
+      break;
+    }
+  }
+
+
   return wcs;
 }
 
