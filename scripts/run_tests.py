@@ -28,7 +28,13 @@ def error(*args: Any, **kwargs: Any):
     exit(1)
 
 
-def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str, print_commands:bool=False, timeout=30) -> Optional[sp.CompletedProcess]:
+def process_wrapper(
+    cmd: List[str],
+    outfile: io.TextIOWrapper,
+    outfilename: str,
+    print_commands: bool = False,
+    timeout=30,
+) -> Optional[sp.CompletedProcess]:
     infile = None
     real_cmd = []
     for c in cmd:
@@ -42,7 +48,9 @@ def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str,
     try:
         if infile:
             with open(infile, "r") as f:
-                cp = sp.run(real_cmd, stdout=outfile, stderr=outfile, stdin=f, timeout=timeout)
+                cp = sp.run(
+                    real_cmd, stdout=outfile, stderr=outfile, stdin=f, timeout=timeout
+                )
         else:
             cp = sp.run(real_cmd, stdout=outfile, stderr=outfile, timeout=timeout)
         outfile.flush()
@@ -53,6 +61,7 @@ def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str,
         outfile.write(str(err) + "\n")
         outfile.flush()
         return None
+
 
 def static_vars(**kwargs: Any):
     def wrapper(func: Callable[[Any], Any]):
@@ -134,6 +143,7 @@ def argsplit(args: str) -> List[str]:
             l[idx] = f"<{l.pop(idx+1)}"
         return l
 
+
 class TestSuite:
     def __init__(
         self,
@@ -190,11 +200,12 @@ class TestSuite:
         if not os.path.exists(file):
             warn(f"'{file}' does not exist")
 
-
         temp_file = gen_temp_name()
+
         def clean_up_temp_file():
             if os.path.exists(temp_file):
                 os.remove(temp_file)
+
         extra_args = {"FILE": file, "TEMP_FILE": temp_file}
 
         comp_cmd = test_config.get("compile-cmd", None)
@@ -227,15 +238,22 @@ class TestSuite:
             os.remove(outfilename)
         with open(outfilename, "a") as outfile:
             if comp_cmd:
-                cp = process_wrapper(comp_cmd, outfile, outfilename, print_commands=self.print_commands)
-            
-            if exec_cmd:
-                cp = process_wrapper(exec_cmd, outfile, outfilename, print_commands=self.print_commands)
+                cp = process_wrapper(
+                    comp_cmd, outfile, outfilename, print_commands=self.print_commands
+                )
 
+            if exec_cmd:
+                cp = process_wrapper(
+                    exec_cmd, outfile, outfilename, print_commands=self.print_commands
+                )
 
         outfile_lines = readlines(outfilename)
         goodfile_lines = readlines(good_file)
-        diffres = list(difflib.context_diff(outfile_lines, goodfile_lines, fromfile=outfilename, tofile=good_file))
+        diffres = list(
+            difflib.context_diff(
+                outfile_lines, goodfile_lines, fromfile=outfilename, tofile=good_file
+            )
+        )
         if len(diffres) != 0:
             clean_up_temp_file()
             if len(diffres) > 500:
@@ -247,7 +265,6 @@ class TestSuite:
         # if we reach this point, its a presumed success
         os.remove(outfilename)
         clean_up_temp_file()
-
 
         return (True, file, "")
 
@@ -264,7 +281,7 @@ class TestSuite:
         d = os.path.dirname(os.path.abspath(self.path))
         os.chdir(d)
 
-        results = []
+        results: List[Result] = []
         tests = self.config.get("tests", [])
         for t in tests:
             file = t.get("file", None)
@@ -284,7 +301,9 @@ def main(raw_args: List[str]) -> int:
     a.add_argument("paths", nargs="*")
     a.add_argument("-v", "--verbose", action="count", default=0)
     a.add_argument("-p", "--print-commands", action="store_true", default=False)
-    a.add_argument("-D", metavar="KEY=VALUE", dest="variables", action="append", type=str)
+    a.add_argument(
+        "-D", metavar="KEY=VALUE", dest="variables", action="append", type=str
+    )
     args = a.parse_args(raw_args)
 
     extra_variables = {
@@ -293,16 +312,15 @@ def main(raw_args: List[str]) -> int:
         "BIN_DIR": "${INSTALL_DIR}/bin",
         "LIB_DIR": "${INSTALL_DIR}/lib",
         "COMPILER_LIB_DIR": "${INSTALL_DIR}/lib/compiler",
-        "EXT": ""
+        "EXT": "",
     }
     if sys.platform == "win32":
         extra_variables["EXT"] = ".exe"
 
     # set users vars
     for var in args.variables:
-        k,_,v = var.partition('=')
+        k, _, v = var.partition("=")
         extra_variables[k] = v
-
 
     files = []
     for p in args.paths:

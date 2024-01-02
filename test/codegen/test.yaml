@@ -101,9 +101,9 @@ tests:
 - file: recurseprint.pebl
   configs:
   - compile-cmd: ${COMP_CMD}
-    exec-cmd: ${EXEC_CMD}
+    exec-cmd: ${EXEC_CMD} a b c
   - compile-cmd: ${COMP_CMD} --opt=full
-    exec-cmd: ${EXEC_CMD}
+    exec-cmd: ${EXEC_CMD} a b c
 - file: recursesum.pebl
   configs:
   - compile-cmd: ${COMP_CMD}
