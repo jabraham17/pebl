@@ -28,7 +28,7 @@ def error(*args: Any, **kwargs: Any):
     exit(1)
 
 
-def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str, print_commands:bool=False) -> Optional[sp.CompletedProcess]:
+def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str, print_commands:bool=False, timeout=30) -> Optional[sp.CompletedProcess]:
     infile = None
     real_cmd = []
     for c in cmd:
@@ -42,12 +42,12 @@ def process_wrapper(cmd: List[str], outfile: io.TextIOWrapper, outfilename: str,
     try:
         if infile:
             with open(infile, "r") as f:
-                cp = sp.run(real_cmd, stdout=outfile, stderr=outfile, stdin=f)
+                cp = sp.run(real_cmd, stdout=outfile, stderr=outfile, stdin=f, timeout=timeout)
         else:
-            cp = sp.run(real_cmd, stdout=outfile, stderr=outfile)
+            cp = sp.run(real_cmd, stdout=outfile, stderr=outfile, timeout=timeout)
         outfile.flush()
         return cp
-    except OSError as err:
+    except (OSError, sp.TimeoutExpired) as err:
         # catch errors from sp
         outfile.flush()
         outfile.write(str(err) + "\n")
