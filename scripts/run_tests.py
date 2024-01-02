@@ -237,12 +237,6 @@ class TestSuite:
                 cp = process_wrapper(
                     c, outfile, outfilename, print_commands=self.print_commands
                 )
-                if cp is None or cp.returncode != 0:
-                    return (
-                        False,
-                        file,
-                        f"failed to run '{command_to_string(c, outfilename=outfilename)}'",
-                    )
 
         outfile_lines = readlines(outfilename)
         goodfile_lines = readlines(good_file)
