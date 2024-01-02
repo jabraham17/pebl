@@ -1,22 +1,17 @@
-extern func print(s: string): void;
-extern func println(s: string): void;
+func print(s: string): void;
 
 extern func intToString(i:int):string;
 extern func stringToInt(i:string):int;
 
-extern func ptrToString(p:void*):string;
-
-extern func allocate(n:int):void*;
-
 func printInt(prefix: string, i: int, suffix: string): void {
   print(prefix);
   print(intToString(i));
-  println(suffix);
+  print(suffix);
 }
 
 func main(args: string*, nargs: int): int {
 
-  println("hello from main");
+  print("hello from main\n");
   let sum: int = 0;
   let i: int = 1;
   while i < nargs {
@@ -24,6 +19,6 @@ func main(args: string*, nargs: int): int {
     sum = sum + stringToInt(*p);
     i = i + 1;
   }
-  printInt("The sum is: ", sum, "");
+  printInt("The sum is: ", sum, "\n");
   return 0;
 }

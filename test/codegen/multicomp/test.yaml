@@ -1,0 +1,9 @@
+variables:
+  COMPILER: ${BIN_DIR}/pebl
+  COMP_CMD: ${COMPILER} -o ${TEMP_FILE}${EXT}
+  EXEC_CMD: ./${TEMP_FILE}${EXT}
+tests:
+- file: a.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD} ${FILE} b.pebl
+    exec-cmd: ${EXEC_CMD}

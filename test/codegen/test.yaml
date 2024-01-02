@@ -1,0 +1,17 @@
+variables:
+  COMPILER: ${BIN_DIR}/pebl
+  COMP_CMD: ${COMPILER} -o ${TEMP_FILE}${EXT} ${FILE}
+  EXEC_CMD: ./${TEMP_FILE}${EXT}
+tests:
+- file: print.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD}
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD}
+- file: whilesum.pebl
+  configs:
+  - compile-cmd: ${COMP_CMD}
+    exec-cmd: ${EXEC_CMD} 1 2 3 4 5 6 7 8 9 10
+  - compile-cmd: ${COMP_CMD} --opt=full
+    exec-cmd: ${EXEC_CMD} 1 2 3 4 5 6 7 8 9 10

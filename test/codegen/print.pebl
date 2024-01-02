@@ -1,8 +1,8 @@
 
-extern func print(s: string): void;
+func print(s: string): void;
 
-export func foo(): int {
-  let msg: string = "hello, world!";
+func main(args: string*, nargs: int): int {
+  let msg: string = "hello, world!\n";
   let _: void = print(msg);
   return 0;
 }

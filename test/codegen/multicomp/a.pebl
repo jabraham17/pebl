@@ -1,8 +1,8 @@
-extern func println(s: string): void;
+func print(s: string): void;
 
 func doB():void;
 func doA():void {
-  println("in A");
+  print("in A\n");
   doB();
 }
 
