@@ -10,7 +10,7 @@ wchar_t* intToString(int64_t i) {
   int buf_size = sizeof(*buf)*16;
   buf = c_allocate(buf_size);
   swprintf(buf, buf_size, L"%ld", i);
-  return  buf;
+  return buf;
 }
 int64_t stringToInt(wchar_t* s) {
   wchar_t* end;

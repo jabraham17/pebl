@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <wchar.h>
+#include <string.h>
 
 
 void* c_allocate(int64_t n);
@@ -14,7 +15,7 @@ void pebl_panic(char* message) {
   fwprintf(stderr, L"%s\n", message);
   abort();
 }
-static int is_char_only(wchar_t* s) {
+int c_is_char_only(wchar_t* s) {
   while (*s) {
     if (*s > 255) return 0;
     s++;
@@ -22,7 +23,7 @@ static int is_char_only(wchar_t* s) {
   return 1;
 }
 // assumes char only
-static char* to_char_only(wchar_t* s) {
+char* c_to_char_only(wchar_t* s) {
   int len = wcslen(s);
   char* only_chars = c_allocate(sizeof(*only_chars)*(len+1));
   only_chars[len] = '\0';
@@ -31,13 +32,22 @@ static char* to_char_only(wchar_t* s) {
   }
   return only_chars;
 }
+wchar_t* c_to_wchar(char* s) {
+  int len = strlen(s);
+  wchar_t* wcs = c_allocate(sizeof(*wcs)*(len+1));
+  wcs[len] = '\0';
+  for (int i = 0; i < len; i++) {
+    wcs[i] = (wchar_t)s[i];
+  }
+  return wcs;
+}
 
 
 void* c_openFilePointer(wchar_t* name, wchar_t* mode) {
-  if(!is_char_only(name) || !is_char_only(mode)) {
+  if(!c_is_char_only(name) || !c_is_char_only(mode)) {
     pebl_panic("only ascii characters allowed");
   }
-  return (void*)fopen(to_char_only(name), to_char_only(mode));
+  return (void*)fopen(c_to_char_only(name), c_to_char_only(mode));
 }
 void c_closeFilePointer(void* fp) {
   fclose((FILE*)fp);
@@ -72,15 +82,15 @@ int64_t c_fseek_seek_type(int64_t seek_type) {
 }
 
 int64_t c_pathExists(wchar_t* path) {
-  if(is_char_only(path)) {
-    return (access(to_char_only(path), F_OK) == 0);
+  if(c_is_char_only(path)) {
+    return (access(c_to_char_only(path), F_OK) == 0);
   }
   pebl_panic("cannot check for a non-ascii path");
 }
 int64_t c_pathIsFile(wchar_t* path) {
-  if(is_char_only(path)) {
+  if(c_is_char_only(path)) {
     struct stat path_stat;
-    if(stat(to_char_only(path), &path_stat) != 0) return 0;
+    if(stat(c_to_char_only(path), &path_stat) != 0) return 0;
     return S_ISREG(path_stat.st_mode);
   }
   pebl_panic("cannot check for a non-ascii path");
