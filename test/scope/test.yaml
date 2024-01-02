@@ -6,9 +6,9 @@ tests:
 - file: ifscope.pebl
   configs:
   - compile-cmd: ${COMP_CMD}
-    exec-cmd: ${EXEC_CMD} 17
+    exec-cmd: ${EXEC_CMD} 19
   - compile-cmd: ${COMP_CMD} --opt=full
-    exec-cmd: ${EXEC_CMD} 17
+    exec-cmd: ${EXEC_CMD} 19
 - file: elsescope.pebl
   configs:
   - compile-cmd: ${COMP_CMD}
