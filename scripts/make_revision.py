@@ -66,6 +66,7 @@ new_install_dir = os.path.join(binaries_dir, "pebl-new")
 build_compiler(build_dir, old_install_dir, new_install_dir)
 
 # TODO: TEST NEW COMPILER
+check_call(["./scripts/run_tests.sh", "test", "-D", f"INSTALL_DIR={os.path.join(os.getcwd(), new_install_dir)}"])
 
 # remove the old and copy in the new
 if os.path.exists(old_install_dir):
