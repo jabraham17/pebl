@@ -1,19 +1,16 @@
 
-#include "cg-expr.h"
-
 #include "ast/Type.h"
 #include "ast/ast.h"
 #include "ast/scope-resolve.h"
 
 #include "cg-helpers.h"
 #include "cg-inst.h"
-#include "cg-operator.h"
 
 struct cg_value*
 codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
   ASSERT(ast_is_type(ast, ast_Expr));
   if(ast_Expr_is_plain(ast)) {
-    return codegen_helper(ctx, ast_Expr_lhs(ast), sr);
+    return codegen_inst(ctx, ast_Expr_lhs(ast), sr);
   } else if(ast_Expr_is_binop(ast)) {
     struct cg_value* val = codegenBinaryOperator(ctx, sr, ast);
     if(val) {

@@ -19,9 +19,12 @@ void lexer_init(struct Context* context) {
   context->lexer = malloc(sizeof(*context->lexer));
   memset(context->lexer, 0, sizeof(*context->lexer));
 
-  context->lexer->fp = fopen(context->filename, "rb");
+  context->lexer->fp = fopen(Arguments_inFilename(context->arguments), "rb");
   if(context->lexer->fp == NULL) {
-    ERROR(context, "could not open file named '%s'\n", context->filename);
+    ERROR(
+        context,
+        "could not open file named '%s'\n",
+        Arguments_inFilename(context->arguments));
   }
   context->lexer->current_line = 1;
 }

@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "cg-expr.h"
 #include "cg-helpers.h"
+#include "cg-inst.h"
 
 static struct CompilerBuiltin*
 allocate_Builtin(struct Context* ctx, char* name, int numArgs) {

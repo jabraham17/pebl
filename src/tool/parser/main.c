@@ -2,6 +2,7 @@
 
 #include "ast/parse-checks.h"
 #include "ast/scope-resolve.h"
+#include "context/arguments.h"
 #include "context/context.h"
 #include "parser/parser.h"
 
@@ -64,7 +65,8 @@ int main(int argc, char** argv) {
 
   struct Context context_;
   struct Context* context = &context_;
-  Context_init(context, filename);
+  struct Arguments* args = create_Arguments(filename, NULL, 0);
+  Context_init(context, args);
   lexer_init(context);
   parser_init(context);
   parser_parse(context);

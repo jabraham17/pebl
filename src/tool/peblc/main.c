@@ -5,6 +5,7 @@
 #include "builtins/compiler-builtin.h"
 #include "codegen/codegen-llvm.h"
 #include "common/bsstring.h"
+#include "context/arguments.h"
 #include "context/context.h"
 #include "parser/parser.h"
 
@@ -16,6 +17,7 @@ int main(int argc, char** argv) {
   int verify = 1;
   int checks = 1;
   char* outfile = NULL;
+  int debug = 0;
 
   int i = 1;
   while(i < argc) {
@@ -45,6 +47,8 @@ int main(int argc, char** argv) {
       } else if(strcmp(flag, "output") == 0) {
         i++;
         outfile = argv[i];
+      } else if(strcmp(flag, "g") == 0) {
+        debug = val_to_set;
       } else {
         fwprintf(stderr, L"Warning: unknown flag '%s'\n", arg);
       }
@@ -57,7 +61,7 @@ int main(int argc, char** argv) {
     fwprintf(
         stderr,
         L"Error - usage: './peblc <filename> (-output FILENAME)? (-checks?) "
-        "-(verify)?'\n");
+        "-(verify)? (-g)?'\n");
     return 1;
   }
   if(outfile == NULL) {
@@ -66,7 +70,8 @@ int main(int argc, char** argv) {
 
   struct Context context_;
   struct Context* context = &context_;
-  Context_init(context, filename);
+  struct Arguments* args = create_Arguments(filename, outfile, debug);
+  Context_init(context, args);
   lexer_init(context);
   parser_init(context);
 
@@ -80,9 +85,10 @@ int main(int argc, char** argv) {
 
   scope_resolve(context);
 
-  init_cg_context(context, outfile);
+  init_cg_context(context);
   codegen(context);
   cg_emit(context);
+  deinit_cg_context(context);
 
   return 0;
 }

@@ -31,4 +31,17 @@
     for(DECLTYPE(root) name = (root); name != NULL && ((idx++), 1);            \
         name = name->next)
 
+#define STACK_PUSH(head, elm)                                                  \
+  do {                                                                         \
+    (elm)->next = (head);                                                      \
+    (head) = (elm);                                                            \
+  } while(0)
+#define STACK_POP(head, res)                                                   \
+  do {                                                                         \
+    (res) = (head);                                                            \
+    (head) = (head)->next;                                                     \
+  } while(0)
+#define STACK_PEEK(head) (head)
+#define STACK_EMPTY(head) ((head) == NULL)
+
 #endif

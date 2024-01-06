@@ -14,9 +14,9 @@ struct Context* Context_allocate() {
   struct Context* context = malloc(sizeof(*context));
   return context;
 }
-void Context_init(struct Context* context, char* filename) {
+void Context_init(struct Context* context, struct Arguments* args) {
   memset(context, 0, sizeof(*context));
-  context->filename = bsstrdup(filename);
+  context->arguments = args;
   setlocale(LC_CTYPE, "");
 }
 

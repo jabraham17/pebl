@@ -1,5 +1,4 @@
 
-#include "cg-operator.h"
 
 #include "ast/Type.h"
 #include "ast/scope-resolve.h"
@@ -14,8 +13,8 @@ static struct cg_value* codegenOperator_sintBOp(
     struct AstNode* lhsAst,
     struct AstNode* rhsAst,
     struct Type* resType) {
-  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
-  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
+  struct cg_value* lhs = codegen_inst(ctx, lhsAst, scope);
+  struct cg_value* rhs = codegen_inst(ctx, rhsAst, scope);
   ASSERT(
       Type_is_signed(lhs->type) && Type_is_signed(rhs->type) &&
       Type_is_signed(resType) && Type_eq(lhs->type, rhs->type));
@@ -62,8 +61,8 @@ static struct cg_value* codegenOperator_compare(
     struct AstNode* lhsAst,
     struct AstNode* rhsAst,
     struct Type* resType) {
-  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
-  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
+  struct cg_value* lhs = codegen_inst(ctx, lhsAst, scope);
+  struct cg_value* rhs = codegen_inst(ctx, rhsAst, scope);
 
   LLVMValueRef lhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
@@ -139,7 +138,7 @@ static struct cg_value* codegenOperator_booleanAnd(
   LLVMBasicBlockRef endBB =
       LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "and.end");
 
-  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
+  struct cg_value* lhs = codegen_inst(ctx, lhsAst, scope);
   LLVMValueRef lhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
   LLVMValueRef lhsCond = LLVMBuildICmp(
@@ -153,7 +152,7 @@ static struct cg_value* codegenOperator_booleanAnd(
   LLVMAppendExistingBasicBlock(currentFunc, rhsBB);
   LLVMPositionBuilderAtEnd(ctx->codegen->builder, rhsBB);
 
-  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
+  struct cg_value* rhs = codegen_inst(ctx, rhsAst, scope);
   LLVMValueRef rhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, rhs->cg_type, rhs->value, "");
   LLVMValueRef rhsCond = LLVMBuildICmp(
@@ -202,7 +201,7 @@ static struct cg_value* codegenOperator_booleanOr(
   LLVMBasicBlockRef endBB =
       LLVMCreateBasicBlockInContext(ctx->codegen->llvmContext, "or.end");
 
-  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
+  struct cg_value* lhs = codegen_inst(ctx, lhsAst, scope);
   LLVMValueRef lhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, lhs->cg_type, lhs->value, "");
   LLVMValueRef lhsCond = LLVMBuildICmp(
@@ -216,7 +215,7 @@ static struct cg_value* codegenOperator_booleanOr(
   LLVMAppendExistingBasicBlock(currentFunc, rhsBB);
   LLVMPositionBuilderAtEnd(ctx->codegen->builder, rhsBB);
 
-  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
+  struct cg_value* rhs = codegen_inst(ctx, rhsAst, scope);
   LLVMValueRef rhsVal =
       LLVMBuildLoad2(ctx->codegen->builder, rhs->cg_type, rhs->value, "");
   LLVMValueRef rhsCond = LLVMBuildICmp(
@@ -242,7 +241,7 @@ static struct cg_value* codegenOperator_negate(
     __attribute__((unused)) enum OperatorType op,
     struct AstNode* operandAst,
     struct Type* resType) {
-  struct cg_value* operand = codegen_helper(ctx, operandAst, scope);
+  struct cg_value* operand = codegen_inst(ctx, operandAst, scope);
 
   LLVMValueRef operandVal = LLVMBuildLoad2(
       ctx->codegen->builder,
@@ -270,7 +269,7 @@ static struct cg_value* codegenOperator_cast(
     struct AstNode* rhsAst,
     __attribute__((unused)) struct Type* resType) {
 
-  struct cg_value* lhsVal = codegen_helper(ctx, lhsAst, scope);
+  struct cg_value* lhsVal = codegen_inst(ctx, lhsAst, scope);
   struct Type* rhsType = scope_get_Type_from_ast(ctx, scope, rhsAst, 1);
   struct Type* lhsType = lhsVal->type;
   LLVMValueRef val =
@@ -296,8 +295,8 @@ static struct cg_value* codegenOperator_addrOffset(
     struct AstNode* rhsAst,
     __attribute__((unused)) struct Type* resType) {
 
-  struct cg_value* lhs = codegen_helper(ctx, lhsAst, scope);
-  struct cg_value* rhs = codegen_helper(ctx, rhsAst, scope);
+  struct cg_value* lhs = codegen_inst(ctx, lhsAst, scope);
+  struct cg_value* rhs = codegen_inst(ctx, rhsAst, scope);
 
   struct cg_value* ptr;
   struct cg_value* offset;
@@ -338,7 +337,7 @@ static struct cg_value* codegenOperator_getValueAtAddress(
     struct AstNode* operandAst,
     __attribute__((unused)) struct Type* resType) {
 
-  struct cg_value* operand = codegen_helper(ctx, operandAst, scope);
+  struct cg_value* operand = codegen_inst(ctx, operandAst, scope);
 
   struct Type* ptrType = Type_get_base_type(operand->type);
   ASSERT(Type_is_pointer(ptrType));
@@ -369,7 +368,7 @@ static struct cg_value* codegenOperator_getAddressOfValue(
     struct AstNode* operandAst,
     __attribute__((unused)) struct Type* resType) {
   // just return the stack ptr for this
-  struct cg_value* operand = codegen_helper(ctx, operandAst, scope);
+  struct cg_value* operand = codegen_inst(ctx, operandAst, scope);
   struct Type* operandTypePtr = Type_get_ptr_type(operand->type);
   ASSERT(LLVMGetTypeKind(LLVMTypeOf(operand->value)) == LLVMPointerTypeKind);
 

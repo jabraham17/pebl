@@ -5,6 +5,20 @@
 
 #include <llvm-c/Core.h>
 
+struct DebugInfo {
+  LLVMMetadataRef fileUnit;
+  LLVMMetadataRef compileUnit;
+};
+
+struct di_scope {
+  LLVMMetadataRef scope;
+  struct di_scope* next;
+};
+struct di_function {
+  LLVMMetadataRef subprogram;
+  struct di_scope* scope_stack;
+};
+
 struct cg_value {
   struct ScopeSymbol* variable;
   struct Type* type;
@@ -20,19 +34,24 @@ struct cg_function {
   LLVMValueRef function;
   LLVMTypeRef cg_type;
   int is_external;
+  struct di_function di;
   struct cg_function* next;
 };
+
 struct cg_context {
   LLVMContextRef llvmContext;
   LLVMModuleRef module;
   LLVMBuilderRef builder;
-  char* outfilename;
+
+  LLVMDIBuilderRef debugBuilder;
+  struct DebugInfo di;
+
   struct cg_value* current_values;
   struct cg_function* functions;
   struct cg_type* struct_types;
 };
 
-void init_cg_context(struct Context* context, char* filename);
+void init_cg_context(struct Context* context);
 void deinit_cg_context(struct Context* context);
 void codegen(struct Context* context);
 void cg_emit(struct Context* context);

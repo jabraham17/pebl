@@ -2,6 +2,8 @@
 #ifndef CONTEXT_H_
 #define CONTEXT_H_
 
+#include "Arguments.h"
+
 #include "ast/location.h"
 
 #include <stdio.h>
@@ -15,8 +17,10 @@ struct ScopeResult;
 struct cg_context;
 struct CompilerBuiltin;
 
+struct Arguments;
+
 struct Context {
-  char* filename;
+  struct Arguments* arguments;
   struct lexer_state* lexer;
 
   struct AstNode* ast;
@@ -30,7 +34,7 @@ struct Context {
 };
 
 struct Context* Context_allocate();
-void Context_init(struct Context* context, char* filename);
+void Context_init(struct Context* context, struct Arguments* arguments);
 
 void BREAKPOINT();
 
@@ -47,14 +51,14 @@ void BREAKPOINT();
       fwprintf(                                                                \
           stderr,                                                              \
           L"%s:%d: warning: " format,                                          \
-          context->filename,                                                   \
+          Arguments_inFilename(context->arguments),                            \
           loc->line_start,                                                     \
           ##__VA_ARGS__);                                                      \
     } else {                                                                   \
       fwprintf(                                                                \
           stderr,                                                              \
           L"%s: warning: " format,                                             \
-          context->filename,                                                   \
+          Arguments_inFilename(context->arguments),                            \
           ##__VA_ARGS__);                                                      \
     }                                                                          \
     BREAKPOINT();                                                              \
@@ -85,7 +89,7 @@ void BREAKPOINT();
     fwprintf(                                                                  \
         stderr,                                                                \
         L"%s:%d: error: " format,                                              \
-        context->filename,                                                     \
+        Arguments_inFilename(context->arguments),                              \
         lineno,                                                                \
         ##__VA_ARGS__);                                                        \
     FATAL_EXIT();                                                              \
@@ -100,7 +104,7 @@ void BREAKPOINT();
       fwprintf(                                                                \
           stderr,                                                              \
           L"%s: error: " format,                                               \
-          context->filename,                                                   \
+          Arguments_inFilename(context->arguments),                            \
           ##__VA_ARGS__);                                                      \
     }                                                                          \
     FATAL_EXIT();                                                              \
