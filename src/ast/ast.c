@@ -4,6 +4,7 @@
 #include "common/ll-common.h"
 #include "context/context.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,7 +63,9 @@ wchar_t* ast_to_string(struct AstNode* ast) {
     wchar_t* buf;
     int buf_len = sizeof(*buf) * 16;
     buf = malloc(buf_len);
-    if(ast_Number_size(ast) == 1) {
+    if(ast_Number_size(ast) == 0) {
+      swprintf(buf, buf_len, L"%s", "null");
+    } else if(ast_Number_size(ast) == 1) {
       swprintf(buf, buf_len, L"%s", ast_Number_value(ast) ? "true" : "false");
     } else if(ast_Number_size(ast) == sizeof(wchar_t) * 8) {
       swprintf(buf, buf_len, L"%lc", ast_Number_value(ast));

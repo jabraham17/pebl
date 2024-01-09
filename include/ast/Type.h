@@ -36,6 +36,8 @@ struct TypeField {
 int Type_ptr_size();
 struct Type* Type_int_type(struct Context* ctx, int size);
 
+struct Type* Type_void_type(struct Context* ctx);
+
 int Type_eq(struct Type* t1, struct Type* t2);
 
 char* Type_to_string(struct Type* t);

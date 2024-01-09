@@ -685,7 +685,14 @@ struct Type* scope_get_Type_from_ast(
     }
   } else if(ast_is_type(ast, ast_Number)) {
     int size = ast_Number_size(ast);
-    return Type_int_type(ctx, size);
+    if(size == 0) {
+      // the type of the null value is a void*, in the future this might be
+      // either void* or some kind of none for optional types
+      ASSERT(ast_Number_value(ast) == 0);
+      return Type_get_ptr_type(Type_void_type(ctx));
+    } else {
+      return Type_int_type(ctx, size);
+    }
   } else if(ast_is_type(ast, ast_String)) {
     return scope_get_Type_from_name(ctx, sr, "string", 1);
   } else if(ast_is_type(ast, ast_Expr)) {

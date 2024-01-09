@@ -32,6 +32,11 @@ struct Type* Type_int_type(struct Context* ctx, int size) {
   return scope_get_Type_from_name(ctx, scope, name, 1);
 }
 
+struct Type* Type_void_type(struct Context* ctx) {
+  struct ScopeResult* scope = ctx->scope_table;
+  return scope_get_Type_from_name(ctx, scope, "void", 1);
+}
+
 static struct Type* Type_allocate_Pointer(struct Type* pointer_to) {
   struct Type* t = Type_allocate(pointer_to->name);
   t->kind = tk_POINTER;
@@ -59,7 +64,7 @@ char* Type_to_string(struct Type* type) {
   char* name = type->name;
   struct Type* t = type;
   int num_stars = 0;
-  while(Type_is_pointer(t)) {
+  while(Type_is_pointer(t) && t->kind != tk_ALIAS) {
     num_stars += 1;
     t = t->pointer_to;
   }

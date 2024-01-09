@@ -21,6 +21,7 @@ enum lexer_tokentype {
   tt_NUMBER,
   tt_TRUE,
   tt_FALSE,
+  tt_NULL,
   tt_STRING_LITERAL,
   tt_CHAR_LITERAL,
   tt_LPAREN,
