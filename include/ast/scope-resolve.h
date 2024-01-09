@@ -19,8 +19,11 @@ struct ScopeFunction {
   int num_args;
   struct ScopeSymbol** args;
 };
-struct ScopeBuiltin {};
-
+struct CompilerBuiltin {
+  char* name;
+  int num_args;
+  struct Type* rettype;
+};
 struct ScopeSymbol {
   enum ScopeSymbolType sst;
   struct ScopeSymbol* next;
@@ -28,11 +31,16 @@ struct ScopeSymbol {
   struct ScopeVariable* ss_variable;
   struct ScopeFunction* ss_function;
   struct Type* ss_type;
-  struct ScopeBuiltin* ss_builtin;
+  struct CompilerBuiltin* ss_builtin;
 };
 
 char* ScopeSymbol_name(struct ScopeSymbol* sym);
+
 int ScopeSymbol_eq(struct ScopeSymbol* lhs, struct ScopeSymbol* rhs);
+int ScopeSymbol_isVariable(struct ScopeSymbol* sym);
+int ScopeSymbol_isFunction(struct ScopeSymbol* sym);
+int ScopeSymbol_isBuiltin(struct ScopeSymbol* sym);
+int ScopeSymbol_isType(struct ScopeSymbol* sym);
 
 struct ScopeResult {
   struct AstNode* ast;

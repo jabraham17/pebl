@@ -136,78 +136,7 @@ codegen_inst(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr) {
         constant->value,
         constant->type);
   } else if(ast_is_type(ast, ast_Call)) {
-    // get the function we are calling
-    struct ScopeSymbol* sym =
-        scope_lookup_name(ctx, sr, ast_Identifier_name(ast_Call_name(ast)), 1);
-    struct CompilerBuiltin* builtin = NULL;
-    if(!sym) {
-      // try and get a builtin
-      builtin = compiler_builtin_lookup_name(
-          ctx,
-          ast_Identifier_name(ast_Call_name(ast)));
-    }
-    if(!sym && !builtin) {
-      ERROR_ON_AST(
-          ctx,
-          ast,
-          "could not find function named '%s'\n",
-          ast_Identifier_name(ast_Call_name(ast)));
-    }
-
-    // if there is a builtin, do codegen for it
-    if(builtin) {
-      struct cg_value* val = codegenBuiltin(ctx, sr, builtin, ast);
-      if(!val) {
-        struct Location* loc = Context_get_location(ctx, ast);
-        int lineno = -1;
-        if(loc) {
-          lineno = loc->line_start;
-        }
-        UNIMPLEMENTED("unimplemented builtin on line %d\n", lineno);
-      }
-      return val;
-    }
-
-    char* mname = mangled_name(ctx, ast);
-    // get the function
-    struct cg_function* func = get_function_named(ctx, mname);
-    if(!func) {
-      ERROR_ON_AST(ctx, ast, "could not find function named '%s'\n", mname);
-    }
-    // TODO: theres a bunch of checks that should happen to make sure funcs
-    // arent called wrong. but thats more a scope resolve/type checking issue
-
-    int numArgs = ast_Call_num_args(ast);
-    LLVMValueRef* args = malloc(sizeof(*args) * numArgs);
-    ast_foreach_idx(ast_Call_args(ast), a, i) {
-      struct cg_value* val = codegen_inst(ctx, a, sr);
-      args[i] =
-          LLVMBuildLoad2(ctx->codegen->builder, val->cg_type, val->value, "");
-    }
-    LLVMValueRef call = LLVMBuildCall2(
-        ctx->codegen->builder,
-        func->cg_type,
-        func->function,
-        args,
-        numArgs,
-        "");
-    LLVMTypeRef rettype = LLVMGetReturnType(func->cg_type);
-    if(LLVMGetTypeKind(rettype) != LLVMVoidTypeKind) {
-      return allocate_stack_for_temp(
-          ctx,
-          LLVMGetReturnType(func->cg_type),
-          call,
-          func->rettype);
-    } else {
-      LLVMTypeRef poisonType =
-          LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0);
-      return allocate_stack_for_temp(
-          ctx,
-          poisonType,
-          LLVMGetPoison(poisonType),
-          func->rettype);
-    }
-
+    return codegen_call(ctx, ast, sr);
   } else if(ast_is_type(ast, ast_Return)) {
 
     if(ast_Return_expr(ast)) {

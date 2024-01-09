@@ -4,6 +4,7 @@
 #include "common/bsstring.h"
 #include "context/context.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 
 static struct AstNode* parse_statement_list(struct Context* context);
@@ -330,7 +331,7 @@ static struct AstNode* parse_expr(struct Context* context) {
 static int is_literal(struct lexer_token* t) {
   return LT_type(t) == tt_NUMBER || LT_type(t) == tt_STRING_LITERAL ||
          LT_type(t) == tt_CHAR_LITERAL || LT_type(t) == tt_TRUE ||
-         LT_type(t) == tt_FALSE;
+         LT_type(t) == tt_FALSE || LT_type(t) == tt_NULL;
 }
 
 // expr_list -> EPSILON | expr | expr COMMA expr_list
@@ -380,6 +381,11 @@ static struct AstNode* parse_literal(struct Context* context) {
     struct AstNode* bool_node = ast_build_Number(0, 1);
     add_location_for_token(context, bool_node, t);
     return bool_node;
+  } else if(LT_type(t) == tt_NULL) {
+    t = expect(context, tt_NULL);
+    struct AstNode* null_node = ast_build_Number(0, 0);
+    add_location_for_token(context, null_node, t);
+    return null_node;
   } else {
     syntax_error(context, t);
   }

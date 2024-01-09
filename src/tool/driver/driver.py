@@ -233,9 +233,9 @@ def main(raw_args: List[str]) -> int:
         ),
     )
 
-    # 
+    #
     # add flags to peblc
-    # 
+    #
     if args.debug:
         toolchain.pebl_compiler.arguments.append("-g")
 

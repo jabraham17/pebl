@@ -56,7 +56,7 @@ def parse_args(raw_args: List[str]) -> ap.Namespace:
         action="store_true",
         help="output llvm bitcode",
     )
-    AP.add_argument('-g', '--debug', default=False, action='store_true')
+    AP.add_argument("-g", "--debug", default=False, action="store_true")
 
     class OptAction(ap.Action):
         @classmethod

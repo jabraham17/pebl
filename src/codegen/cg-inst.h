@@ -12,6 +12,15 @@ struct cg_value* codegen_function(
     struct ScopeResult* sr);
 
 struct cg_value*
+codegen_call(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr);
+
+struct cg_value* codegenBuiltin(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    struct ScopeSymbol* builtin,
+    struct AstNode* call);
+
+struct cg_value*
 codegen_expr(struct Context* ctx, struct AstNode* ast, struct ScopeResult* sr);
 
 // TODO: these should go into ast.h, not in codegen

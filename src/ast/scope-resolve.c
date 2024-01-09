@@ -39,6 +39,16 @@ static struct ScopeSymbol* ScopeSymbol_init_type(struct Type* type) {
   return ss;
 }
 
+static struct ScopeSymbol*
+ScopeSymbol_init_builtin(char* name, int num_args, struct Type* rettype) {
+  struct ScopeSymbol* ss = ScopeSymbol_allocate(sst_Builtin);
+  ss->ss_builtin = malloc(sizeof(*ss->ss_builtin));
+  memset(ss->ss_builtin, 0, sizeof(*ss->ss_builtin));
+  ss->ss_builtin->name = bsstrdup(name);
+  ss->ss_builtin->num_args = num_args;
+  ss->ss_builtin->rettype = rettype;
+  return ss;
+}
 static struct ScopeFunction* ScopeFunction_allocate(
     struct AstNode* function,
     struct Type* rettype,
@@ -337,25 +347,37 @@ char* ScopeSymbol_name(struct ScopeSymbol* sym) {
     return ast_Identifier_name(ast_Function_name(sym->ss_function->function));
   } else if(sym->sst == sst_Type) {
     return sym->ss_type->name;
-  } else if(sym->sst == sst_Builtin) {
-    UNIMPLEMENTED("unhandled builtin name\n");
+  } else if(ScopeSymbol_isBuiltin(sym)) {
+    return sym->ss_builtin->name;
   } else {
     UNIMPLEMENTED("unhandled\n");
   }
 }
 int ScopeSymbol_eq(struct ScopeSymbol* lhs, struct ScopeSymbol* rhs) {
-  if(lhs->sst == sst_Variable && rhs->sst == sst_Variable) {
+  if(ScopeSymbol_isVariable(lhs) && ScopeSymbol_isVariable(rhs)) {
     return lhs->ss_variable->variable == rhs->ss_variable->variable;
-  } else if(lhs->sst == sst_Function && rhs->sst == sst_Function) {
+  } else if(ScopeSymbol_isFunction(lhs) && ScopeSymbol_isFunction(rhs)) {
     return lhs->ss_function->function == rhs->ss_function->function;
-  } else if(lhs->sst == sst_Type && rhs->sst == sst_Type) {
+  } else if(ScopeSymbol_isBuiltin(lhs) && ScopeSymbol_isBuiltin(rhs)) {
+    return lhs->ss_builtin->num_args == rhs->ss_builtin->num_args &&
+           strcmp(lhs->ss_builtin->name, rhs->ss_builtin->name) == 0;
+  } else if(ScopeSymbol_isType(lhs) && ScopeSymbol_isType(rhs)) {
     return Type_eq(lhs->ss_type, rhs->ss_type);
-  } else if(lhs->sst == sst_Builtin && rhs->sst == sst_Builtin) {
-    UNIMPLEMENTED("unhandled builtin eq\n");
   }
 
   return 0;
 }
+
+int ScopeSymbol_isVariable(struct ScopeSymbol* sym) {
+  return sym->sst == sst_Variable;
+}
+int ScopeSymbol_isFunction(struct ScopeSymbol* sym) {
+  return sym->sst == sst_Function;
+}
+int ScopeSymbol_isBuiltin(struct ScopeSymbol* sym) {
+  return sym->sst == sst_Builtin;
+}
+int ScopeSymbol_isType(struct ScopeSymbol* sym) { return sym->sst == sst_Type; }
 
 struct ScopeResult* scope_lookup(struct Context* ctx, struct AstNode* ast) {
   ASSERT(ast_is_type(ast, ast_Block));
@@ -380,7 +402,7 @@ struct ScopeResult* scope_lookup(struct Context* ctx, struct AstNode* ast) {
   ALIAS(int, int64)                                                            \
   PTR_ALIAS(string, char)
 
-void install_builtin_types(struct Context* ctx, struct ScopeResult* scope) {
+static void install_builtins(struct Context* ctx, struct ScopeResult* scope) {
 
 #define ALLOCATE_TYPE(type, name)                                              \
   struct Type* type;                                                           \
@@ -417,13 +439,30 @@ void install_builtin_types(struct Context* ctx, struct ScopeResult* scope) {
 #undef MAKE_ALIAS
 #undef MAKE_PTR_ALIAS
 #undef ALLOCATE_TYPE
+
+#define GET_TYPE_GENERIC(name)                                                 \
+  _Generic(                                                                    \
+      (name),                                                                  \
+      char*: scope_get_Type_from_name(ctx, scope, (char*)(name), 0),           \
+      struct Type*: (name),                                                    \
+      default: NULL)
+#define BUILTIN_FUNCTION(name, numArgs, retType, codegenFunc)                  \
+  do {                                                                         \
+    struct ScopeSymbol* builtin_ss = scope_lookup_name(ctx, scope, #name, 0);  \
+    ASSERT_MSG(!builtin_ss, "builtin already exists");                         \
+    struct Type* type = GET_TYPE_GENERIC(retType);                             \
+    builtin_ss = ScopeSymbol_init_builtin(#name, numArgs, type);               \
+    LL_APPEND(scope->symbols, builtin_ss);                                     \
+  } while(0);
+#include "definitions/builtins.def"
+#undef GET_TYPE_GENERIC
 }
 
 void scope_resolve(struct Context* ctx) {
   struct AstNode* body = ctx->ast;
   struct ScopeResult* scope = allocate_ScopeResult(ctx, body, NULL);
 
-  install_builtin_types(ctx, scope);
+  install_builtins(ctx, scope);
 
   ast_foreach(ast_Block_stmts(body), s) {
     scope_resolve_internal(ctx, scope, s);
@@ -717,11 +756,11 @@ struct Type* scope_get_Type_from_ast(
     struct ScopeSymbol* sym = scope_lookup_name(ctx, sr, name, search_parent);
     if(sym && sym->sst == sst_Function) {
       return sym->ss_function->rettype;
+    } else if(sym && ScopeSymbol_isBuiltin(sym)) {
+      // todo: type of builtin should depend on what arguments are given. for
+      // example, `new(string)` should return string*
+      return sym->ss_builtin->rettype;
     } else {
-      // TODO: MAJOR HACK, add scoping for builtins
-      if(strcmp(name, "sizeof") == 0) {
-        return Type_int_type(ctx, 64);
-      }
       ERROR_ON_AST(ctx, ast, "could not find function named '%s'\n", name);
     }
   } else if(ast_is_type(ast, ast_FieldAccess)) {

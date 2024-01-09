@@ -81,8 +81,6 @@ int main(int argc, char** argv) {
   if(verify) verify_ast(context);
   if(checks) parse_checks(context);
 
-  register_compiler_builtins(context);
-
   scope_resolve(context);
 
   init_cg_context(context);

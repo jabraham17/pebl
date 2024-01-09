@@ -7,5 +7,7 @@ set(SRCS
     cg-function.c
     cg-constant.c
     debug/debugwrappers.c
-    compiler-builtins.c)
+    cg-builtin.c
+    cg-call.c
+    cg-debug.c)
 add_sources("${SRCS}" "${CMAKE_CURRENT_SOURCE_DIR}")

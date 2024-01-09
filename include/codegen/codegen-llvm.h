@@ -34,7 +34,7 @@ struct cg_function {
   LLVMValueRef function;
   LLVMTypeRef cg_type;
   int is_external;
-  struct di_function di;
+  struct di_function* di;
   struct cg_function* next;
 };
 

@@ -31,8 +31,18 @@ struct cg_value* codegen_constant_expr(
   if(ast_is_type(ast, ast_Number)) {
     struct Type* t = scope_get_Type_from_ast(ctx, sr, ast, 1);
     LLVMTypeRef cg_type = get_llvm_type(ctx, sr, t);
-    LLVMValueRef val =
-        LLVMConstInt(cg_type, ast_Number_value(ast), /*signext*/ 1);
+    LLVMValueRef val;
+    if(Type_is_integer(t) || Type_is_boolean(t)) {
+      val = LLVMConstInt(cg_type, ast_Number_value(ast), /*signext*/ 1);
+    } else {
+      ASSERT(Type_is_pointer(t));
+
+      // for now, the only pointer constant is a constant NULL
+      ASSERT_MSG(
+          Type_is_void(Type_get_pointee_type(t)),
+          "constants of type ptr must be void");
+      val = LLVMConstNull(cg_type);
+    }
     return add_temp_value(ctx, val, cg_type, t);
   } else if(ast_is_type(ast, ast_String)) {
     wchar_t* str = ast_String_value(ast);

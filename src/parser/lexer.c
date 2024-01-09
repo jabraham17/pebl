@@ -399,6 +399,7 @@ static struct lexer_token* lexer_gettoken_internal(struct Context* context) {
   else if(is_keyword(tokenLexeme, L"let")) t->tt = tt_LET;
   else if(is_keyword(tokenLexeme, L"true")) t->tt = tt_TRUE;
   else if(is_keyword(tokenLexeme, L"false")) t->tt = tt_FALSE;
+  else if(is_keyword(tokenLexeme, L"null")) t->tt = tt_NULL;
   // THESE MUST GO LAST
   else if(is_valid_id(tokenLexeme)) t->tt = tt_ID;
   else if(is_valid_num(tokenLexeme)) t->tt = tt_NUMBER;
@@ -416,6 +417,7 @@ wchar_t* tokentype_to_string(enum lexer_tokentype tt) {
   else if(tt == tt_NUMBER) return L"NUMBER";
   else if(tt == tt_TRUE) return L"TRUE";
   else if(tt == tt_FALSE) return L"FALSE";
+  else if(tt == tt_NULL) return L"NULL";
   else if(tt == tt_STRING_LITERAL) return L"STRING_LITERAL";
   else if(tt == tt_CHAR_LITERAL) return L"CHAR_LITERAL";
   else if(tt == tt_LPAREN) return L"LPAREN";

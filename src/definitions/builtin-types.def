@@ -1,0 +1,48 @@
+
+
+#ifndef BUILTIN_TYPE
+  #define BUILTIN_TYPE(name, size)
+#endif
+#ifndef BUILTIN_TYPE_ALIAS
+  #define BUILTIN_TYPE_ALIAS(name, alias_to)
+#endif
+#ifndef BUILTIN_TYPE_PTR_ALIAS
+  #define BUILTIN_TYPE_PTR_ALIAS(name, pointer_to)
+#endif
+// builtins functions are purely disambiguated by their name and number of args
+#ifndef BUILTIN_FUNCTION
+#define BUILTIN_FUNCTION(name, numArgs, codegenFunc)
+#endif
+
+
+//
+// types
+//
+BUILTIN_TYPE(void, 0)
+BUILTIN_TYPE(int64, 64)
+BUILTIN_TYPE(int8, 8)
+BUILTIN_TYPE(bool, 1)
+BUILTIN_TYPE(char, (sizeof(wchar_t) * 8))
+BUILTIN_TYPE_ALIAS(int, int64)
+BUILTIN_TYPE_PTR_ALIAS(string, char)
+
+//
+// functions/operators
+//
+
+
+// TODO: size should take any expression and eval its type
+BUILTIN_FUNCTION(sizeof, 1, codegenBuiltinSizeof)
+// TODO: currently returns a string, really should return a custom cg_value for types
+BUILTIN_FUNCTION(typeof, 1, codegenBuiltinTypeof)
+
+// TODO: this currently just aborts with llvm.debugtrap, it should create some nice strings and pass them to a library func like __pebl_abort
+BUILTIN_FUNCTION(assert, 1, codegenBuiltinAssert)
+
+// TODO:add a `new` which is like a smart allocate(sizeof)
+BUILTIN_FUNCTION(new, 1, codegenBuiltinNew)
+
+#undef BUILTIN_TYPE
+#undef BUILTIN_TYPE_ALIAS
+#undef BUILTIN_TYPE_PTR_ALIAS
+#undef BUILTIN_FUNCTION

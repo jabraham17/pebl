@@ -5,6 +5,7 @@
 #include <llvm-c/DebugInfo.h>
 #include <string.h>
 
+#include "cg-debug.h"
 #include "cg-helpers.h"
 #include "cg-inst.h"
 
@@ -61,16 +62,44 @@ static struct cg_function* codegen_function_prototype(
       cg_func->is_external = 1;
     }
 
-    if(Arguments_isDebug(ctx->arguments)) {
+    // create names for the parameters
+    ast_foreach_idx(ast_Function_args(ast_func), arg, i) {
+
+      struct AstNode* var = ast_Variable_name(arg);
+      char* varname = ast_Identifier_name(var);
+
+      LLVMValueRef param = LLVMGetParam(func, i);
+      LLVMSetValueName(param, varname);
+    }
+  }
+
+  if(Arguments_isDebug(ctx->arguments)) {
+    // if it has no debug info, create it
+    // if it already has debug info and the function has a body, recreate it
+    // if it already has debug info and the function doesnt have a body, do
+    // nothing
+    int create_debug_info = 0;
+    if(cg_func->di == NULL) {
+      create_debug_info = 1;
+    } else {
+      if(ast_Function_has_body(ast_func)) {
+        create_debug_info = 1;
+      } else {
+        create_debug_info = 0;
+      }
+    }
+    if(create_debug_info) {
+
+      cg_func->di = allocate_di_function();
       LLVMMetadataRef PPP[] = {NULL};
 
-      cg_func->di.subprogram = LLVMDIBuilderCreateFunction(
+      cg_func->di->subprogram = LLVMDIBuilderCreateFunction(
           ctx->codegen->debugBuilder,
           ctx->codegen->di.fileUnit,
-          name,
-          strlen(name),
-          mname,
-          strlen(mname),
+          cg_func->name,
+          strlen(cg_func->name),
+          cg_func->mname,
+          strlen(cg_func->mname),
           ctx->codegen->di.fileUnit,
           0,
           LLVMDIBuilderCreateSubroutineType(
@@ -84,17 +113,7 @@ static struct cg_function* codegen_function_prototype(
           0,
           LLVMDIFlagPrototyped,
           0);
-      LLVMSetSubprogram(func, cg_func->di.subprogram);
-    }
-
-    // create names for the parameters
-    ast_foreach_idx(ast_Function_args(ast_func), arg, i) {
-
-      struct AstNode* var = ast_Variable_name(arg);
-      char* varname = ast_Identifier_name(var);
-
-      LLVMValueRef param = LLVMGetParam(func, i);
-      LLVMSetValueName(param, varname);
+      LLVMSetSubprogram(cg_func->function, cg_func->di->subprogram);
     }
   }
 
@@ -107,6 +126,7 @@ struct cg_value* codegen_function(
     struct ScopeResult* sr) {
   ASSERT(ast_is_type(ast, ast_Function));
   struct cg_function* func = codegen_function_prototype(ctx, ast, sr);
+
   // generate body
   if(ast_Function_has_body(ast)) {
     struct AstNode* body = ast_Function_body(ast);
@@ -158,6 +178,13 @@ struct cg_value* codegen_function(
         LLVMBuildRetVoid(ctx->codegen->builder);
       }
     }
+
+    if(Arguments_isDebug(ctx->arguments) && func->di) {
+      LLVMDIBuilderFinalizeSubprogram(
+          ctx->codegen->debugBuilder,
+          func->di->subprogram);
+    }
   }
+
   return add_temp_value(ctx, func->function, func->cg_type, func->rettype);
 }
