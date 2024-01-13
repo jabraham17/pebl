@@ -1,0 +1,6 @@
+int is sized 8
+myType is sized 16
+sizeof(mytype) returns a int64 numBytes=16
+int8 is sized 1
+char is sized 4
+ptr is sized 8

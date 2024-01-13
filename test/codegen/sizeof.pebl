@@ -1,0 +1,37 @@
+func print(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+func println(s:string): void;
+func println(s: string):void {
+  print(s);
+  print("\n");
+}
+func println(s: string):void;
+
+type myType = {a: int8; b: int8; c: char; d:int;}
+func main(args: string*, nargs: int): int {
+  print("int is sized ");
+  println(intToString(sizeof(int)));
+
+  print("myType is sized ");
+  println(intToString(sizeof(myType)));
+
+  print("sizeof(mytype) returns a ");
+  let x = sizeof(myType);
+  print(typeof(x));
+  print(" numBytes=");
+  println(intToString(x));
+
+  print("int8 is sized ");
+  println(intToString(sizeof(int8)));
+
+  print("char is sized ");
+  println(intToString(sizeof(char)));
+
+  type ptr = void*;
+  print("ptr is sized ");
+  println(intToString(sizeof(ptr)));
+  return 0;
+}
