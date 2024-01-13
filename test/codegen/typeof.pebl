@@ -1,0 +1,23 @@
+func print(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+func println(s:string): void;
+func println(s: string):void {
+  print(s);
+  print("\n");
+}
+func println(s: string):void;
+
+type myList = {x:int; next:myList*;}
+
+func main(args: string*, nargs: int): int {
+  println(typeof(1));
+  println(typeof(args));
+  
+  println(typeof(myList));
+  let x: myList;
+  println(typeof(x));
+  println(typeof(x.next));
+}
