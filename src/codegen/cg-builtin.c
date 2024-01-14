@@ -33,10 +33,18 @@ static struct cg_value* codegenBuiltin_codegenBuiltinSizeof(
   if(!type) {
     ERROR_ON_AST(ctx, call, "could not find type for sizeof()\n");
   }
-  int size = Type_get_size(type);
+
+  LLVMTypeRef gepType = get_llvm_type(ctx, scope, type);
+  LLVMTypeRef idxType = LLVMInt32TypeInContext(ctx->codegen->llvmContext);
+  LLVMValueRef gepIdx[] = {LLVMConstInt(idxType, 1, /*signext*/ 1)};
+  LLVMValueRef gep = LLVMConstGEP2(
+      gepType,
+      LLVMConstNull(LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0)),
+      gepIdx,
+      1);
 
   LLVMTypeRef cg_type = LLVMInt64TypeInContext(ctx->codegen->llvmContext);
-  LLVMValueRef val = LLVMConstInt(cg_type, size, /*signext*/ 1);
+  LLVMValueRef val = LLVMConstPtrToInt(gep, cg_type);
   return allocate_stack_for_temp(
       ctx,
       cg_type,
