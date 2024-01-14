@@ -38,13 +38,14 @@ BINARY_EXPR(PLUS, Any, Any, Any, sintBOp)
 BINARY_EXPR(MINUS, Any, Any, Any, sintBOp)
 BINARY_EXPR(MULT, Any, Any, Any, sintBOp)
 BINARY_EXPR(DIVIDE, Any, Any, Any, sintBOp)
+UNARY_EXPR(MINUS, Any, Any, intNegate)
 
 //
 // boolean logic
 //
 BINARY_EXPR(AND, Any, Any, Bool, booleanAnd)
 BINARY_EXPR(OR, Any, Any, Bool, booleanOr)
-UNARY_EXPR(NOT, Any, Bool, negate)
+UNARY_EXPR(NOT, Any, Bool, booleanNot)
 
 //
 // Int Comparison

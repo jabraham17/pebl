@@ -59,7 +59,7 @@ op:
   | NEQ
   | COLON
 ;
-preop: AMPERSAND | STAR | NOT;
+preop: AMPERSAND | STAR | NOT | MINUS;
 
 call_stmt: call_expr SEMICOLON;
 call_expr: varname LPAREN expr_list RPAREN;

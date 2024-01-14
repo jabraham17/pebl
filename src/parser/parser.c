@@ -300,7 +300,7 @@ static struct AstNode* parse_typename(struct Context* context) {
 static struct AstNode* parse_expr(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(LT_type(t) == tt_AMPERSAND || LT_type(t) == tt_STAR ||
-     LT_type(t) == tt_NOT) {
+     LT_type(t) == tt_NOT || LT_type(t) == tt_MINUS) {
     enum OperatorType op = parse_preop(context);
     struct AstNode* lhs = parse_atom(context);
     struct AstNode* expr_node = ast_build_Expr_uop(lhs, op);
@@ -338,8 +338,8 @@ static int is_literal(struct lexer_token* t) {
 static struct AstNode* parse_expr_list(struct Context* context) {
   struct lexer_token* t = lexer_peek(context, 1);
   if(LT_type(t) == tt_AMPERSAND || LT_type(t) == tt_STAR ||
-     LT_type(t) == tt_NOT || is_literal(t) || LT_type(t) == tt_ID ||
-     LT_type(t) == tt_LPAREN) {
+     LT_type(t) == tt_NOT || LT_type(t) == tt_MINUS || is_literal(t) ||
+     LT_type(t) == tt_ID || LT_type(t) == tt_LPAREN) {
     struct AstNode* head = parse_expr(context);
     t = lexer_peek(context, 1);
     if(LT_type(t) == tt_COMMA) {
@@ -460,7 +460,7 @@ static enum OperatorType parse_op(struct Context* context) {
     syntax_error(context, t);
   }
 }
-// preop -> AMPERSAND | STAR | NOT
+// preop -> AMPERSAND | STAR | NOT | MINUS
 static enum OperatorType parse_preop(struct Context* context) {
   struct lexer_token* t = lexer_gettoken(context);
   if(LT_type(t) == tt_AMPERSAND) {
@@ -469,6 +469,8 @@ static enum OperatorType parse_preop(struct Context* context) {
     return op_PTR_DEREFERENCE;
   } else if(LT_type(t) == tt_NOT) {
     return op_NOT;
+  } else if(LT_type(t) == tt_MINUS) {
+    return op_MINUS;
   } else {
     syntax_error(context, t);
   }

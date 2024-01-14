@@ -27,7 +27,7 @@ expr_list -> EPSILON | expr | expr COMMA expr_list
 literal -> NUMBER | STRING_LITERAL | CHAR_LITERAL | TRUE | FALSE
 atom -> literal | varname | call_expr | varname (DOT|ARROW) varname | LPAREN expr RPAREN
 op -> PLUS | MINUS | STAR | DIVIDE | AND | OR | LT | GT | LTEQ | GTEQ | EQ | NEQ | COLON
-preop -> AMPERSAND | STAR | NOT
+preop -> AMPERSAND | STAR | NOT | MINUS
 
 call_stmt -> call_expr SEMICOLON
 call_expr -> varname LPAREN expr_list RPAREN

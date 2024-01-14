@@ -1,0 +1,26 @@
+func print(s: string): void;
+
+extern func intToString(i:int):string;
+extern func stringToInt(i:string):int;
+
+func main(args: string*, nargs: int): int {
+  let x = -1;
+  print(intToString(x));
+  print("\n");
+
+  x = (-1) + 2;
+  print(intToString(x));
+  print("\n");
+
+  x = (-9) + (-6);
+  print(intToString(x));
+  print("\n");
+
+  x = (-9) - (-9);
+  print(intToString(x));
+  print("\n");
+
+  x = 8 / (-2);
+  print(intToString(x));
+  print("\n");
+}

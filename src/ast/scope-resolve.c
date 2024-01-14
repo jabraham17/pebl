@@ -624,6 +624,11 @@ static struct Type* determine_result_type_uop(
     enum OperatorType op,
     struct Type* operandType) {
 
+  // '-' results in the same type as the operand, it requires an integer
+  if(op == op_MINUS && Type_is_integer(operandType)) {
+    return operandType;
+  }
+
   // get_addr results in the pointer type
   if(op == op_TAKE_ADDRESS) {
     return Type_get_ptr_type(operandType);
