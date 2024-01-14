@@ -8,7 +8,7 @@
 
 static struct cg_value* codegenOperator_sintBOp(
     struct Context* ctx,
-    __attribute__((unused)) struct ScopeResult* scope,
+    struct ScopeResult* scope,
     enum OperatorType op,
     struct AstNode* lhsAst,
     struct AstNode* rhsAst,
@@ -42,6 +42,41 @@ static struct cg_value* codegenOperator_sintBOp(
   } else {
     ERROR(ctx, "could not codegen operator\n");
   }
+
+  LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
+  if(LLVMGetTypeKind(resLLVMType) != LLVMGetTypeKind(LLVMTypeOf(resVal))) {
+    resVal =
+        LLVMBuildIntCast2(ctx->codegen->builder, resVal, resLLVMType, 1, "");
+  }
+
+  struct cg_value* res =
+      allocate_stack_for_temp(ctx, resLLVMType, resVal, resType);
+  return res;
+}
+
+static struct cg_value* codegenOperator_intNegate(
+    struct Context* ctx,
+    struct ScopeResult* scope,
+    enum OperatorType op,
+    struct AstNode* operandAst,
+    struct Type* resType) {
+  struct cg_value* operand = codegen_inst(ctx, operandAst, scope);
+  ASSERT(
+      Type_is_integer(operand->type) && Type_is_integer(resType) &&
+      Type_eq(operand->type, resType));
+  ASSERT(op == op_MINUS);
+
+  LLVMValueRef operandVal = LLVMBuildLoad2(
+      ctx->codegen->builder,
+      operand->cg_type,
+      operand->value,
+      "");
+
+  LLVMValueRef resVal = LLVMBuildSub(
+      ctx->codegen->builder,
+      LLVMConstNull(operand->cg_type),
+      operandVal,
+      "");
 
   LLVMTypeRef resLLVMType = get_llvm_type(ctx, scope, resType);
   if(LLVMGetTypeKind(resLLVMType) != LLVMGetTypeKind(LLVMTypeOf(resVal))) {
@@ -235,7 +270,7 @@ static struct cg_value* codegenOperator_booleanOr(
   return res;
 }
 
-static struct cg_value* codegenOperator_negate(
+static struct cg_value* codegenOperator_booleanNot(
     struct Context* ctx,
     __attribute__((unused)) struct ScopeResult* scope,
     __attribute__((unused)) enum OperatorType op,
