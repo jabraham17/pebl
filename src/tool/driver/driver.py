@@ -178,7 +178,7 @@ def build_executable(
     )
     objects = obj_files + list(compiled_obj_files)
     toolchain.linker.execute(
-        "-o", outfile, *objects, libs.stdlib, libs.runtime, libs.startup
+        "-o", outfile, *objects, libs.startup, libs.stdlib, libs.runtime,
     )
 
 
