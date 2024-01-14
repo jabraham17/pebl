@@ -2,10 +2,11 @@
 #include <locale.h>
 #include <wchar.h>
 
-extern wchar_t* c_to_wchar(char* s);
-extern void* c_allocate(int64_t n);
+wchar_t* c_to_wchar(char* s);
+void* c_allocate(int64_t n);
 
-extern int64_t _bs_main_entry(wchar_t** args, int64_t nargs);
+int64_t _bs_main_entry(wchar_t** args, int64_t nargs);
+
 int main(int argc, char** argv) {
   setlocale(LC_CTYPE,"");
   // allocate args
