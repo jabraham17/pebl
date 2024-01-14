@@ -232,3 +232,23 @@ tests:
     - ${COMP_CMD} --opt=full
     - ${EXEC_CMD}
     - ${CLEAN_CMD}
+- file: assert.pebl
+  configs:
+  - cmds:
+    - ${COMP_CMD}
+    - ${EXEC_CMD} 10
+    - ${CLEAN_CMD}
+  - cmds:
+    - ${COMP_CMD} --opt=full
+    - ${EXEC_CMD} 11
+    - ${CLEAN_CMD}
+  - cmds:
+    - ${COMP_CMD}
+    - ${EXEC_CMD} 18
+    - ${CLEAN_CMD}
+    good-file: assert-fail.good
+  - cmds:
+    - ${COMP_CMD} --opt=full
+    - ${EXEC_CMD} 19
+    - ${CLEAN_CMD}
+    good-file: assert-fail.good

@@ -9,12 +9,9 @@
 
 
 void* c_allocate(int64_t n);
-
 __attribute__((noreturn))
-void pebl_panic(char* message) {
-  fwprintf(stderr, L"%s\n", message);
-  abort();
-}
+void pebl_panic(wchar_t* message);
+
 int c_is_char_only(wchar_t* s) {
   while (*s) {
     if (*s > 255) return 0;
@@ -83,7 +80,7 @@ wchar_t* c_to_wchar(char* s) {
 
 void* c_openFilePointer(wchar_t* name, wchar_t* mode) {
   if(!c_is_char_only(name) || !c_is_char_only(mode)) {
-    pebl_panic("only ascii characters allowed");
+    pebl_panic(L"only ascii characters allowed");
   }
   return (void*)fopen(c_to_char_only(name), c_to_char_only(mode));
 }
@@ -116,14 +113,14 @@ int64_t c_fseek_seek_type(int64_t seek_type) {
   if (seek_type == 0) { return SEEK_SET; }
   else if (seek_type == 1) { return SEEK_CUR; }
   else if (seek_type == 2) { return SEEK_END; }
-  else { pebl_panic("unknown seek type"); }
+  else { pebl_panic(L"unknown seek type"); }
 }
 
 int64_t c_pathExists(wchar_t* path) {
   if(c_is_char_only(path)) {
     return (access(c_to_char_only(path), F_OK) == 0);
   }
-  pebl_panic("cannot check for a non-ascii path");
+  pebl_panic(L"cannot check for a non-ascii path");
 }
 int64_t c_pathIsFile(wchar_t* path) {
   if(c_is_char_only(path)) {
@@ -131,5 +128,5 @@ int64_t c_pathIsFile(wchar_t* path) {
     if(stat(c_to_char_only(path), &path_stat) != 0) return 0;
     return S_ISREG(path_stat.st_mode);
   }
-  pebl_panic("cannot check for a non-ascii path");
+  pebl_panic(L"cannot check for a non-ascii path");
 }

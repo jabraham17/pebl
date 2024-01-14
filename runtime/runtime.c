@@ -5,6 +5,12 @@
 
 void* c_allocate(int64_t n);
 
+__attribute__((noreturn))
+void pebl_panic(wchar_t* message) {
+  fwprintf(stderr, L"%ls\n", message);
+  abort();
+}
+
 wchar_t* intToString(int64_t i) {
   wchar_t* buf;
   int buf_size = sizeof(*buf)*16;

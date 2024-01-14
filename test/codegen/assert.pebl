@@ -1,0 +1,6 @@
+extern func stringToInt(s: string): int;
+func main(args: string*, nargs: int): int {
+  assert((1+1)==2);
+  assert(2!=3);
+  assert(17>=stringToInt(*(args + 1)));
+}

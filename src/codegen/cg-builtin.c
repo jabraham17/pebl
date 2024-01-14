@@ -120,14 +120,21 @@ static struct cg_value* codegenBuiltin_codegenBuiltinAssert(
   LLVMAppendExistingBasicBlock(currentFunc, thenBB);
   LLVMPositionBuilderAtEnd(ctx->codegen->builder, thenBB);
 
-  // the body is just a trap
-  char* name = "llvm.debugtrap";
-  unsigned ID = LLVMLookupIntrinsicID(name, strlen(name));
-  LLVMTypeRef intrinsicTy =
-      LLVMIntrinsicGetType(ctx->codegen->llvmContext, ID, NULL, 0);
-  LLVMValueRef intrinsic =
-      LLVMGetIntrinsicDeclaration(ctx->codegen->module, ID, NULL, 0);
-  LLVMBuildCall2(ctx->codegen->builder, intrinsicTy, intrinsic, NULL, 0, "");
+  // call pebl_panic
+  char* name = "pebl_panic";
+           LLVMTypeRef params[] = {LLVMPointerTypeInContext(ctx->codegen->llvmContext, 0)};
+         LLVMTypeRef funcType = LLVMFunctionType(
+      LLVMVoidTypeInContext(ctx->codegen->llvmContext),
+      params,
+      1,
+      0);
+        LLVMValueRef func =
+      LLVMGetNamedFunction(ctx->codegen->module, name);
+      if(!func) {
+        func = LLVMAddFunction(ctx->codegen->module, name, funcType);
+      }
+      LLVMValueRef args[] = {get_string_literal(ctx, scope, "hit assertion")->value};
+  LLVMBuildCall2(ctx->codegen->builder, funcType, func, args, 1, "");
 
   // create br to endBB
   LLVMBuildBr(ctx->codegen->builder, endBB);
