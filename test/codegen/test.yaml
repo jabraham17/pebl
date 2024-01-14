@@ -202,3 +202,33 @@ tests:
     - ${COMP_CMD} --opt=full
     - ${EXEC_CMD}
     - ${CLEAN_CMD}
+- file: negativeNumbers.pebl
+  configs:
+  - cmds:
+    - ${COMP_CMD}
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
+  - cmds:
+    - ${COMP_CMD} --opt=full
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
+- file: typeof.pebl
+  configs:
+  - cmds:
+    - ${COMP_CMD}
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
+  - cmds:
+    - ${COMP_CMD} --opt=full
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
+- file: sizeof.pebl
+  configs:
+  - cmds:
+    - ${COMP_CMD}
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
+  - cmds:
+    - ${COMP_CMD} --opt=full
+    - ${EXEC_CMD}
+    - ${CLEAN_CMD}
